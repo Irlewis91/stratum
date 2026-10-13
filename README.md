@@ -25,12 +25,13 @@ Requires macOS 12 or later. Runs on Apple silicon and Intel; AI stem separation 
 - **Rack back panel:** press Tab to flip the devices and patch LFO cables into parameters.
 - **Warping:** imported audio is tempo-detected and time-stretched to the project tempo.
 - **Stem separation:** split a mix into drums, bass, other and vocals on-device (HT-Demucs).
-- **Files:** saves `.stratum` projects; imports MIDI, Ableton `.als`, FL Studio `.flp` and audio; exports WAV, MIDI and DAWproject.
+- **Files:** saves `.stratum` projects; imports MIDI, Ableton `.als`, FL Studio `.flp`, Reason `.reason` songs and audio; exports WAV, MIDI and DAWproject.
 
 ## Known limits
 
 - Prompt-to-Plugin is keyword-driven. It assembles built-in effect blocks; it does not generate or compile code.
 - `.als` and `.flp` import bring in tempo, tracks, notes, volume and pan. Plugins, samples and automation are not read, and audio tracks arrive empty.
+- `.reason` import (Reason 6 and later) brings in tempo, tracks, note clips and audio-track recordings at their timeline positions. Reason devices, their samples, mixer levels, effects and automation are not read; clips flagged as muted are left out.
 - DAWproject is export-only; DAWproject import is not built yet.
 - Comping is for recorded audio only.
 - Recording has been tested with simulated input, not yet with a wide range of audio interfaces.

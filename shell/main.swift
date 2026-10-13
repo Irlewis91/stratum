@@ -119,7 +119,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
             await S.io.nativeOpen(name, b64);
             const p = S.proj;
             return JSON.stringify({ file: name, msg, bpm: p.bpm, scenes: p.scenes.map((s) => s.name + ':' + s.bars), sections: p.sections.length, songBeats: S.songEnd(p), regions: p.tracks.reduce((a, t) => a + t.regions.length, 0),
-              tracks: p.tracks.map((t) => [t.name, t.type, +t.vol.toFixed(2), +t.pan.toFixed(2), Object.values(t.clips).reduce((a, c) => a + (c.notes ? c.notes.length : 0), 0)]) });
+              tracks: p.tracks.map((t) => [t.name, t.type, +t.vol.toFixed(2), +t.pan.toFixed(2), Object.values(t.clips).reduce((a, c) => a + (c.notes ? c.notes.length : 0), 0), t.regions.length, t.mute]),
+              firstRegions: p.tracks.map((t) => t.regions.slice(0, 3).map((r) => [+r.start.toFixed(3), +r.len.toFixed(3), +r.off.toFixed(3), r.clip.notes ? r.clip.notes.length + 'n' : 'audio'])),
+              buffers: Object.values(S.buffers).map((b) => [b.name, +b.buf.duration.toFixed(2), b.bpm, +b.buf.getChannelData(0).reduce((m, x) => Math.max(m, Math.abs(x)), 0).toFixed(3)]) });
             """
             web.callAsyncJavaScript(js, arguments: ["name": url.lastPathComponent, "b64": data.base64EncodedString()], in: nil, in: .page) { result in
                 switch result {
@@ -276,14 +278,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
         let panel = NSOpenPanel()
         panel.allowsMultipleSelection = false
         panel.canChooseDirectories = false
-        panel.message = "Open a STRATUM project, or import MIDI, Ableton .als, FL Studio .flp or an audio file"
+        panel.message = "Open a STRATUM project, or import MIDI, Ableton .als, FL Studio .flp, a Reason song or an audio file"
         panel.beginSheetModal(for: window) { [weak self] result in
             guard result == .OK, let url = panel.url, let self = self else { return }
             guard let data = try? Data(contentsOf: url) else { return self.alert("Could not read \(url.lastPathComponent).") }
             if data.count > 400_000_000 { return self.alert("That file is too large to import (limit 400 MB).") }
-            guard let name = try? JSONSerialization.data(withJSONObject: [url.lastPathComponent]),
-                  let nameJSON = String(data: name, encoding: .utf8) else { return }
-            self.web.evaluateJavaScript("S.io.nativeOpen(\(nameJSON)[0], '\(data.base64EncodedString())')", completionHandler: nil)
+            self.web.callAsyncJavaScript("await S.io.nativeOpen(name, b64);", arguments: ["name": url.lastPathComponent, "b64": data.base64EncodedString()], in: nil, in: .page, completionHandler: nil)
         }
     }
 

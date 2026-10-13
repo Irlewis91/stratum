@@ -256,7 +256,7 @@
       const b = u8.subarray(a, a + len), wide = len > 1 && b[1] === 0;
       return new TextDecoder(wide ? 'utf-16le' : 'latin1').decode(b).replace(/\0/g, '');
     };
-    let bpm = 0, chan = -1, pat = 0, title = '';
+    let bpm = 0, chan = -1, pat = 0, title = '', audioClips = 0;
     const chans = {}, pats = {}, playlist = [];
     const ch = (i) => chans[i] || (chans[i] = { name: '', plugin: '' });
     while (o < end) {
@@ -273,11 +273,12 @@
         else if (id === 194) title = text(o, len);
         else if (id === 219 && chan >= 0 && len >= 8) { ch(chan).pan = v.getInt32(o, true) / 6400 - 1; ch(chan).vol = v.getUint32(o + 4, true) / 12800; }
         else if (id === 233 && !playlist.length) {
-          // Playlist items are 32 bytes (60 from FL Studio 21); every item carries the constant 20480 at offset 4.
-          const size = [32, 60].find((z) => len >= z && len % z === 0 && v.getUint16(o + 4, true) === 20480 && (len < 2 * z || v.getUint16(o + z + 4, true) === 20480));
+          // Playlist items are 32 bytes (60 from FL Studio 21, 80 from FL Studio 25); every item carries the constant 20480 at offset 4.
+          const size = [32, 60, 80].find((z) => len >= z && len % z === 0 && v.getUint16(o + 4, true) === 20480 && (len < 2 * z || v.getUint16(o + z + 4, true) === 20480));
           for (let q = o; size && q + size <= o + len; q += size) {
             const base = v.getUint16(q + 4, true), idx = v.getUint16(q + 6, true);
             if (idx > base) playlist.push({ pat: idx - base, t: v.getUint32(q, true) / ppq, len: v.getUint32(q + 8, true) / ppq });
+            else audioClips++;
           }
         }
         else if (id === 224) {
@@ -318,9 +319,138 @@
     if (!scenes.length) scenes.push({ name: 'Pattern 1', bars: 1 });
     return {
       proj: S.fromFlat({ name: title || name, bpm: bpm || 140, scenes, tracks, arrangement: songBars ? [{ scene: 0, reps: 1 }] : undefined }),
-      report: `FL Studio project: ${tracks.length} channels, ${patIds.length} patterns, ${noteCount} notes, tempo ${Math.round(bpm || 140)}, channel volume and pan kept. ` +
+      report: `FL Studio project: ${tracks.length} channels, ${patIds.length} patterns, ${noteCount} notes, ` + (bpm ? `tempo ${Math.round(bpm)}` : 'tempo not found in the file so it is set to 140') + ', channel volume and pan kept. ' +
+        (audioClips ? `${audioClips} audio clips on the playlist were skipped: an .flp only points at sample files on the computer that made it, it does not contain them. ` : '') +
         (noteCount ? '' : 'This project has no pattern notes (it is built from audio or automation clips), so the tracks came in empty. ') +
         (songBars ? `The playlist was read into a ${songBars}-bar “Song” scene.` : 'No playlist found, so each pattern is placed once in the arrangement.') + ' Samples, plugins, automation and mixer inserts are not read.',
+    };
+  };
+
+  // ---- Reason song (.reason, Reason 6 and later) ----
+  // The file is a paged container ("X15_FILE"): a directory page lists streams as page chains. One stream is the song as
+  // IFF chunks; each audio track's recording is its own stream of interleaved 32-bit float samples starting at byte 1024.
+  // Positions are in ticks, 15360 to the quarter note.
+  IO.reasonIn = (ab, name) => {
+    const v = new DataView(ab), u8 = new Uint8Array(ab), TPQ = 15360;
+    const ascii = (b, o, n) => String.fromCharCode.apply(null, b.subarray(o, o + n));
+    if (ascii(u8, 0, 8) !== 'X15_FILE') throw new Error('Only songs saved by Reason 6 or later can be read');
+    const P = v.getUint32(8), dir = 52 + Number(v.getBigUint64(24)) * P;
+    if (!P || dir + 12 > u8.length || v.getUint32(dir) !== 0xffffffff) throw new Error('The Reason song directory could not be found');
+    const streams = {};
+    for (let i = v.getUint32(dir + 8), o = dir + 12; i > 0 && o + 20 <= u8.length; i--) {
+      const id = v.getUint32(o), len = Number(v.getBigUint64(o + 4)), np = Number(v.getBigUint64(o + 12)), pages = [];
+      o += 20;
+      for (let k = 0; k < np && o + 8 <= u8.length; k++, o += 8) pages.push(Number(v.getBigUint64(o)));
+      o += 4;
+      streams[id] = { len, pages };
+    }
+    const load = (st) => {
+      const out = new Uint8Array(st.len);
+      st.pages.forEach((pg, i) => { const at = i * P; if (at < st.len) out.set(u8.subarray(52 + pg * P, 52 + pg * P + Math.min(P, st.len - at)), at); });
+      return out;
+    };
+    const first = (st, n) => (st.pages.length ? ascii(u8, 52 + st.pages[0] * P, n) : '');
+    const songStream = Object.values(streams).find((st) => first(st, 4) === 'FORM');
+    if (!songStream) throw new Error('No song data found in this Reason file');
+    const song = load(songStream), sv = new DataView(song.buffer);
+    const kids = (o, end) => {
+      const out = [];
+      while (o + 8 <= end) {
+        const t = ascii(song, o, 4), n = sv.getUint32(o + 4);
+        if (!/^[ -~]{4}$/.test(t) || o + 8 + n > end) break;
+        const group = t === 'FORM' || t === 'CAT ' || t === 'LIST';
+        out.push({ t: group ? ascii(song, o + 8, 4) : t, group, o: o + (group ? 12 : 8), end: o + 8 + n });
+        o += 8 + n + (n & 1);
+      }
+      return out;
+    };
+    const all = (node, t, out) => { out = out || []; for (const k of kids(node.o, node.end)) { if (k.t === t) out.push(k); else if (k.group) all(k, t, out); } return out; };
+    const child = (node, t) => kids(node.o, node.end).find((k) => k.t === t);
+    const text = (o, end) => { const n = o + 4 <= end ? sv.getUint32(o) : 0; return o + 4 + n <= end ? { s: new TextDecoder().decode(song.subarray(o + 4, o + 4 + n)).trim(), next: o + 4 + n } : { s: '', next: end }; };
+    // The song proper is a "CAT RS10" group wrapped in a BODY chunk after the embedded sample bank.
+    const body = all({ o: 0, end: song.length }, 'BODY').filter((k) => k.end - k.o > 64).pop();
+    let rs = null;
+    for (let o = body ? body.o : song.length; body && o < body.o + 1024; o++) if (ascii(song, o, 4) === 'CAT ' && ascii(song, o + 8, 4) === 'RS10') { rs = kids(o, body.end)[0]; break; }
+    if (!rs) throw new Error('No song data found in this Reason file');
+    const devices = {};
+    for (const dv of all(rs, 'DEVI')) {
+      const ds = child(dv, 'DESC');
+      if (!ds || ds.end - ds.o < 14) continue;
+      const nm = text(ds.o + 10, ds.end);
+      devices[sv.getUint32(ds.o + 6)] = { name: nm.s, kind: text(nm.next + 9, ds.end).s };
+    }
+    const seq = child(rs, 'SQCT'), head = seq && child(seq, 'TRDC');
+    let bpm = head && head.end - head.o >= 29 ? sv.getUint32(head.o + 23) / 1000 : 0;
+    const tempoRead = bpm >= 20 && bpm <= 999;
+    if (!tempoRead) bpm = 120;
+    const p = S.blankProject();
+    p.name = name; p.bpm = Math.min(300, Math.max(30, bpm)); p.scale = 'Chromatic';
+    if (!p.scenes.length) S.newScene(p, 'Scene 1', 1);
+    S.migrate(p);
+    const ctx = E.ensure(), used = [];
+    let nClips = 0, nNotes = 0, nAudio = 0, nMuted = 0, nLost = 0;
+    for (const tk of seq ? all(seq, 'TRFM') : []) {
+      const td = child(tk, 'TRDC'), clips = all(tk, 'SNIF');
+      if (!td || td.end - td.o < 14 || !clips.length) continue;
+      const dev = devices[sv.getUint32(td.o + 9)] || { name: '', kind: '' }, ri = all(tk, 'TRRI')[0], tm = all(tk, 'TRTM')[0];
+      let rec = null;
+      if (ri && ri.end - ri.o >= 21) {
+        const st = streams[sv.getUint32(ri.o + 13)], pg = st && st.pages.length ? 52 + st.pages[0] * P : -1;
+        if (pg >= 0 && v.getUint32(pg) === 0x0513a997 && st.len > 1032) {
+          const ch = Math.min(2, Math.max(1, v.getUint32(pg + 9))), sr = v.getUint32(pg + 13) || 44100, raw = load(st);
+          const frames = Math.floor((raw.length - 1024) / (4 * ch)), f = new DataView(raw.buffer), buf = ctx.createBuffer(ch, frames, sr), id = S.uid();
+          for (let c = 0; c < ch; c++) { const d = buf.getChannelData(c); for (let i = 0, q = 1024 + 4 * c; i < frames; i++, q += 4 * ch) d[i] = f.getFloat32(q, true); }
+          const own = tm && tm.end - tm.o >= 14 ? sv.getUint32(tm.o + 10) / 1000 : 0;
+          rec = S.buffers[id] = { id, name: text(ri.o + 29, ri.end).s || dev.name || 'Audio', buf, bpm: own >= 20 && own <= 999 ? own : p.bpm };
+        } else nLost++;
+      }
+      const drums = !ri && /kong|redrum|drum/i.test(dev.kind);
+      const t = S.newTrack(p, ri ? 'audio' : drums ? 'drums' : 'synth', dev.name || (ri ? 'Audio' : dev.kind) || 'Track');
+      t.mute = sv.getUint8(td.o + 13) === 1;
+      if (!ri && dev.kind) used.push(dev.kind);
+      for (const cl of clips) {
+        const ic = child(cl, 'SNIC');
+        if (!ic || ic.end - ic.o < 26) continue;
+        let start = sv.getUint32(ic.o + 5) / TPQ, len = sv.getUint32(ic.o + 9) / TPQ;
+        if (sv.getUint8(ic.o + 25) === 1) { nMuted++; continue; }
+        if (ri) {
+          const ac = all(cl, 'ACRC')[0];
+          if (!rec || !ac) continue;
+          let off = -sv.getInt32(ac.o + 5) / TPQ;
+          const beats = rec.buf.duration * rec.bpm / 60, bars = Math.max(1, Math.ceil(beats / 4));
+          if (off < 0) { start -= off; len += off; off = 0; }
+          len = Math.min(len, bars * 4 - off);
+          if (len <= 0) continue;
+          t.regions.push({ id: S.uid(), start, len, off, clip: { audio: rec.id, warp: Math.abs(rec.bpm - p.bpm) > 0.01, bars, gain: 1 } });
+          nClips++; nAudio++;
+          continue;
+        }
+        const ev = child(cl, 'SNTE'), notes = [];
+        if (!ev) continue;
+        let o = ev.o + 9, at = 0;
+        const vlq = () => { let x = 0, b; do { b = song[o++]; x = (x << 7) | (b & 0x7f); } while (b & 0x80 && o < ev.end); return x | 0; };
+        for (let i = sv.getUint32(ev.o + 5); i > 0 && o < ev.end; i--) {
+          at += vlq();
+          const pitch = song[o++], vel = song[o++], dur = vlq();
+          o++;
+          const tb = at / TPQ;
+          if (tb >= 0 && tb < len) notes.push({ t: tb, d: Math.max(0.05, Math.min(dur / TPQ, len - tb)), p: drums ? S.drumMap(pitch) : pitch, v: Math.max(0.05, vel / 127) });
+        }
+        if (!notes.length) continue;
+        notes.sort((a, b) => a.t - b.t);
+        t.regions.push({ id: S.uid(), start, len, off: 0, clip: { bars: Math.max(1, Math.ceil(len / 4)), notes } });
+        nClips++; nNotes += notes.length;
+      }
+    }
+    if (!p.tracks.length) throw new Error('No sequencer tracks with clips found in this Reason song');
+    const kinds = [...new Set(used)];
+    return {
+      proj: p,
+      report: `Reason song: ${p.tracks.length} tracks, ${nClips} clips (${nAudio} audio), ${nNotes} notes, ` + (tempoRead ? `tempo ${+p.bpm.toFixed(2)}. ` : 'tempo not found, set to 120. ') +
+        'Audio recordings came in with their clip positions and are stretched to the song tempo. ' +
+        (kinds.length ? `Reason devices are not recreated: ${kinds.join(', ')} tracks play on STRATUM's built-in sounds. ` : '') +
+        (nMuted ? `${nMuted} muted clips were left out. ` : '') + (nLost ? `${nLost} audio tracks had no readable recording. ` : '') +
+        'Mixer levels, effects, automation and samples inside devices are not read.',
     };
   };
 
@@ -420,7 +550,8 @@ ${lanes}    </Lanes>
       else if (ext === 'mid' || ext === 'midi') res = IO.midiIn(ab, base);
       else if (ext === 'als') res = IO.alsIn(await IO.gunzip(ab), base);
       else if (ext === 'flp') res = IO.flpIn(ab, base);
-      else if (['rns', 'reason', 'ptx', 'ptf', 'logicx', 'omf', 'aaf', 'dawproject'].includes(ext)) throw new Error('.' + ext + ' files cannot be opened in this version');
+      else if (ext === 'reason') res = IO.reasonIn(ab, base);
+      else if (['rns', 'ptx', 'ptf', 'logicx', 'omf', 'aaf', 'dawproject'].includes(ext)) throw new Error('.' + ext + ' files cannot be opened in this version');
       else res = { audio: await IO.addAudio(fname, ab) };
       S.ui.imported(res);
     } catch (e) {

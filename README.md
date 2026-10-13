@@ -1,0 +1,62 @@
+# STRATUM
+
+A digital audio workstation for macOS. Alpha software: expect rough edges.
+
+STRATUM is a native Mac app with one project model and four switchable layouts ("Comfort Skins"): Pattern, Session, Arrange and Mix / Edit. Switching skin changes the screen layout and the keyboard map without stopping playback.
+
+## Install
+
+1. Download `STRATUM.dmg` from the [Releases](../../releases) page and drag STRATUM into Applications.
+2. The app is not yet signed with an Apple Developer ID, so macOS blocks it on first launch. Either:
+   - double-click it once, then open **System Settings › Privacy & Security** and click **Open Anyway**, or
+   - run `xattr -dr com.apple.quarantine /Applications/STRATUM.app` in Terminal.
+
+Requires macOS 12 or later. Runs on Apple silicon and Intel; AI stem separation is Apple silicon only.
+
+## What it does
+
+- **Tracks:** synth, drum and audio tracks; a mixer with insert effects; a master bus with drive, glue compression and a limiter.
+- **Composition:** step sequencer, piano roll with scale lock, glide and per-note cents, harmony suggestions, and a Dump Score Log that keeps the last five minutes of notes you play.
+- **Session players:** drum, bass, chord and arpeggio parts that follow each scene's chord progression.
+- **Song timeline:** freely placed regions you can move, resize, copy, split and duplicate, plus arranger sections.
+- **Recording:** record audio onto an armed track, with direct monitoring that bypasses effects.
+- **Comping:** record again over a region to add takes, then drag across take lanes to choose between them.
+- **Prompt-to-Plugin:** describe an effect in words and get an effect chain with matching controls.
+- **Rack back panel:** press Tab to flip the devices and patch LFO cables into parameters.
+- **Warping:** imported audio is tempo-detected and time-stretched to the project tempo.
+- **Stem separation:** split a mix into drums, bass, other and vocals on-device (HT-Demucs).
+- **Files:** saves `.stratum` projects; imports MIDI, Ableton `.als`, FL Studio `.flp` and audio; exports WAV, MIDI and DAWproject.
+
+## Known limits
+
+- Prompt-to-Plugin is keyword-driven. It assembles built-in effect blocks; it does not generate or compile code.
+- `.als` and `.flp` import bring in tempo, tracks, notes, volume and pan. Plugins, samples and automation are not read, and audio tracks arrive empty.
+- DAWproject is export-only; DAWproject import is not built yet.
+- Comping is for recorded audio only.
+- Recording has been tested with simulated input, not yet with a wide range of audio interfaces.
+- No undo history across sessions, no plugin hosting (AU/VST), no MIDI hardware input.
+
+## Build from source
+
+Needs Xcode (for `swiftc`, `clang`, `codesign`, `iconutil`).
+
+```bash
+./fetch-vendor.sh   # optional: 350 MB of stem-separation model and runtime
+./build.sh          # writes dist/STRATUM.app and dist/STRATUM.dmg
+```
+
+Layout:
+
+- `web/` — the application: audio engine, DSP, file formats and interface (plain JavaScript, Web Audio).
+- `shell/` — the macOS shell (Swift): window, menus, file dialogs, audio recording, and the stem-separation bridge (C).
+- `assets/` — logo artwork.
+
+The built app has three check modes, run from Terminal against `dist/STRATUM.app/Contents/MacOS/STRATUM`:
+`--selftest` (launch and play), `--fake-input --rec-test` (record two takes and comp them), `--stem-test` (separate the demo song), and `--import-test <files…>` (run files through the importers).
+
+## Third-party components
+
+- [ONNX Runtime](https://github.com/microsoft/onnxruntime) — MIT licence.
+- HT-Demucs stem separation model, ONNX export from [StemSplitio/htdemucs-onnx](https://huggingface.co/StemSplitio/htdemucs-onnx) — MIT licence. Original model: [Demucs](https://github.com/facebookresearch/demucs), Meta Platforms, Inc.
+
+Their licence texts ship inside the app under `Contents/Resources/licenses`.

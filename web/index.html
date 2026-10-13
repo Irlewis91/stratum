@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>STRATUM</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="skin-pattern">
+<header id="hdr">
+  <div class="logo"><img src="logo.png" alt=""><span>STRATUM</span></div>
+  <div class="grp">
+    <button data-act="new">New</button>
+    <button data-act="open">Open / Import</button>
+    <button data-act="save">Save</button>
+    <select id="exportSel" data-chg="export">
+      <option value="">Export…</option>
+      <option value="wav">Audio mixdown (.wav)</option>
+      <option value="mid">MIDI file (.mid)</option>
+      <option value="dawproject">DAWproject (experimental)</option>
+    </select>
+  </div>
+  <div class="grp transport">
+    <button id="playBtn" data-act="play" title="Play / stop">▶</button>
+    <button data-act="stop" title="Stop and return to start">■</button>
+    <button id="recBtn" data-act="rec" title="Record onto the armed audio track (Mac app only)">●</button>
+    <button id="monBtn" data-act="monitor" class="tog" title="Direct monitoring: hear the input with no effects while recording">Monitor</button>
+    <select id="modeSel" data-chg="mode"><option value="scene">Scene loop</option><option value="song">Song</option></select>
+    <label>BPM <input id="bpm" type="number" min="40" max="240" step="1" data-chg="bpm"></label>
+    <label>Key <select id="rootSel" data-chg="root"></select><select id="scaleSel" data-chg="scale"></select></label>
+    <button id="metroBtn" data-act="metronome" class="tog">Click</button>
+    <span id="pos">1.1.1</span>
+  </div>
+  <div class="grp">
+    <button id="keysBtn" data-act="keys" class="tog" title="Play the selected track from the computer keyboard (A–L row, Z/X octave)">Keys</button>
+    <button data-act="dump" title="Write the notes you played in the last 5 minutes into the selected clip">Dump Score Log</button>
+    <button data-act="undo">Undo</button>
+  </div>
+  <div class="grp right">
+    <select id="addTrackSel" data-chg="addTrack">
+      <option value="">+ Track…</option><option value="synth">Synth track</option><option value="drums">Drum track</option><option value="audio">Audio track</option>
+    </select>
+    <button data-act="help" title="Shortcuts and notes">?</button>
+    <label>Comfort Skin
+      <select id="skinSel" data-chg="skin">
+        <option value="pattern">Pattern</option>
+        <option value="session">Session</option>
+        <option value="arrange">Arrange</option>
+        <option value="mixedit">Mix / Edit</option>
+      </select>
+    </label>
+  </div>
+</header>
+<main id="main">
+  <section id="inspector" class="panel"></section>
+  <section id="rack" class="panel"></section>
+  <section id="session" class="panel"></section>
+  <section id="timeline" class="panel"></section>
+  <section id="mixer" class="panel"></section>
+  <section id="editor" class="panel"></section>
+  <section id="devices" class="panel"></section>
+</main>
+<div id="pop" hidden></div>
+<div id="toast" hidden></div>
+<input id="file" type="file" hidden>
+<script src="js/model.js"></script>
+<script src="js/dsp.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/io.js"></script>
+<script src="js/ui.js"></script>
+</body>
+</html>

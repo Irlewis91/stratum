@@ -157,7 +157,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
         let msg = ''; S.ui.toast = (m) => { msg = m; };
         const list = await S.plug.list();
         const v3 = list.filter((p) => p.id.startsWith('vst3'));
-        const inst = vst3 ? v3.find((p) => p.kind === 'inst' && /piano|jx10|dx10/i.test(p.name)) : list.find((p) => p.id === 'aumu:dls :appl'), fx = vst3 ? v3.find((p) => p.kind === 'fx' && /delay/i.test(p.name)) : list.find((p) => p.id === 'aufx:dely:appl');
+        const inst = vst3 ? v3.find((p) => p.kind === 'inst' && /piano|jx10|dx10|testtone/i.test(p.name)) : list.find((p) => p.id === 'aumu:dls :appl'), fx = vst3 ? v3.find((p) => p.kind === 'fx' && /delay|testgain/i.test(p.name)) : list.find((p) => p.id === 'aufx:dely:appl');
         if (!inst || !fx) return JSON.stringify({ error: 'test plugins not found', vst3: v3.map((p) => p.name + ':' + p.kind) });
         const p = S.blankProject(); if (!p.scenes.length) S.newScene(p, 'A', 1);
         const t = S.newTrack(p, 'synth', 'Plugin keys');

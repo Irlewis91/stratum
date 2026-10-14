@@ -9,6 +9,7 @@ OUT="build/v3-$arch"
 mkdir -p "$OUT"
 SOURCES=(
   shell/vst3host.mm
+  shell/vst2host.mm
   $SDK/public.sdk/source/vst/hosting/module.cpp
   $SDK/public.sdk/source/vst/hosting/module_mac.mm
   $SDK/public.sdk/source/vst/hosting/plugprovider.cpp
@@ -40,7 +41,7 @@ objs=()
 for f in "${SOURCES[@]}"; do
   [ -f "$f" ] || continue
   o="$OUT/$(basename "$f").o"
-  clang++ -std=c++17 -fobjc-arc -O2 -DRELEASE=1 -DNDEBUG -w -target "$arch-apple-macos12.0" -I "$SDK" -c "$f" -o "$o"
+  clang++ -std=c++17 -fobjc-arc -O2 -DRELEASE=1 -DNDEBUG -w -target "$arch-apple-macos12.0" -I "$SDK" -I shell -c "$f" -o "$o"
   objs+=("$o")
 done
 libtool -static -o "build/libv3-$arch.a" "${objs[@]}" 2>/dev/null

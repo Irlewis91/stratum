@@ -1,5 +1,6 @@
 // STRATUM VST3 host: loads a VST3 plugin with Steinberg's hosting classes and exposes it through the C calls in vst3host.h.
 #include "vst3host.h"
+#include "vst2host.h"
 #include "public.sdk/source/vst/hosting/module.h"
 #include "public.sdk/source/vst/hosting/plugprovider.h"
 #include "public.sdk/source/vst/hosting/hostclasses.h"
@@ -22,6 +23,7 @@ using namespace Steinberg;
 using namespace Steinberg::Vst;
 
 namespace {
+bool isVST2 (const char *path) { size_t n = strlen (path); return n > 4 && !strcasecmp (path + n - 4, ".vst"); }
 std::map<std::string, VST3::Hosting::Module::Ptr> &modules () { static std::map<std::string, VST3::Hosting::Module::Ptr> m; return m; }
 
 VST3::Hosting::Module::Ptr moduleFor (const std::string &path, std::string &err)
@@ -68,6 +70,7 @@ struct Bus { int channels = 0; std::vector<std::vector<float>> data; std::vector
 
 struct V3
 {
+	V2 *v2 = nullptr;   // set when this is a VST2 plugin; every call below then forwards to vst2host.mm
 	VST3::Hosting::Module::Ptr module;
 	IPtr<PlugProvider> provider;
 	IPtr<IComponent> comp;
@@ -111,6 +114,7 @@ extern "C" {
 
 int v3_scan (const char *path, char *json, int cap)
 {
+	if (isVST2 (path)) return v2_scan (path, json, cap);
 	@autoreleasepool {
 		std::string err;
 		auto mod = moduleFor (path, err);
@@ -131,6 +135,13 @@ int v3_scan (const char *path, char *json, int cap)
 
 V3 *v3_load (const char *path, const char *cid, char *err, int err_len)
 {
+	if (isVST2 (path))
+	{
+		V2 *v2 = v2_load (path, err, err_len);
+		if (!v2) return nullptr;
+		auto p = new V3 (); p->v2 = v2; p->instrument = v2_is_instrument (v2);
+		return p;
+	}
 	@autoreleasepool {
 		auto fail = [&] (const std::string &m) -> V3 * { if (err && err_len > 0) snprintf (err, err_len, "%s", m.c_str ()); return nullptr; };
 		std::string e;
@@ -168,6 +179,7 @@ static void stop (V3 *p)
 void v3_destroy (V3 *p)
 {
 	if (!p) return;
+	if (p->v2) { v2_destroy (p->v2); delete p; return; }
 	@autoreleasepool {
 		v3_close_view (p);
 		stop (p);
@@ -201,6 +213,7 @@ static void layout (V3 *p, BusDirection dir, std::vector<Bus> &buses, std::vecto
 int v3_setup (V3 *p, double sample_rate, int max_frames)
 {
 	if (!p) return 0;
+	if (p->v2) return v2_setup (p->v2, sample_rate, max_frames);
 	stop (p);
 	p->sr = sample_rate; p->block = max_frames > 0 ? max_frames : 1024;
 	ProcessSetup setup {kRealtime, kSample32, p->block, sample_rate};
@@ -222,6 +235,7 @@ int v3_setup (V3 *p, double sample_rate, int max_frames)
 void v3_note (V3 *p, int on, int pitch, float velocity, int sample_offset)
 {
 	if (!p) return;
+	if (p->v2) return v2_note (p->v2, on, pitch, velocity, sample_offset);
 	Event e {};
 	e.busIndex = 0; e.sampleOffset = sample_offset < 0 ? 0 : sample_offset; e.flags = Event::kIsLive;
 	if (on) { e.type = Event::kNoteOnEvent; e.noteOn.channel = 0; e.noteOn.pitch = (int16)pitch; e.noteOn.velocity = velocity; e.noteOn.noteId = -1; }
@@ -231,6 +245,7 @@ void v3_note (V3 *p, int on, int pitch, float velocity, int sample_offset)
 
 void v3_process (V3 *p, const float *const *in, float *const *out, int frames)
 {
+	if (p && p->v2) return v2_process (p->v2, in, out, frames);
 	if (!p || !p->active) { for (int c = 0; c < 2; c++) memset (out[c], 0, sizeof (float) * frames); return; }
 	if (p->lock.try_lock ())
 	{
@@ -268,6 +283,7 @@ void v3_process (V3 *p, const float *const *in, float *const *out, int frames)
 
 int v3_open_view (V3 *p, void *nsview, int *width, int *height)
 {
+	if (p && p->v2) return v2_open_view (p->v2, nsview, width, height);
 	if (!p || !p->ctrl) return 0;
 	@autoreleasepool {
 		v3_close_view (p);
@@ -287,6 +303,7 @@ int v3_open_view (V3 *p, void *nsview, int *width, int *height)
 
 void v3_close_view (V3 *p)
 {
+	if (p && p->v2) return v2_close_view (p->v2);
 	if (!p || !p->view) return;
 	p->view->setFrame (nullptr);
 	p->view->removed ();
@@ -296,6 +313,7 @@ void v3_close_view (V3 *p)
 int v3_get_state (V3 *p, unsigned char **data, int *len)
 {
 	if (!p) return 0;
+	if (p->v2) return v2_get_state (p->v2, data, len);
 	MemoryStream cs, es;
 	p->comp->getState (&cs);
 	if (p->ctrl) p->ctrl->getState (&es);
@@ -308,6 +326,7 @@ int v3_get_state (V3 *p, unsigned char **data, int *len)
 
 int v3_set_state (V3 *p, const unsigned char *data, int len)
 {
+	if (p && p->v2) return v2_set_state (p->v2, data, len);
 	if (!p || len < 4) return 0;
 	uint32_t cl; memcpy (&cl, data, 4);
 	if ((int64_t)cl + 4 > len) return 0;

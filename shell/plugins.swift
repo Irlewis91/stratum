@@ -88,7 +88,7 @@ final class PluginHost {
     }
 
     private func instantiate(_ id: String, state: String?, done: @escaping (AVAudioUnit?) -> Void) {
-        if id.hasPrefix("vst3") {
+        if id.hasPrefix("vst3") {   // VST3 and VST2 plugins both go through the wrapper
             let p = id.split(separator: "|", maxSplits: 2, omittingEmptySubsequences: false).map(String.init)
             guard p.count == 3 else { return done(nil) }
             v3Queue.append { [weak self] in
@@ -430,7 +430,7 @@ final class VST3Unit: AUAudioUnit {
     // MARK: finding VST3 plugins
 
     private static var folders: [String] {
-        var f = ["/Library/Audio/Plug-Ins/VST3", NSHomeDirectory() + "/Library/Audio/Plug-Ins/VST3"]
+        var f = ["/Library/Audio/Plug-Ins/VST3", NSHomeDirectory() + "/Library/Audio/Plug-Ins/VST3", "/Library/Audio/Plug-Ins/VST", NSHomeDirectory() + "/Library/Audio/Plug-Ins/VST"]
         if let extra = ProcessInfo.processInfo.environment["STRATUM_VST3_PATH"] { f.append(extra) }
         return f
     }
@@ -443,7 +443,7 @@ final class VST3Unit: AUAudioUnit {
         var out: [[String: String]] = [], seen = Set<String>()
         for folder in folders {
             guard let walker = fm.enumerator(at: URL(fileURLWithPath: folder), includingPropertiesForKeys: [.contentModificationDateKey]) else { continue }
-            for case let url as URL in walker where url.pathExtension.lowercased() == "vst3" {
+            for case let url as URL in walker where ["vst3", "vst"].contains(url.pathExtension.lowercased()) {
                 walker.skipDescendants()
                 let path = url.path, stamp = ((try? url.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate ?? .distantPast).timeIntervalSince1970
                 var classes = cache[path]?["stamp"] as? Double == stamp ? cache[path]?["classes"] as? [[String: String]] : nil
@@ -456,7 +456,7 @@ final class VST3Unit: AUAudioUnit {
                 seen.insert(path)
                 for c in classes! {
                     let inst = (c["sub"] ?? "").contains("Instrument")
-                    out.append(["id": "\(inst ? "vst3i" : "vst3f")|\(c["cid"] ?? "")|\(path)", "name": (c["name"] ?? url.deletingPathExtension().lastPathComponent) + " (VST3)", "maker": c["vendor"] ?? "", "kind": inst ? "inst" : "fx"])
+                    out.append(["id": "\(inst ? "vst3i" : "vst3f")|\(c["cid"] ?? "")|\(path)", "name": ((c["name"] ?? "").isEmpty ? url.deletingPathExtension().lastPathComponent : c["name"]!) + (c["cid"] == "VST2" ? " (VST2)" : " (VST3)"), "maker": c["vendor"] ?? "", "kind": inst ? "inst" : "fx"])
                 }
             }
         }

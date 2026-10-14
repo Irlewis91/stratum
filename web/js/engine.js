@@ -47,6 +47,8 @@
     for (const tr of proj.tracks) {
       const t = (g.tracks[tr.id] = { last: null, instParams: {} });
       t.input = ctx.createGain();
+      // A track with plugin effects plays its samples in the Mac shell; `sink` collects them instead during a mixdown.
+      t.input.plug = S.plug && S.plug.fxOn(tr) ? { tr, sink: null } : null;
       let node = t.input;
       if (tr.type === 'synth') {
         const f = ctx.createBiquadFilter();
@@ -109,6 +111,7 @@
   // One-shot or held playback of a loaded sample. With `hold` the note gets an attack/release envelope and stops.
   E.sample = (ctx, dest, buf, when, rate, gain, hold, att, rel, loop) => {
     const s = ctx.createBufferSource(), a = ctx.createGain();
+    if (dest.plug) return S.plug.voice(dest.plug, hold == null ? { buf, rate, gain } : { buf, rate, gain, d: Math.max(hold, att), att, rel, loop }, when, ctx);
     s.buffer = buf; s.playbackRate.value = rate; s.loop = !!loop;
     s.connect(a); a.connect(dest); s.start(when);
     if (hold == null) { a.gain.value = gain; return; }
@@ -138,7 +141,9 @@
   E.drum = (ctx, dest, pitch, vel, when, tr) => {
     const pad = tr && tr.pads && tr.pads[pitch], rec = pad && S.buffers[pad.audio];
     if (rec) return E.sample(ctx, dest, rec.buf, when, Math.pow(2, (pad.tune || 0) / 12), (vel == null ? 0.8 : vel) * (pad.gain == null ? 1 : pad.gain));
-    const p = S.drumMap(pitch), v = vel == null ? 0.8 : vel, a = ctx.createGain();
+    const p = S.drumMap(pitch), v = vel == null ? 0.8 : vel;
+    if (dest.plug) { const b = S.plug.drumBuf(p); if (b) S.plug.voice(dest.plug, { buf: b, gain: v }, when, ctx); return; }
+    const a = ctx.createGain();
     a.connect(dest);
     const env = (peak, dec) => { a.gain.setValueAtTime(peak * v, when); a.gain.exponentialRampToValueAtTime(0.0008, when + dec); return when + dec + 0.02; };
     const osc = (type, f0, f1, dec, stopAt) => {
@@ -224,7 +229,9 @@
   // Start one buffer slice with short fades so edits and comp joins do not click.
   const slice = (ctx, dest, buf, when, offset, dur, gain, live) => {
     if (dur <= 0.001 || offset >= buf.duration) return;
-    const src = ctx.createBufferSource(), g = ctx.createGain(), f = Math.min(0.004, dur / 4);
+    const f = Math.min(0.004, dur / 4);
+    if (dest.plug) return S.plug.voice(dest.plug, { buf, off: Math.max(0, offset), gain, d: dur - f, att: f, rel: f }, when, ctx);
+    const src = ctx.createBufferSource(), g = ctx.createGain();
     src.buffer = buf;
     g.gain.setValueAtTime(0, when); g.gain.linearRampToValueAtTime(gain, when + f);
     g.gain.setValueAtTime(gain, when + dur - f); g.gain.linearRampToValueAtTime(0, when + dur);
@@ -304,6 +311,7 @@
     E.stop();
     E.anchorT = E.ctx.currentTime + 0.06; E.anchorB = fromBeat || 0; E.sched = E.anchorB; E.playing = true; E.first = true;
     for (const id in E.graph.tracks) E.graph.tracks[id].last = null;
+    if (S.plug) S.plug.transport(true, E.anchorB, 0.06);
     E.timer = setInterval(E.tick, 25);
     E.tick();
   };
@@ -312,10 +320,10 @@
     clearInterval(E.timer);
     E.sources.forEach((s) => { try { s.stop(); } catch (e) {} });
     E.sources.clear();
-    if (S.plug) S.plug.allOff();
+    if (S.plug) { S.plug.allOff(); S.plug.transport(false, 0, 0); }
   };
   E.setBpm = (v) => {
-    if (E.playing) { const now = E.ctx.currentTime, b = E.beatAt(now); S.proj.bpm = v; E.anchorT = now; E.anchorB = b; }
+    if (E.playing) { const now = E.ctx.currentTime, b = E.beatAt(now); S.proj.bpm = v; E.anchorT = now; E.anchorB = b; if (S.plug) S.plug.transport(true, b, 0); }
     else S.proj.bpm = v;
   };
   E.position = () => {
@@ -340,6 +348,7 @@
   E.render = async (proj, mode, sceneId, beats) => {
     const spb = 60 / proj.bpm, sr = 44100, ctx = new OfflineAudioContext(2, Math.ceil((beats * spb + 2) * sr), sr), g = E.build(ctx, proj);
     g.plugEvents = [];
+    for (const id in g.tracks) if (g.tracks[id].input.plug) g.tracks[id].input.plug.sink = g.plugEvents;
     E.scheduleRange(ctx, g, proj, mode, sceneId, 0, beats, (b) => 0.05 + b * spb, false, true);
     E.plugEvents = g.plugEvents;
     return ctx.startRendering();

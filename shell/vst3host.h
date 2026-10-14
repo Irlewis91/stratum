@@ -14,6 +14,8 @@ int v3_is_instrument(V3 *p);
 int v3_setup(V3 *p, double sample_rate, int max_frames);
 // Audio thread only. Notes queue for the next v3_process call; `in` may be NULL for instruments.
 void v3_note(V3 *p, int on, int pitch, float velocity, int sample_offset);
+// Song tempo (BPM) and position (quarter notes) for the next v3_process call.
+void v3_transport(V3 *p, double tempo, double beat, int playing);
 void v3_process(V3 *p, const float *const *in, float *const *out, int frames);
 // Editor: attaches the plugin's view to an NSView. Returns 0 when the plugin has no editor.
 int v3_open_view(V3 *p, void *nsview, int *width, int *height);

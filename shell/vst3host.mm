@@ -91,6 +91,8 @@ struct V3
 	double sr = 44100;
 	int block = 0;
 	int64 pos = 0;
+	double tempo = 120, beat = 0;
+	bool playing = true;
 };
 
 tresult PLUGIN_API Handler::performEdit (ParamID id, ParamValue v)
@@ -243,6 +245,13 @@ void v3_note (V3 *p, int on, int pitch, float velocity, int sample_offset)
 	p->events.addEvent (e);
 }
 
+void v3_transport (V3 *p, double tempo, double beat, int playing)
+{
+	if (!p) return;
+	if (p->v2) return v2_transport (p->v2, tempo, beat, playing);
+	p->tempo = tempo; p->beat = beat; p->playing = playing;
+}
+
 void v3_process (V3 *p, const float *const *in, float *const *out, int frames)
 {
 	if (p && p->v2) return v2_process (p->v2, in, out, frames);
@@ -260,8 +269,9 @@ void v3_process (V3 *p, const float *const *in, float *const *out, int frames)
 		if (in && !p->ins.empty ()) for (int c = 0; c < p->ins[0].channels && c < 2; c++) memcpy (p->ins[0].data[c].data (), in[c] + done, sizeof (float) * n);
 		for (size_t i = 0; i < p->outBufs.size (); i++) p->outBufs[i].silenceFlags = 0;
 		ProcessContext ctx {};
-		ctx.state = ProcessContext::kPlaying | ProcessContext::kTempoValid | ProcessContext::kTimeSigValid;
-		ctx.sampleRate = p->sr; ctx.projectTimeSamples = p->pos; ctx.tempo = 120; ctx.timeSigNumerator = 4; ctx.timeSigDenominator = 4;
+		ctx.state = (p->playing ? ProcessContext::kPlaying : 0) | ProcessContext::kTempoValid | ProcessContext::kTimeSigValid | ProcessContext::kProjectTimeMusicValid | ProcessContext::kBarPositionValid;
+		ctx.projectTimeMusic = p->beat + (double)done / p->sr * p->tempo / 60.0; ctx.barPositionMusic = floor (ctx.projectTimeMusic / 4) * 4;
+		ctx.sampleRate = p->sr; ctx.projectTimeSamples = p->pos; ctx.tempo = p->tempo; ctx.timeSigNumerator = 4; ctx.timeSigDenominator = 4;
 		ProcessData d {};
 		d.processMode = kRealtime; d.symbolicSampleSize = kSample32; d.numSamples = n;
 		d.numInputs = (int32)p->inBufs.size (); d.inputs = p->inBufs.empty () ? nullptr : p->inBufs.data ();

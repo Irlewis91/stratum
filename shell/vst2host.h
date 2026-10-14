@@ -8,6 +8,7 @@ void v2_destroy(V2 *p);
 int v2_is_instrument(V2 *p);
 int v2_setup(V2 *p, double sample_rate, int max_frames);
 void v2_note(V2 *p, int on, int pitch, float velocity, int sample_offset);
+void v2_transport(V2 *p, double tempo, double beat, int playing);
 void v2_process(V2 *p, const float *const *in, float *const *out, int frames);
 int v2_open_view(V2 *p, void *nsview, int *width, int *height);
 void v2_close_view(V2 *p);

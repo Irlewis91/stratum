@@ -9,15 +9,67 @@
   PL.cb = (id, v) => { const f = waits[id]; delete waits[id]; if (f) f(v); };
   PL.available = () => !!native();
   PL.on = (t) => !!(t && t.plugin && t.type !== 'audio' && native());
+  // Tracks that play their own audio (clips, drum pads, a loaded sample) move into the shell's engine once they have plugin effects.
+  PL.fxOn = (t) => !!(t && !t.plugin && t.pfx && t.pfx.length && native() && (t.type !== 'synth' || (t.inst && t.inst.sample)));
+  PL.native = (t) => PL.on(t) || PL.fxOn(t);
+  PL.fxList = (t) => (t.plugin ? t.plugin.fx || (t.plugin.fx = []) : t.pfx || (t.pfx = []));
+  // Audio the shell needs is sent once per buffer and then referred to by key.
+  const keys = new Map();
+  let keyN = 0;
+  PL.keyOf = (buf) => {
+    let k = keys.get(buf);
+    if (k) return k;
+    k = 'b' + ++keyN; keys.set(buf, k);
+    const n = buf.length, L = buf.getChannelData(0), R = buf.numberOfChannels > 1 ? buf.getChannelData(1) : L, f = new Float32Array(n * 2);
+    for (let i = 0; i < n; i++) { f[2 * i] = L[i]; f[2 * i + 1] = R[i]; }
+    const u = new Uint8Array(f.buffer);
+    let s = '';
+    for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000));
+    native().postMessage({ op: 'auSample', key: k, rate: buf.sampleRate, b64: btoa(s) });
+    return k;
+  };
+  // The built-in drum sounds, rendered once so a drum track with plugin effects can play them as samples.
+  const drums = {};
+  PL.drumBuf = (p) => {
+    if (drums[p] === undefined) {
+      drums[p] = null;
+      const c = new OfflineAudioContext(2, 44100, 44100);
+      E.drum(c, c.destination, p, 1, 0.001);
+      c.startRendering().then((b) => { drums[p] = b; });
+    }
+    return drums[p];
+  };
+  // Send ahead everything a track will play, so the first bar is not held up by transfers.
+  PL.preload = (proj) => {
+    for (const t of proj.tracks.filter(PL.fxOn)) {
+      const clips = [...Object.values(t.clips), ...t.regions.map((r) => r.clip)], ids = [];
+      for (const c of clips) if (c && c.audio) ids.push([c.audio, c.warp]);
+      for (const r of t.regions) for (const tk of r.takes || []) ids.push([tk.audio, true]);
+      for (const [id, warp] of ids) { const rec = S.buffers[id]; if (rec) PL.keyOf(warp && rec.bpm ? S.dsp.warped(rec, proj.bpm) : rec.buf); }
+      for (const k in t.pads || {}) { const rec = S.buffers[t.pads[k].audio]; if (rec) PL.keyOf(rec.buf); }
+      if (t.type === 'drums') S.DRUMS.forEach((d) => PL.drumBuf(d.p));
+      if (t.inst && t.inst.sample && S.buffers[t.inst.sample.audio]) PL.keyOf(S.buffers[t.inst.sample.audio].buf);
+    }
+  };
+  // Start a sample on a native track: live it goes to the shell with its delay, offline it joins the mixdown events.
+  PL.voice = (plug, o, when, ctx) => {
+    const m = { t: plug.tr.id, key: PL.keyOf(o.buf), off: o.off || 0, gain: o.gain == null ? 1 : o.gain, rate: o.rate || 1, att: o.att || 0, rel: o.rel || 0.004, loop: !!o.loop };
+    if (o.d != null) m.d = o.d;
+    if (plug.sink) plug.sink.push({ ...m, at: when });
+    else native().postMessage({ ...m, op: 'auPlay', delay: Math.max(0, when - ctx.currentTime + (ctx.outputLatency || 0)) });
+  };
+  PL.transport = (playing, beat, delay) => { if (native() && S.proj) native().postMessage({ op: 'auTransport', bpm: S.proj.bpm, playing, beat: beat || 0, delay: delay || 0 }); };
   PL.list = async () => PL._list || (PL._list = (await ask({ op: 'auList' })) || []);
   const mixOf = (proj) => {
     const anySolo = proj.tracks.some((t) => t.solo);
-    return proj.tracks.filter(PL.on).map((t) => ({ id: t.id, vol: t.vol, pan: t.pan, mute: !!(t.mute || (anySolo && !t.solo)) }));
+    return proj.tracks.filter(PL.native).map((t) => ({ id: t.id, vol: t.vol, pan: t.pan, mute: !!(t.mute || (anySolo && !t.solo)) }));
   };
   // Load, swap or unload plugins so the shell matches the project. Safe to call after every structural change.
   PL.sync = async () => {
     if (!native() || !S.proj) return;
-    const mix = mixOf(S.proj), tracks = S.proj.tracks.filter(PL.on).map((t, i) => ({ ...mix[i], inst: t.plugin.id, state: t.plugin.state || '', fx: (t.plugin.fx || []).map((f) => ({ id: f.id, state: f.state || '' })) }));
+    if (PL._proj !== S.proj) { PL._proj = S.proj; keys.clear(); native().postMessage({ op: 'auKeep', keys: [] }); }
+    const mix = mixOf(S.proj), tracks = S.proj.tracks.filter(PL.native).map((t, i) => ({ ...mix[i], inst: t.plugin ? t.plugin.id : '', state: t.plugin ? t.plugin.state || '' : '', fx: PL.fxList(t).map((f) => ({ id: f.id, state: f.state || '' })) }));
+    PL.preload(S.proj);
     const key = JSON.stringify(tracks.map((t) => [t.id, t.inst, t.fx.map((f) => f.id)]));
     if (key === PL._key) return PL.mix();
     PL._key = key;
@@ -27,22 +79,22 @@
   PL.mix = () => { if (native() && S.proj) native().postMessage({ op: 'auMix', tracks: mixOf(S.proj), master: S.proj.master.vol }); };
   PL.note = (t, p, v, delay, dur) => native().postMessage({ op: 'auNote', t: t.id, p, v: v == null ? 0.8 : v, delay: Math.max(0, delay), d: dur });
   PL.allOff = () => { if (native()) native().postMessage({ op: 'auOff' }); };
-  PL.show = (t, slot) => native() && native().postMessage({ op: 'auUI', t: t.id, slot, title: (slot < 0 ? t.plugin.name : t.plugin.fx[slot].name) + ' — ' + t.name });
+  PL.show = (t, slot) => native() && native().postMessage({ op: 'auUI', t: t.id, slot, title: (slot < 0 ? t.plugin.name : PL.fxList(t)[slot].name) + ' — ' + t.name });
   // Copy each plugin's current settings into the project so they are saved with it.
   PL.capture = async () => {
-    const st = S.proj.tracks.some(PL.on) ? await ask({ op: 'auStates' }) : null;
+    const st = S.proj.tracks.some(PL.native) ? await ask({ op: 'auStates' }) : null;
     if (!st) return;
     for (const t of S.proj.tracks) {
-      const s = PL.on(t) && st[t.id];
+      const s = PL.native(t) && st[t.id];
       if (!s) continue;
-      t.plugin.state = s.inst || t.plugin.state || '';
-      (t.plugin.fx || []).forEach((f, i) => { f.state = (s.fx && s.fx[i]) || f.state || ''; });
+      if (t.plugin) t.plugin.state = s.inst || t.plugin.state || '';
+      PL.fxList(t).forEach((f, i) => { f.state = (s.fx && s.fx[i]) || f.state || ''; });
     }
   };
   // Add the plugin tracks to an offline mixdown. `events` come from E.render; the shell renders them through the same plugins.
   PL.mixInto = async (buf, events) => {
     if (!native() || !events || !events.length) return buf;
-    const b64 = await ask({ op: 'auRender', events, seconds: buf.duration });
+    const b64 = await ask({ op: 'auRender', events, seconds: buf.duration, bpm: S.proj.bpm });
     if (!b64) return buf;
     const bin = atob(b64), bytes = new Uint8Array(bin.length);
     for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);

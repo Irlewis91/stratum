@@ -5,9 +5,107 @@ import AVFoundation
 import Cocoa
 import CoreAudioKit
 
+/// Song position and tempo as plugins see it. Written from the main thread, read on the audio thread.
+final class Transport {
+    var bpm = 120.0
+    var playing = false
+    var beat0 = 0.0
+    var t0 = CFAbsoluteTimeGetCurrent()
+    var offlineBeat: Double?
+    var seenByVST = 0.0   // last tempo a wrapped VST plugin was given (used by the self-check)
+    var beat: Double { offlineBeat ?? (playing ? beat0 + (CFAbsoluteTimeGetCurrent() - t0) * bpm / 60 : beat0) }
+    static let shared = Transport()
+    /// What Audio Units ask the host for.
+    static let context: AUHostMusicalContextBlock = { tempo, sigNum, sigDen, beat, _, downbeat in
+        let t = Transport.shared, b = t.beat
+        tempo?.pointee = t.bpm; sigNum?.pointee = 4; sigDen?.pointee = 4; beat?.pointee = b; downbeat?.pointee = (b / 4).rounded(.down) * 4
+        return true
+    }
+    static let state: AUHostTransportStateBlock = { flags, sample, _, _ in
+        let t = Transport.shared
+        flags?.pointee = t.playing || t.offlineBeat != nil ? [.moving] : []
+        sample?.pointee = t.beat * 60 / t.bpm * 44100
+        return true
+    }
+}
+
+/// Audio held in memory for the native engine: recordings, loops and one-shots sent over from the web side.
+final class Sample {
+    let l: UnsafeMutablePointer<Float>, r: UnsafeMutablePointer<Float>
+    let count: Int
+    let rate: Double
+    init(interleaved d: Data, rate: Double) {
+        count = d.count / 8; self.rate = rate
+        l = .allocate(capacity: max(1, count)); r = .allocate(capacity: max(1, count))
+        d.withUnsafeBytes { raw in
+            let f = raw.bindMemory(to: Float.self)
+            for i in 0..<count { l[i] = f[2 * i]; r[i] = f[2 * i + 1] }
+        }
+    }
+    deinit { l.deallocate(); r.deallocate() }
+}
+
+/// Plays samples on one track of the native engine: audio clips, drum pads and sampler notes, mixed into one stereo stream.
+final class VoiceBank {
+    struct Voice {
+        var active = false
+        var sample: Unmanaged<Sample>?
+        var pos = 0.0, step = 1.0
+        var gain: Float = 1
+        var start: Int64 = 0        // engine sample time at which the voice begins
+        var hold = Int.max          // output frames before the release begins
+        var attack = 0, release = 1, age = 0, released = -1
+        var loop = false
+    }
+    static let size = 96
+    private let voices = UnsafeMutablePointer<Voice>.allocate(capacity: VoiceBank.size)
+    private var lock = os_unfair_lock()
+    init() { voices.initialize(repeating: Voice(), count: VoiceBank.size) }
+    deinit { clear(); voices.deallocate() }
+
+    func add(_ v: Voice) {
+        os_unfair_lock_lock(&lock)
+        var slot = 0, oldest = -1
+        for i in 0..<VoiceBank.size { if !voices[i].active { slot = i; oldest = -2; break }; if voices[i].age > oldest { oldest = voices[i].age; slot = i } }
+        voices[slot].sample?.release()
+        voices[slot] = v; voices[slot].active = true
+        os_unfair_lock_unlock(&lock)
+    }
+    func clear() {
+        os_unfair_lock_lock(&lock)
+        for i in 0..<VoiceBank.size { voices[i].sample?.release(); voices[i] = Voice() }
+        os_unfair_lock_unlock(&lock)
+    }
+    func render(time: Int64, frames: Int, l: UnsafeMutablePointer<Float>, r: UnsafeMutablePointer<Float>) {
+        l.update(repeating: 0, count: frames); r.update(repeating: 0, count: frames)
+        guard os_unfair_lock_trylock(&lock) else { return }
+        for i in 0..<VoiceBank.size where voices[i].active {
+            var v = voices[i]
+            guard let smp = v.sample?.takeUnretainedValue() else { voices[i].active = false; continue }
+            var done = false
+            let from = Int(max(0, min(Int64(frames), v.start - time)))   // a voice may start after this block
+            for f in from..<frames {
+                var env: Float = v.attack > 0 && v.age < v.attack ? Float(v.age) / Float(v.attack) : 1
+                if v.age >= v.hold { v.released += 1; env *= max(0, 1 - Float(v.released) / Float(v.release)); if v.released >= v.release { done = true; break } }
+                var i0 = Int(v.pos)
+                if i0 >= smp.count - 1 { if v.loop && smp.count > 1 { v.pos -= Double(smp.count - 1); i0 = Int(v.pos) } else { done = true; break } }
+                let fr = Float(v.pos - Double(i0)), g = v.gain * env
+                l[f] += (smp.l[i0] + (smp.l[i0 + 1] - smp.l[i0]) * fr) * g
+                r[f] += (smp.r[i0] + (smp.r[i0 + 1] - smp.r[i0]) * fr) * g
+                v.pos += v.step; v.age += 1
+            }
+            if done { v.active = false }
+            voices[i] = v
+        }
+        os_unfair_lock_unlock(&lock)
+    }
+}
+
 final class PluginHost {
     private final class Strip {
         var inst: AVAudioUnit?
+        var bank: VoiceBank?            // tracks without a plugin instrument play their own audio through this
+        var bankNode: AVAudioSourceNode?
         var instID = ""
         var fx: [AVAudioUnit] = []
         var fxIDs: [String] = []
@@ -20,6 +118,7 @@ final class PluginHost {
     private var strips: [String: Strip] = [:]
     private let format = AVAudioFormat(standardFormatWithSampleRate: 44100, channels: 2)!
     private var pendingOffs: [DispatchWorkItem] = []
+    private var samples: [String: Sample] = [:]
 
     // MARK: catalogue
 
@@ -64,9 +163,9 @@ final class PluginHost {
     }
 
     private func rewire(_ s: Strip) {
-        guard let inst = s.inst else { return }
-        var prev: AVAudioNode = inst
-        engine.disconnectNodeOutput(inst)
+        guard let src: AVAudioNode = s.inst ?? s.bankNode else { return }
+        var prev: AVAudioNode = src
+        engine.disconnectNodeOutput(src)
         for f in s.fx { engine.disconnectNodeOutput(f); engine.connect(prev, to: f, format: format); prev = f }
         engine.connect(prev, to: s.mixer, format: format)
         startIfNeeded()
@@ -114,6 +213,8 @@ final class PluginHost {
                    let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any] {
                     unit.auAudioUnit.fullState = plist
                 }
+                unit?.auAudioUnit.musicalContextBlock = Transport.context
+                unit?.auAudioUnit.transportStateBlock = Transport.state
                 done(unit)
             }
         }
@@ -133,6 +234,7 @@ final class PluginHost {
         for (id, s) in strips where !wanted.contains(id) {
             s.windows.values.forEach { $0.close() }
             s.fx.forEach(drop); drop(s.inst)
+            if let b = s.bankNode { engine.disconnectNodeOutput(b); engine.detach(b) }
             engine.disconnectNodeOutput(s.mixer); engine.detach(s.mixer)
             strips[id] = nil
         }
@@ -143,15 +245,15 @@ final class PluginHost {
             setMix(id, vol: t["vol"] as? Double ?? 0.8, pan: t["pan"] as? Double ?? 0, mute: t["mute"] as? Bool ?? false)
             let fx = (t["fx"] as? [[String: Any]] ?? [])
             let fxIDs = fx.compactMap { $0["id"] as? String }
-            if s.instID == instID && s.fxIDs == fxIDs { continue }
+            if s.instID == instID && s.fxIDs == fxIDs && (s.inst != nil || s.bankNode != nil) { continue }
             group.enter()
-            let instChanged = s.instID != instID
+            let instChanged = s.instID != instID || (s.inst == nil && s.bankNode == nil)
             let load: (@escaping (AVAudioUnit?) -> Void) -> Void = { [weak self] cb in
-                if instChanged { self?.instantiate(instID, state: t["state"] as? String, done: cb) } else { cb(s.inst) }
+                if instID.isEmpty { cb(nil) } else if instChanged { self?.instantiate(instID, state: t["state"] as? String, done: cb) } else { cb(s.inst) }
             }
             load { [weak self] inst in
                 guard let self = self else { return group.leave() }
-                guard let inst = inst else { failed.append(instID); return group.leave() }
+                if inst == nil && !instID.isEmpty { failed.append(instID); return group.leave() }
                 // Keep effects whose slot is unchanged; load the rest in order.
                 var units = [AVAudioUnit?](repeating: nil, count: fxIDs.count)
                 let inner = DispatchGroup()
@@ -167,7 +269,24 @@ final class PluginHost {
                     s.windows.values.forEach { $0.close() }; s.windows = [:]
                     let keep = units.compactMap { $0 }
                     for old in s.fx where !keep.contains(where: { $0 === old }) { self.drop(old) }
-                    if instChanged { self.drop(s.inst); self.engine.attach(inst) }
+                    if instChanged {
+                        self.drop(s.inst)
+                        if let inst = inst { self.engine.attach(inst) }
+                    }
+                    if instID.isEmpty, s.bankNode == nil {
+                        let bank = VoiceBank()
+                        let node = AVAudioSourceNode(format: self.format) { _, ts, frames, abl in
+                            let out = UnsafeMutableAudioBufferListPointer(abl)
+                            guard out.count >= 2, let l = out[0].mData, let r = out[1].mData else { return noErr }
+                            bank.render(time: Int64(ts.pointee.mSampleTime), frames: Int(frames), l: l.assumingMemoryBound(to: Float.self), r: r.assumingMemoryBound(to: Float.self))
+                            return noErr
+                        }
+                        self.engine.attach(node)
+                        s.bank = bank; s.bankNode = node
+                    } else if !instID.isEmpty, let b = s.bankNode {
+                        self.engine.disconnectNodeOutput(b); self.engine.detach(b)
+                        s.bank = nil; s.bankNode = nil
+                    }
                     for u in keep where u.engine == nil { self.engine.attach(u) }
                     s.inst = inst; s.instID = instID
                     s.fx = keep; s.fxIDs = zip(fxIDs, units).compactMap { $1 == nil ? nil : $0 }
@@ -186,6 +305,38 @@ final class PluginHost {
     }
 
     func setMaster(_ vol: Double) { engine.mainMixerNode.outputVolume = Float(vol) }
+
+    // MARK: samples
+
+    func addSample(_ key: String, rate: Double, data: Data) { samples[key] = Sample(interleaved: data, rate: rate) }
+    /// Forget audio the project no longer uses.
+    func keepSamples(_ keys: Set<String>) { for k in samples.keys where !keys.contains(k) { samples[k] = nil } }
+
+    private func voice(_ e: [String: Any], start: Int64) -> VoiceBank.Voice? {
+        guard let key = e["key"] as? String, let smp = samples[key] else { return nil }
+        let sr = format.sampleRate
+        var v = VoiceBank.Voice()
+        v.sample = Unmanaged.passRetained(smp)
+        v.step = (e["rate"] as? Double ?? 1) * smp.rate / sr
+        v.pos = max(0, (e["off"] as? Double ?? 0) * smp.rate)
+        v.gain = Float(e["gain"] as? Double ?? 1)
+        v.start = start
+        v.attack = Int((e["att"] as? Double ?? 0) * sr)
+        v.release = max(1, Int((e["rel"] as? Double ?? 0.004) * sr))
+        if let d = e["d"] as? Double { v.hold = max(v.attack, Int(d * sr)) }
+        v.loop = e["loop"] as? Bool ?? false
+        return v
+    }
+
+    /// Starts a sample on a track: {t, key, delay, off, d, gain, rate, att, rel, loop} (seconds).
+    func play(_ e: [String: Any]) {
+        guard let s = strips[e["t"] as? String ?? ""], let bank = s.bank, let node = s.bankNode else { return }
+        startIfNeeded()
+        let delay = e["delay"] as? Double ?? 0
+        var start: Int64 = 0
+        if delay > 0.002, let t = node.lastRenderTime, t.isSampleTimeValid { start = t.sampleTime + Int64(delay * t.sampleRate) }
+        if let v = voice(e, start: start) { bank.add(v) }
+    }
 
     // MARK: notes
 
@@ -216,6 +367,7 @@ final class PluginHost {
         for s in strips.values {
             for p in s.held { send(s, [0x80, p, 0], after: 0) }
             s.held.removeAll()
+            s.bank?.clear()
             send(s, [0xB0, 123, 0], after: 0)
             s.inst?.auAudioUnit.reset()
         }
@@ -273,27 +425,37 @@ final class PluginHost {
     // MARK: offline mixdown
 
     /// Renders `seconds` of audio from note events [{t: track, p, v, at, d}] (times in seconds). Returns interleaved stereo floats.
-    func render(events: [[String: Any]], seconds: Double) throws -> [Float] {
+    func render(events: [[String: Any]], seconds: Double, lead: Double = 0.05) throws -> [Float] {
         struct Ev { let at: Int64; let strip: Strip; let bytes: [UInt8] }
         let sr = format.sampleRate
         var evs: [Ev] = []
+        var plays: [(at: Int64, strip: Strip, e: [String: Any])] = []
         for e in events {
-            guard let id = e["t"] as? String, let s = strips[id], let p = e["p"] as? Int, let at = e["at"] as? Double else { continue }
+            guard let id = e["t"] as? String, let s = strips[id], let at = e["at"] as? Double else { continue }
+            if e["key"] != nil { plays.append((Int64(at * sr), s, e)); continue }
+            guard let p = e["p"] as? Int else { continue }
             let pitch = UInt8(max(0, min(127, p))), vel = UInt8(max(1, min(127, Int((e["v"] as? Double ?? 0.8) * 127))))
             evs.append(Ev(at: Int64(at * sr), strip: s, bytes: [0x90, pitch, vel]))
             evs.append(Ev(at: Int64((at + max(0.02, e["d"] as? Double ?? 0.25)) * sr), strip: s, bytes: [0x80, pitch, 0]))
         }
         evs.sort { $0.at < $1.at }
+        plays.sort { $0.at < $1.at }
+        var nextPlay = 0
         allOff()
         engine.stop()
         try engine.enableManualRenderingMode(.offline, format: format, maximumFrameCount: 1024)
-        defer { engine.stop(); engine.disableManualRenderingMode(); startIfNeeded() }
+        defer { engine.stop(); engine.disableManualRenderingMode(); Transport.shared.offlineBeat = nil; allOff(); startIfNeeded() }
         try engine.start()
         let total = Int64(seconds * sr), buffer = AVAudioPCMBuffer(pcmFormat: engine.manualRenderingFormat, frameCapacity: 1024)!
         var out = [Float](); out.reserveCapacity(Int(total) * 2)
         var next = 0
         while engine.manualRenderingSampleTime < total {
             let pos = engine.manualRenderingSampleTime, n = AVAudioFrameCount(min(1024, total - pos))
+            Transport.shared.offlineBeat = max(0, Double(pos) / sr - lead) * Transport.shared.bpm / 60
+            while nextPlay < plays.count, plays[nextPlay].at < pos + Int64(n) {
+                let p = plays[nextPlay]; nextPlay += 1
+                if let v = voice(p.e, start: p.at) { p.strip.bank?.add(v) }
+            }
             while next < evs.count, evs[next].at < pos + Int64(n) {
                 let e = evs[next]; next += 1
                 guard let block = e.strip.inst?.auAudioUnit.scheduleMIDIEventBlock else { continue }
@@ -371,6 +533,9 @@ final class VST3Unit: AUAudioUnit {
         let v3 = self.v3, fx = isEffect, s = scratch
         return { _, timestamp, frameCount, _, outputData, events, pull in
             let n = min(Int(frameCount), s.frames), now = AUEventSampleTime(timestamp.pointee.mSampleTime)
+            let tr = Transport.shared
+            tr.seenByVST = tr.bpm
+            v3_transport(v3, tr.bpm, tr.beat, tr.playing || tr.offlineBeat != nil ? 1 : 0)
             var ev = events
             while let e = ev {
                 if e.pointee.head.eventType == .MIDI {

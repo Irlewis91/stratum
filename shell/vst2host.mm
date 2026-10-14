@@ -170,6 +170,13 @@ void v2_note (V2 *p, int on, int pitch, float velocity, int sample_offset)
 	p->queue.push_back (e);
 }
 
+void v2_transport (V2 *p, double tempo, double beat, int playing)
+{
+	if (!p) return;
+	p->time.tempo = tempo; p->time.ppqPos = beat; p->time.barStart = floor (beat / 4) * 4;
+	p->time.flags = (playing ? V2T_PLAYING : 0) | V2T_TEMPO | V2T_SIG | V2T_PPQ;
+}
+
 void v2_process (V2 *p, const float *const *in, float *const *out, int frames)
 {
 	if (!p || !p->active) { for (int c = 0; c < 2; c++) memset (out[c], 0, sizeof (float) * frames); return; }
@@ -187,7 +194,7 @@ void v2_process (V2 *p, const float *const *in, float *const *out, int frames)
 		for (auto &ch : p->outData) std::fill (ch.begin (), ch.begin () + n, 0.f);
 		p->fx->process (p->fx, p->inPtrs.data (), p->outPtrs.data (), n);
 		p->queue.clear ();
-		p->time.samplePos += n; p->time.ppqPos = p->time.samplePos / p->sr * p->time.tempo / 60.0;
+		p->time.samplePos += n;
 		for (int c = 0; c < 2; c++)
 		{
 			if (p->outData.empty ()) memset (out[c] + done, 0, sizeof (float) * n);

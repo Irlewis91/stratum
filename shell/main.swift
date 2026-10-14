@@ -107,6 +107,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
         if CommandLine.arguments.contains("--stem-test") { stemTest() }
         if CommandLine.arguments.contains("--sampler-test") { samplerTest() }
         if CommandLine.arguments.contains("--plugin-test") { pluginTest() }
+        if CommandLine.arguments.contains("--fx-test") { fxTest() }
         if let i = CommandLine.arguments.firstIndex(of: "--import-test") { importTest(Array(CommandLine.arguments[(i + 1)...])) }
     }
 
@@ -189,6 +190,51 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
                 switch result {
                 case .success(let v): print("PLUGIN", v, "livePeak", livePeak)
                 case .failure(let e): print("PLUGIN error", e)
+                }
+                NSApp.terminate(nil)
+            }
+        }
+    }
+
+    // Plugin-effects check: an audio track and a drum track (one loaded pad, one built-in sound) each get a plugin effect,
+    // so they play in the native engine. Measures the live output and the mixdown, and the tempo plugins were given.
+    private func fxTest() {
+        var livePeak: Float = 0
+        let js = """
+        let msg = ''; S.ui.toast = (m) => { msg = m; };
+        const ctx = S.engine.ensure(), list = await S.plug.list(), v = list.filter((p) => p.id.startsWith('vst3'));
+        const fx = vst3 ? v.find((p) => p.kind === 'fx' && /testgain|delay/i.test(p.name)) : list.find((p) => p.id === 'aufx:dely:appl');
+        if (!fx) return JSON.stringify({ error: 'effect not found' });
+        const tone = (hz, sec) => { const b = ctx.createBuffer(2, Math.floor(44100 * sec), 44100); for (let c = 0; c < 2; c++) { const d = b.getChannelData(c); for (let i = 0; i < d.length; i++) d[i] = 0.5 * Math.sin(2 * Math.PI * hz * i / 44100); } const id = S.uid(); S.buffers[id] = { id, name: 'tone', buf: b, bpm: 0 }; return id; };
+        const p = S.blankProject(); p.bpm = 97; if (!p.scenes.length) S.newScene(p, 'A', 1);
+        const A = S.newTrack(p, 'audio', 'Loop'), Dr = S.newTrack(p, 'drums', 'Kit');
+        A.regions.push({ id: S.uid(), start: 0, len: 1.5, off: 0, clip: { audio: tone(440, 2), warp: false, bars: 1, gain: 1 } });
+        Dr.pads = { 36: { audio: tone(1000, 0.15), name: 'pad', tune: 0, gain: 1 } };
+        Dr.regions.push({ id: S.uid(), start: 0, len: 4, off: 0, clip: { bars: 1, notes: [{ t: 2, d: 0.25, p: 36, v: 1 }, { t: 3, d: 0.25, p: 42, v: 1 }] } });
+        const render = async () => { const b = await S.engine.render(S.proj, 'song', S.proj.scenes[0].id, 4); const web = b.getChannelData(0).reduce((m, x) => Math.max(m, Math.abs(x)), 0); await S.plug.mixInto(b, S.engine.plugEvents); return [b.getChannelData(0), web]; };
+        const rms = (d, a, b) => { let s = 0; for (let i = Math.floor(a * 44100); i < b * 44100 && i < d.length; i++) s += d[i] * d[i]; return +Math.sqrt(s / ((b - a) * 44100)).toFixed(4); };
+        S.ui.imported({ proj: p, report: '' }); S.engine.rebuild();
+        const [dry] = await render();
+        for (const t of S.proj.tracks) t.pfx = [{ id: fx.id, name: fx.name, state: '' }];
+        S.engine.rebuild();
+        await new Promise((r) => setTimeout(r, 1800));
+        S.engine.mode = 'song'; S.engine.play(0);
+        await new Promise((r) => setTimeout(r, 1200));
+        S.engine.stop();
+        await new Promise((r) => setTimeout(r, 300));
+        const [wet, webPeak] = await render(), spb = 60 / 97;
+        const dbg = await new Promise((res) => { const id = 99999; S.plug.cb0 = S.plug.cb; window.webkit.messageHandlers.stratum.postMessage({ op: 'auDebug', req: id }); const old = S.plug.cb; S.plug.cb = (i, x) => (i === id ? (S.plug.cb = old, res(x)) : old(i, x)); });
+        const saved = JSON.parse(await new Promise((res) => { S.io.saveFile = (n, x) => res(x); S.io.saveProject(); }));
+        const win = (d) => ({ loop: rms(d, 0.1, 0.5), afterLoop: rms(d, 1.05, 1.2), pad: rms(d, 0.05 + 2 * spb, 0.05 + 2 * spb + 0.12), hat: rms(d, 0.05 + 3 * spb, 0.05 + 3 * spb + 0.04) });
+        return JSON.stringify({ effect: fx.name, withoutPlugin: win(dry), withPlugin: win(wet), webAudioPeakWithPlugin: +webPeak.toFixed(4), events: S.engine.plugEvents.length, tempo: dbg, fxStateBytes: saved.proj.tracks.map((t) => t.pfx[0].state.length), msg });
+        """
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            _ = self.plugins.livePeak()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3.4) { livePeak = self.plugins.livePeak() }
+            self.web.callAsyncJavaScript(js, arguments: ["vst3": CommandLine.arguments.contains("--vst3")], in: nil, in: .page) { result in
+                switch result {
+                case .success(let v): print("FXTEST", v, "livePeak", livePeak)
+                case .failure(let e): print("FXTEST error", e)
                 }
                 NSApp.terminate(nil)
             }
@@ -379,9 +425,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
             plugins.setMaster(body["master"] as? Double ?? 1)
         case "auNote": plugins.note(track, pitch: body["p"] as? Int ?? 60, velocity: body["v"] as? Double ?? 0.8, delay: body["delay"] as? Double ?? 0, duration: body["d"] as? Double ?? 0.25)
         case "auOff": plugins.allOff()
+        case "auPlay": plugins.play(body)
+        case "auSample":
+            if let key = body["key"] as? String, let d = Data(base64Encoded: body["b64"] as? String ?? "") { plugins.addSample(key, rate: body["rate"] as? Double ?? 44100, data: d) }
+        case "auKeep": plugins.keepSamples(Set(body["keys"] as? [String] ?? []))
+        case "auTransport":
+            let t = Transport.shared
+            t.bpm = max(20, body["bpm"] as? Double ?? 120); t.playing = body["playing"] as? Bool ?? false
+            t.beat0 = body["beat"] as? Double ?? 0; t.t0 = CFAbsoluteTimeGetCurrent() + (body["delay"] as? Double ?? 0)
         case "auUI": plugins.showUI(track, slot: body["slot"] as? Int ?? -1, title: body["title"] as? String ?? "Plugin")
         case "auStates": reply(body, plugins.states())
+        case "auDebug": reply(body, ["tempoSeenByVST": Transport.shared.seenByVST])
         case "auRender":
+            if let bpm = body["bpm"] as? Double { Transport.shared.bpm = max(20, bpm) }
             let floats = (try? plugins.render(events: body["events"] as? [[String: Any]] ?? [], seconds: body["seconds"] as? Double ?? 0)) ?? []
             reply(body, floats.withUnsafeBufferPointer { Data(buffer: $0) }.base64EncodedString())
         default: break

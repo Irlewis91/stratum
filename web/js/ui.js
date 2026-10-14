@@ -250,7 +250,7 @@
     if (back) {
       h += P().lfos.map((l, i) => `<div class="dev lfo"><h4>LFO ${i + 1} · CV source</h4><div class="krow">${ctl('knob', { k: 'lfo', i, key: 'rate' }, l.rate, 'Rate')}${ctl('knob', { k: 'lfo', i, key: 'depth' }, l.depth, 'Depth')}</div><select data-chg="lfoShape" data-i="${i}">${opts(['sine', 'triangle', 'square', 'sawtooth'], l.shape)}</select><div class="jackw"><i class="jack out ${U.arm === i ? 'armed' : ''}" data-act="jackOut" data-i="${i}"></i><span>CV out</span></div></div>`).join('');
     }
-    const kindSel = t.type === 'audio' ? '' : `<label class="ikind">Instrument <select data-chg="instKind">${opts([['synth', 'Built-in synth'], ['sample', 'My own sample…'], ['drums', 'Drum kit / pads'], ['plugin', 'Plugin (Audio Unit)…']], t.plugin ? 'plugin' : t.type === 'drums' ? 'drums' : t.inst && t.inst.sample ? 'sample' : 'synth')}</select></label>`;
+    const kindSel = t.type === 'audio' ? '' : `<label class="ikind">Instrument <select data-chg="instKind">${opts([['synth', 'Built-in synth'], ['sample', 'My own sample…'], ['drums', 'Drum kit / pads'], ['plugin', 'Plugin (Audio Unit / VST3)…']], t.plugin ? 'plugin' : t.type === 'drums' ? 'drums' : t.inst && t.inst.sample ? 'sample' : 'synth')}</select></label>`;
     if (t.plugin && t.type !== 'audio') {
       const pl = t.plugin, ok = S.plug.available();
       h += `<div class="dev inst plug"><h4>Plugin · ${esc(pl.name)} <span class="hint">${esc(pl.maker || '')}</span></h4>${kindSel}` +
@@ -699,7 +699,7 @@
       if (!S.plug.available()) return U.toast('Plugins need the STRATUM Mac app.', true);
       const kind = el.dataset.kind, list = (await S.plug.list()).filter((p) => p.kind === kind);
       showPop(`<h3>${kind === 'inst' ? 'Choose an instrument plugin' : 'Add a plugin effect'} · ${esc(curTrack().name)}</h3><input placeholder="Type to filter" oninput="const q=this.value.toLowerCase();this.parentNode.querySelectorAll('.plist button').forEach(b=>b.hidden=!b.textContent.toLowerCase().includes(q))">` +
-        `<p class="hint">${list.length} Audio Unit ${kind === 'inst' ? 'instruments' : 'effects'} installed on this Mac.</p><div class="plist">` +
+        `<p class="hint">${list.length} Audio Unit and VST3 ${kind === 'inst' ? 'instruments' : 'effects'} installed on this Mac.</p><div class="plist">` +
         list.map((p) => `<button data-act="plugSet" data-kind="${kind}" data-id="${esc(p.id)}" data-name="${esc(p.name)}" data-maker="${esc(p.maker)}">${esc(p.name)} <small>${esc(p.maker)}</small></button>`).join('') + `</div><button data-act="closePop">Cancel</button>`);
     },
     plugSet(el) {

@@ -11,7 +11,8 @@ mkdir -p build "$APP/Contents/MacOS" "$APP/Contents/Resources"
 ORT="vendor/onnxruntime-osx-arm64-1.31.0"
 for arch in arm64 x86_64; do
   clang -O2 -c -target "$arch-apple-macos12.0" -I "$ORT/include" shell/stems.c -o "build/stems-$arch.o"
-  swiftc -O -target "$arch-apple-macos12.0" -import-objc-header shell/stems.h shell/main.swift shell/plugins.swift "build/stems-$arch.o" -o "build/stratum-$arch"
+  ./build-vst3.sh "$arch"
+  swiftc -O -target "$arch-apple-macos12.0" -import-objc-header shell/bridge.h -I vendor/vst3sdk shell/main.swift shell/plugins.swift "build/stems-$arch.o" "build/libv3-$arch.a" -Xlinker -lc++ -o "build/stratum-$arch"
 done
 lipo -create build/stratum-arm64 build/stratum-x86_64 -output "$APP/Contents/MacOS/STRATUM"
 
@@ -26,6 +27,9 @@ if [ -f vendor/model/htdemucs.onnx ] && [ -f "$ORT/lib/libonnxruntime.1.31.0.dyl
   cp "$ORT/ThirdPartyNotices.txt" "$APP/Contents/Resources/licenses/onnxruntime-ThirdPartyNotices.txt"
   printf 'HT-Demucs stem separation model (htdemucs.onnx)\nONNX export: https://huggingface.co/StemSplitio/htdemucs-onnx (MIT licence)\nOriginal model: Demucs, Meta Platforms, Inc. (MIT licence) https://github.com/facebookresearch/demucs\n' > "$APP/Contents/Resources/licenses/htdemucs-NOTICE.txt"
 fi
+
+mkdir -p "$APP/Contents/Resources/licenses"
+cp vendor/vst3sdk/public.sdk/LICENSE.txt "$APP/Contents/Resources/licenses/vst3sdk-LICENSE.txt"
 
 swift shell/icon.swift assets/stratum-icon.png build/icon.png
 mkdir -p build/AppIcon.iconset

@@ -48,7 +48,8 @@ final class PluginHost {
                 out.append(["id": "\(Self.code(a.componentType)):\(Self.code(a.componentSubType)):\(Self.code(a.componentManufacturer))", "name": c.name, "maker": c.manufacturerName, "kind": kind])
             }
         }
-        return out.sorted { ($0["maker"]!, $0["name"]!) < ($1["maker"]!, $1["name"]!) }
+        out += VST3Unit.catalogue()
+        return out.sorted { ($0["maker"]!.lowercased(), $0["name"]!.lowercased()) < ($1["maker"]!.lowercased(), $1["name"]!.lowercased()) }
     }
 
     // MARK: strips
@@ -77,8 +78,36 @@ final class PluginHost {
         try? engine.start()
     }
 
+    /// VST3 plugins are created one at a time, because the wrapper learns which plugin to load from `VST3Unit.pending`.
+    private var v3Queue: [() -> Void] = []
+    private var v3Busy = false
+    private func nextVST3() {
+        guard !v3Busy, !v3Queue.isEmpty else { return }
+        v3Busy = true
+        v3Queue.removeFirst()()
+    }
+
     private func instantiate(_ id: String, state: String?, done: @escaping (AVAudioUnit?) -> Void) {
+        if id.hasPrefix("vst3") {
+            let p = id.split(separator: "|", maxSplits: 2, omittingEmptySubsequences: false).map(String.init)
+            guard p.count == 3 else { return done(nil) }
+            v3Queue.append { [weak self] in
+                VST3Unit.register()
+                VST3Unit.pending = (path: p[2], cid: p[1])
+                self?.finish(p[0] == "vst3i" ? VST3Unit.instrument : VST3Unit.effect, state: state) { unit in
+                    VST3Unit.pending = nil
+                    self?.v3Busy = false
+                    done(unit)
+                    self?.nextVST3()
+                }
+            }
+            return nextVST3()
+        }
         guard let desc = Self.describe(id) else { return done(nil) }
+        finish(desc, state: state, done: done)
+    }
+
+    private func finish(_ desc: AudioComponentDescription, state: String?, done: @escaping (AVAudioUnit?) -> Void) {
         AVAudioUnit.instantiate(with: desc, options: []) { unit, _ in
             DispatchQueue.main.async {
                 if let unit = unit, let b64 = state, let data = Data(base64Encoded: b64),
@@ -212,7 +241,10 @@ final class PluginHost {
     func showUI(_ track: String, slot: Int, title: String) {
         guard let s = strips[track], let unit = slot < 0 ? s.inst : (slot < s.fx.count ? s.fx[slot] : nil) else { return }
         if let w = s.windows[slot] { w.makeKeyAndOrderFront(nil); return }
-        unit.auAudioUnit.requestViewController { [weak s] vc in
+        let open: (@escaping (NSViewController?) -> Void) -> Void = { cb in
+            if let v3 = unit.auAudioUnit as? VST3Unit { cb(v3.makeEditor()) } else { unit.auAudioUnit.requestViewController(completionHandler: cb) }
+        }
+        open { [weak s] vc in
             DispatchQueue.main.async {
                 let content: NSViewController = vc ?? {
                     let v = NSViewController(); let label = NSTextField(labelWithString: "This plugin has no editor window.")
@@ -270,6 +302,165 @@ final class PluginHost {
             guard try engine.renderOffline(n, to: buffer) == .success, let ch = buffer.floatChannelData else { break }
             for i in 0..<Int(buffer.frameLength) { out.append(ch[0][i]); out.append(ch[1][i]) }
         }
+        return out
+    }
+}
+
+// MARK: - VST3
+
+/// Wraps one VST3 plugin (loaded by vst3host.mm) as an Audio Unit, so the host above treats VST3 and Audio Unit plugins alike.
+final class VST3Unit: AUAudioUnit {
+    static let stateKey = "stratum.vst3.state"
+    static let instrument = AudioComponentDescription(componentType: kAudioUnitType_MusicDevice, componentSubType: 0x7633696E, componentManufacturer: 0x5374726D, componentFlags: 0, componentFlagsMask: 0)
+    static let effect = AudioComponentDescription(componentType: kAudioUnitType_Effect, componentSubType: 0x76336678, componentManufacturer: 0x5374726D, componentFlags: 0, componentFlagsMask: 0)
+    /// The plugin file and class the next instance should load. Instances are created one at a time (see PluginHost).
+    static var pending: (path: String, cid: String)?
+    private static var registered = false
+    static func register() {
+        guard !registered else { return }
+        registered = true
+        AUAudioUnit.registerSubclass(VST3Unit.self, as: instrument, name: "STRATUM: VST3 Instrument", version: 1)
+        AUAudioUnit.registerSubclass(VST3Unit.self, as: effect, name: "STRATUM: VST3 Effect", version: 1)
+    }
+
+    /// Buffers the render block uses, allocated once so nothing is allocated on the audio thread.
+    private final class Scratch {
+        let frames: Int
+        let bufs: [UnsafeMutablePointer<Float>]
+        let inPtrs = UnsafeMutablePointer<UnsafePointer<Float>?>.allocate(capacity: 2)
+        let outPtrs = UnsafeMutablePointer<UnsafeMutablePointer<Float>?>.allocate(capacity: 2)
+        let abl = AudioBufferList.allocate(maximumBuffers: 2)
+        init(frames: Int) {
+            self.frames = frames
+            bufs = (0..<4).map { _ in let p = UnsafeMutablePointer<Float>.allocate(capacity: frames); p.initialize(repeating: 0, count: frames); return p }
+        }
+        deinit { bufs.forEach { $0.deallocate() }; inPtrs.deallocate(); outPtrs.deallocate(); free(abl.unsafeMutablePointer) }
+    }
+
+    private let v3: OpaquePointer
+    private let isEffect: Bool
+    private var inputs: AUAudioUnitBusArray!
+    private var outputs: AUAudioUnitBusArray!
+    private var scratch = Scratch(frames: 4096)
+
+    override init(componentDescription: AudioComponentDescription, options: AudioComponentInstantiationOptions = []) throws {
+        guard let p = VST3Unit.pending else { throw NSError(domain: "STRATUM", code: 2, userInfo: [NSLocalizedDescriptionKey: "No VST3 plugin selected"]) }
+        var err = [CChar](repeating: 0, count: 256)
+        guard let h = v3_load(p.path, p.cid, &err, 256) else { throw NSError(domain: "STRATUM", code: 3, userInfo: [NSLocalizedDescriptionKey: String(cString: err)]) }
+        v3 = h
+        isEffect = componentDescription.componentType == kAudioUnitType_Effect
+        try super.init(componentDescription: componentDescription, options: options)
+        let format = AVAudioFormat(standardFormatWithSampleRate: 44100, channels: 2)!
+        outputs = AUAudioUnitBusArray(audioUnit: self, busType: .output, busses: [try AUAudioUnitBus(format: format)])
+        inputs = AUAudioUnitBusArray(audioUnit: self, busType: .input, busses: isEffect ? [try AUAudioUnitBus(format: format)] : [])
+        maximumFramesToRender = 4096
+    }
+    deinit { v3_destroy(v3) }
+
+    override var inputBusses: AUAudioUnitBusArray { inputs }
+    override var outputBusses: AUAudioUnitBusArray { outputs }
+
+    override func allocateRenderResources() throws {
+        try super.allocateRenderResources()
+        let frames = Int(maximumFramesToRender)
+        if scratch.frames < frames { scratch = Scratch(frames: frames) }
+        if v3_setup(v3, outputs[0].format.sampleRate, Int32(frames)) == 0 { throw NSError(domain: "STRATUM", code: 4, userInfo: [NSLocalizedDescriptionKey: "The VST3 plugin refused the audio setup"]) }
+    }
+
+    override var internalRenderBlock: AUInternalRenderBlock {
+        let v3 = self.v3, fx = isEffect, s = scratch
+        return { _, timestamp, frameCount, _, outputData, events, pull in
+            let n = min(Int(frameCount), s.frames), now = AUEventSampleTime(timestamp.pointee.mSampleTime)
+            var ev = events
+            while let e = ev {
+                if e.pointee.head.eventType == .MIDI {
+                    let m = e.pointee.MIDI, status = m.data.0 & 0xF0, off = Int32(max(0, min(AUEventSampleTime(n - 1), m.eventSampleTime - now)))
+                    if status == 0x90 && m.data.2 > 0 { v3_note(v3, 1, Int32(m.data.1), Float(m.data.2) / 127, off) }
+                    else if status == 0x80 || status == 0x90 { v3_note(v3, 0, Int32(m.data.1), 0, off) }
+                }
+                ev = UnsafePointer(e.pointee.head.next)
+            }
+            if fx {
+                for c in 0..<2 { s.abl[c] = AudioBuffer(mNumberChannels: 1, mDataByteSize: UInt32(n * 4), mData: UnsafeMutableRawPointer(s.bufs[c])) }
+                s.abl.unsafeMutablePointer.pointee.mNumberBuffers = 2
+                var flags = AudioUnitRenderActionFlags()
+                if let pull = pull, pull(&flags, timestamp, AUAudioFrameCount(n), 0, s.abl.unsafeMutablePointer) == noErr {
+                    for c in 0..<2 { s.inPtrs[c] = UnsafePointer(s.abl[c].mData?.assumingMemoryBound(to: Float.self) ?? s.bufs[c]) }
+                } else {
+                    for c in 0..<2 { s.bufs[c].update(repeating: 0, count: n); s.inPtrs[c] = UnsafePointer(s.bufs[c]) }
+                }
+            }
+            let out = UnsafeMutableAudioBufferListPointer(outputData)
+            for c in 0..<2 {
+                let i = min(c, out.count - 1)
+                if out[i].mData == nil { out[i].mData = UnsafeMutableRawPointer(s.bufs[2 + c]) }
+                s.outPtrs[c] = c < out.count ? out[i].mData!.assumingMemoryBound(to: Float.self) : s.bufs[2 + c]
+            }
+            v3_process(v3, fx ? UnsafePointer(s.inPtrs) : nil, UnsafePointer(s.outPtrs), Int32(n))
+            return noErr
+        }
+    }
+
+    override var fullState: [String: Any]? {
+        get {
+            var data: UnsafeMutablePointer<UInt8>?
+            var len: Int32 = 0
+            guard v3_get_state(v3, &data, &len) != 0, let d = data else { return [:] }
+            defer { v3_free(d) }
+            return [VST3Unit.stateKey: Data(bytes: d, count: Int(len))]
+        }
+        set {
+            guard let d = newValue?[VST3Unit.stateKey] as? Data else { return }
+            d.withUnsafeBytes { _ = v3_set_state(v3, $0.bindMemory(to: UInt8.self).baseAddress, Int32(d.count)) }
+        }
+    }
+
+    /// The plugin's own editor, hosted in a plain view. Nil when the plugin has none.
+    func makeEditor() -> NSViewController? {
+        let view = NSView(frame: NSRect(x: 0, y: 0, width: 480, height: 320))
+        var w: Int32 = 0, h: Int32 = 0
+        guard v3_open_view(v3, Unmanaged.passUnretained(view).toOpaque(), &w, &h) != 0 else { return nil }
+        view.setFrameSize(NSSize(width: Int(max(w, 100)), height: Int(max(h, 60))))
+        let vc = NSViewController()
+        vc.view = view
+        vc.preferredContentSize = view.frame.size
+        return vc
+    }
+
+    // MARK: finding VST3 plugins
+
+    private static var folders: [String] {
+        var f = ["/Library/Audio/Plug-Ins/VST3", NSHomeDirectory() + "/Library/Audio/Plug-Ins/VST3"]
+        if let extra = ProcessInfo.processInfo.environment["STRATUM_VST3_PATH"] { f.append(extra) }
+        return f
+    }
+
+    /// Every VST3 plugin in the standard folders, as catalogue entries. Each bundle is opened once and the result remembered
+    /// until the file changes, because opening a plugin runs its code.
+    static func catalogue() -> [[String: String]] {
+        let fm = FileManager.default, defaults = UserDefaults.standard
+        var cache = defaults.dictionary(forKey: "vst3scan") as? [String: [String: Any]] ?? [:]
+        var out: [[String: String]] = [], seen = Set<String>()
+        for folder in folders {
+            guard let walker = fm.enumerator(at: URL(fileURLWithPath: folder), includingPropertiesForKeys: [.contentModificationDateKey]) else { continue }
+            for case let url as URL in walker where url.pathExtension.lowercased() == "vst3" {
+                walker.skipDescendants()
+                let path = url.path, stamp = ((try? url.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate ?? .distantPast).timeIntervalSince1970
+                var classes = cache[path]?["stamp"] as? Double == stamp ? cache[path]?["classes"] as? [[String: String]] : nil
+                if classes == nil {
+                    var buf = [CChar](repeating: 0, count: 1 << 16)
+                    classes = []
+                    if v3_scan(path, &buf, Int32(buf.count)) >= 0, let d = String(cString: buf).data(using: .utf8), let j = try? JSONSerialization.jsonObject(with: d) as? [[String: String]] { classes = j }
+                    cache[path] = ["stamp": stamp, "classes": classes!]
+                }
+                seen.insert(path)
+                for c in classes! {
+                    let inst = (c["sub"] ?? "").contains("Instrument")
+                    out.append(["id": "\(inst ? "vst3i" : "vst3f")|\(c["cid"] ?? "")|\(path)", "name": (c["name"] ?? url.deletingPathExtension().lastPathComponent) + " (VST3)", "maker": c["vendor"] ?? "", "kind": inst ? "inst" : "fx"])
+                }
+            }
+        }
+        defaults.set(cache.filter { seen.contains($0.key) }, forKey: "vst3scan")
         return out
     }
 }

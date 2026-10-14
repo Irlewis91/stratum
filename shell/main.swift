@@ -156,7 +156,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
         let js = """
         let msg = ''; S.ui.toast = (m) => { msg = m; };
         const list = await S.plug.list();
-        const inst = list.find((p) => p.id === 'aumu:dls :appl'), fx = list.find((p) => p.id === 'aufx:dely:appl');
+        const v3 = list.filter((p) => p.id.startsWith('vst3'));
+        const inst = vst3 ? v3.find((p) => p.kind === 'inst' && /piano|jx10|dx10/i.test(p.name)) : list.find((p) => p.id === 'aumu:dls :appl'), fx = vst3 ? v3.find((p) => p.kind === 'fx' && /delay/i.test(p.name)) : list.find((p) => p.id === 'aufx:dely:appl');
+        if (!inst || !fx) return JSON.stringify({ error: 'test plugins not found', vst3: v3.map((p) => p.name + ':' + p.kind) });
         const p = S.blankProject(); if (!p.scenes.length) S.newScene(p, 'A', 1);
         const t = S.newTrack(p, 'synth', 'Plugin keys');
         t.plugin = { id: inst.id, name: inst.name, maker: inst.maker, state: '', fx: [{ id: fx.id, name: fx.name, state: '' }] };
@@ -172,12 +174,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
         const rms = (a, b) => { let s = 0; for (let i = Math.floor(a * 44100); i < b * 44100 && i < d.length; i++) s += d[i] * d[i]; return +Math.sqrt(s / ((b - a) * 44100)).toFixed(4); };
         const saved = JSON.parse(await new Promise((res) => { S.io.saveFile = (n, x) => res(x); S.io.saveProject(); }));
         const sp = saved.proj.tracks[0].plugin;
-        return JSON.stringify({ installed: list.length, instruments: list.filter((x) => x.kind === 'inst').length, events: S.engine.plugEvents.length, webOnlyPeak: +before.toFixed(4), mixPeak: +peak.toFixed(4), firstNote: rms(0.1, 0.6), gap: rms(1.6, 2.0), secondNote: rms(2.2, 2.7), stateBytes: sp.state.length, fxStateBytes: sp.fx[0].state.length, msg });
+        // Unload every plugin, then load them again from the saved settings and render once more.
+        const T = S.proj.tracks[0]; T.type = 'audio'; await S.plug.sync(); T.type = 'synth'; await S.plug.sync();
+        await new Promise((r) => setTimeout(r, 800));
+        const buf2 = await S.engine.render(S.proj, 'scene', S.proj.scenes[0].id, 4); await S.plug.mixInto(buf2, S.engine.plugEvents);
+        const reloadPeak = +buf2.getChannelData(0).reduce((m, x) => Math.max(m, Math.abs(x)), 0).toFixed(4);
+        const onset = (from) => { for (let i = Math.floor(from * 44100); i < d.length; i++) if (Math.abs(d[i]) > 0.01) return +(i / 44100).toFixed(3); return -1; };
+        return JSON.stringify({ reloadPeak, firstOnset: onset(0), quietBeforeSecond: rms(0.9, 1.04), secondOnsetAfter1s: onset(1.0), using: [inst.name, fx.name], vst3Found: v3.length, installed: list.length, instruments: list.filter((x) => x.kind === 'inst').length, events: S.engine.plugEvents.length, webOnlyPeak: +before.toFixed(4), mixPeak: +peak.toFixed(4), firstNote: rms(0.1, 0.6), gap: rms(1.6, 2.0), secondNote: rms(2.2, 2.7), stateBytes: sp.state.length, fxStateBytes: sp.fx[0].state.length, msg });
         """
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
             _ = self.plugins.livePeak()
             DispatchQueue.main.asyncAfter(deadline: .now() + 2.2) { livePeak = self.plugins.livePeak() }
-            self.web.callAsyncJavaScript(js, arguments: [:], in: nil, in: .page) { result in
+            self.web.callAsyncJavaScript(js, arguments: ["vst3": CommandLine.arguments.contains("--vst3")], in: nil, in: .page) { result in
                 switch result {
                 case .success(let v): print("PLUGIN", v, "livePeak", livePeak)
                 case .failure(let e): print("PLUGIN error", e)

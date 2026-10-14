@@ -108,6 +108,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
         if CommandLine.arguments.contains("--sampler-test") { samplerTest() }
         if CommandLine.arguments.contains("--plugin-test") { pluginTest() }
         if CommandLine.arguments.contains("--fx-test") { fxTest() }
+        if CommandLine.arguments.contains("--auto-test") { autoTest() }
         if let i = CommandLine.arguments.firstIndex(of: "--import-test") { importTest(Array(CommandLine.arguments[(i + 1)...])) }
     }
 
@@ -242,6 +243,33 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
         }
     }
 
+    // Automation check: a held note with volume automation falling from full to silent, and a pan sweep, rendered in Song mode.
+    private func autoTest() {
+        let js = """
+        const p = S.blankProject(); p.bpm = 120; if (!p.scenes.length) S.newScene(p, 'A', 1);
+        const t = S.newTrack(p, 'synth', 'Pad'); t.vol = 1; t.inst.release = 0.01; t.inst.cutoff = 1;
+        t.regions.push({ id: S.uid(), start: 0, len: 8, off: 0, clip: { bars: 2, notes: [{ t: 0, d: 8, p: 60, v: 1 }] } });
+        S.ui.imported({ proj: p, report: '' }); S.engine.ensure(); S.engine.rebuild();
+        const run = async () => { const b = await S.engine.render(S.proj, 'song', S.proj.scenes[0].id, 8); return [b.getChannelData(0), b.getChannelData(1)]; };
+        const rms = (d, a, b) => { let s = 0; for (let i = Math.floor(a * 44100); i < b * 44100; i++) s += d[i] * d[i]; return +Math.sqrt(s / ((b - a) * 44100)).toFixed(4); };
+        const [flat] = await run();
+        S.proj.tracks[0].auto = { vol: [{ t: 0, v: 1 }, { t: 8, v: 0 }] };
+        const [fall] = await run();
+        S.proj.tracks[0].auto = { pan: [{ t: 0, v: -1 }, { t: 8, v: 1 }] };
+        const [L, R] = await run();
+        return JSON.stringify({ noAutomation: [rms(flat, 0.3, 0.8), rms(flat, 3.2, 3.7)], volumeFalling: [rms(fall, 0.3, 0.8), rms(fall, 1.8, 2.3), rms(fall, 3.2, 3.7)], panLeftToRight: { start: [rms(L, 0.3, 0.8), rms(R, 0.3, 0.8)], end: [rms(L, 3.2, 3.7), rms(R, 3.2, 3.7)] } });
+        """
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            self.web.callAsyncJavaScript(js, arguments: [:], in: nil, in: .page) { result in
+                switch result {
+                case .success(let v): print("AUTOTEST", v)
+                case .failure(let e): print("AUTOTEST error", e)
+                }
+                NSApp.terminate(nil)
+            }
+        }
+    }
+
     // Importer check: opens each file through the same path as File > Open and prints what came in.
     private func importTest(_ paths: [String]) {
         var queue = paths
@@ -254,7 +282,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
             await S.io.nativeOpen(name, b64, path);
             const p = S.proj;
             return JSON.stringify({ file: name, msg, bpm: p.bpm, scenes: p.scenes.map((s) => s.name + ':' + s.bars), sections: p.sections.length, songBeats: S.songEnd(p), regions: p.tracks.reduce((a, t) => a + t.regions.length, 0),
-              tracks: p.tracks.map((t) => [t.name, t.type, +t.vol.toFixed(2), +t.pan.toFixed(2), Object.values(t.clips).reduce((a, c) => a + (c.notes ? c.notes.length : 0), 0), t.regions.length, t.mute, t.pads ? Object.values(t.pads).map((x) => x.name).join('+') : t.inst && t.inst.sample ? t.inst.sample.name : '']), wanted: (p.wanted || []).map((w) => w.file),
+              tracks: p.tracks.map((t) => [t.name, t.type, +t.vol.toFixed(2), +t.pan.toFixed(2), Object.values(t.clips).reduce((a, c) => a + (c.notes ? c.notes.length : 0), 0), t.regions.length, t.mute, t.pads ? Object.values(t.pads).map((x) => x.name).join('+') : t.inst && t.inst.sample ? t.inst.sample.name : '']), wanted: (p.wanted || []).map((w) => w.file), auto: p.tracks.filter((t) => t.auto).map((t) => [t.name, Object.keys(t.auto).map((k) => k + ':' + t.auto[k].map((q) => +q.t.toFixed(2) + '=' + +q.v.toFixed(2)).join(' ')).join(' | ')]), masterAuto: p.master.auto ? p.master.auto.vol.map((q) => +q.t.toFixed(2) + '=' + +q.v.toFixed(2)).join(' ') : '', wantPlugins: (p.wantPlugins || []).map((w) => w.name), insts: p.tracks.filter((t) => t.inst).map((t) => t.name + ':' + t.inst.wave),
               firstRegions: p.tracks.map((t) => t.regions.slice(0, 3).map((r) => [+r.start.toFixed(3), +r.len.toFixed(3), +r.off.toFixed(3), r.clip.notes ? r.clip.notes.length + 'n' : 'audio'])),
               buffers: Object.values(S.buffers).map((b) => [b.name, +b.buf.duration.toFixed(2), b.bpm, +b.buf.getChannelData(0).reduce((m, x) => Math.max(m, Math.abs(x)), 0).toFixed(3)]) });
             """

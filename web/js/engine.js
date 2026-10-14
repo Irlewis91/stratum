@@ -266,8 +266,37 @@
       slice(ctx, dest, buf, when + (s0 - c0) * spb, (s0 - k * L) * spb, (s1 - s0) * spb, gain, live);
     }
   };
+  // ---- automation: volume and pan lanes on tracks and master volume, as points {t: song beat, v} joined by straight lines ----
+  E.lanes = (g, proj) => {
+    const out = [], has = (o, k) => o && o.auto && o.auto[k] && o.auto[k].length;
+    for (const tr of proj.tracks) {
+      const tg = g.tracks[tr.id];
+      if (!tg) continue;
+      if (has(tr, 'vol')) out.push([tg.vol.gain, tr.auto.vol]);
+      if (has(tr, 'pan')) out.push([tg.pan.pan, tr.auto.pan]);
+    }
+    if (has(proj.master, 'vol')) out.push([g.master.vol.gain, proj.master.auto.vol]);
+    return out;
+  };
+  E.autoAt = (pts, beat) => {
+    if (beat <= pts[0].t) return pts[0].v;
+    for (let i = 1; i < pts.length; i++) if (beat < pts[i].t) { const p = pts[i - 1], q = pts[i]; return p.v + ((q.v - p.v) * (beat - p.t)) / Math.max(1e-9, q.t - p.t); }
+    return pts[pts.length - 1].v;
+  };
+  E.automate = (g, proj, a, b, toTime, first) => {
+    const L = E.noLoop ? Infinity : E.songBeats(proj);
+    for (const [param, pts] of E.lanes(g, proj)) {
+      if (first) { param.cancelScheduledValues(0); param.setValueAtTime(E.autoAt(pts, L === Infinity ? a : a % L), Math.max(0, toTime(a))); }
+      for (let k = L === Infinity ? 0 : Math.floor(a / L), k1 = L === Infinity ? 0 : Math.floor((b - 1e-9) / L); k <= k1; k++) {
+        const base = L === Infinity ? 0 : k * L;
+        if (base > a && base < b) param.setValueAtTime(pts[0].v, toTime(base));   // the song has looped
+        for (const p of pts) { const t = base + p.t; if (t > a && t <= b && (L === Infinity || p.t <= L)) param.linearRampToValueAtTime(p.v, toTime(t)); }
+      }
+    }
+  };
   E.scheduleRange = (ctx, g, proj, mode, sceneId, a, b, toTime, live, first) => {
     const spb = 60 / proj.bpm;
+    if (mode === 'song') E.automate(g, proj, a, b, toTime, first);
     E.walk(proj, mode, sceneId, a, b, (tr, kind, beat, n, info, clip, L) => {
       const tg = g.tracks[tr.id];
       if (!tg) return;
@@ -322,6 +351,7 @@
     E.sources.forEach((s) => { try { s.stop(); } catch (e) {} });
     E.sources.clear();
     if (S.plug) { S.plug.allOff(); S.plug.transport(false, 0, 0); }
+    if (E.graph && E.ctx) { for (const [param] of E.lanes(E.graph, S.proj)) param.cancelScheduledValues(0); E.applyMix(); }
   };
   E.setBpm = (v) => {
     if (E.playing) { const now = E.ctx.currentTime, b = E.beatAt(now); S.proj.bpm = v; E.anchorT = now; E.anchorB = b; if (S.plug) S.plug.transport(true, b, 0); }

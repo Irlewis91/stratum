@@ -85,6 +85,9 @@
     E.rebuild(); syncHeader(); render();
   }
   U.setProject = setProject;
+  U.refresh = () => render();
+  // A follow-up to an import (samples found, plugins matched): shown after the import report so that is not lost.
+  U.followUp = (msg, err) => { U.report = (U.report ? U.report + ' ' : '') + msg; U.toast(U.report, err); };
 
   // ---------- panels ----------
   function renderRack() {
@@ -318,6 +321,7 @@
       `<div class="dual"><div><div class="fad">${ctl('fader', { k: 'vol', t: t.id }, t.vol / 1.25)}<div class="meter"><i data-m="${t.id}"></i></div></div><span>${esc(t.name)}</span></div>` +
       `<div><div class="fad">${ctl('fader', { k: 'master', key: 'vol' }, p.master.vol / 1.25)}<div class="meter"><i data-m="master"></i></div></div><span>Stereo Out</span></div></div>` +
       `<div class="krow">${ctl('knob', { k: 'pan', t: t.id }, (t.pan + 1) / 2, 'Pan')}<div class="msb">${ms(t)}</div></div>` +
+      ((t.auto && (t.auto.vol || t.auto.pan)) || (p.master.auto && p.master.auto.vol) ? `<div class="hint">Automation (plays in Song mode): ${[t.auto && t.auto.vol ? 'volume ' + t.auto.vol.length + ' pts' : '', t.auto && t.auto.pan ? 'pan ' + t.auto.pan.length + ' pts' : '', p.master.auto && p.master.auto.vol ? 'master volume ' + p.master.auto.vol.length + ' pts' : ''].filter(Boolean).join(', ')} <button data-act="clearAuto">Clear</button></div>` : '') +
       `<div class="hint">Inserts</div>${t.fx.map((f) => `<div class="slot">${esc(f.name)}</div>`).join('')}<div class="slot empty" data-act="addFx" data-t="${t.id}">+ insert</div></div>`);
   }
 
@@ -589,6 +593,7 @@
     toggleMode() { $('#modeSel').value = $('#modeSel').value === 'scene' ? 'song' : 'scene'; C.mode($('#modeSel')); },
     new() { S.snap(); const p = S.blankProject(); S.newScene(p, 'Scene 1', 1); S.newTrack(p, 'drums', 'Drums'); S.newTrack(p, 'synth', 'Synth'); setProject(p); },
     open() { U.pendingAudio = null; U.pendingSample = null; IO.open(); },
+    clearAuto() { structural(() => { delete curTrack().auto; delete P().master.auto; }); },
     wanted() {
       const w = P().wanted || [];
       showPop(`<h3>Missing samples</h3><p class="hint">This project uses these sound files, but they are not on this Mac where the project says they are. Choose them (you can pick several at once); files are matched by name.</p><div class="plist">` +
@@ -766,7 +771,7 @@
   S.menu = (a) => (a.startsWith('export:') ? IO.exportAs(a.slice(7)) : A[a] && A[a]());
 
   U.imported = (res) => {
-    if (res.proj) { S.snap(); setProject(res.proj); U.wantedUI(); return U.toast(res.report); }
+    if (res.proj) { S.snap(); setProject(res.proj); U.wantedUI(); U.report = res.report; return U.toast(res.report); }
     if (U.pendingSample && tr(U.pendingSample.t) && tr(U.pendingSample.t).type !== 'audio') {
       const ps = U.pendingSample, t = tr(ps.t), nm = res.audio.name.replace(/\.[^.]+$/, '');
       S.snap();
@@ -807,7 +812,7 @@
   U.wantedDone = (found) => {
     const left = (P().wanted || []).length;
     E.rebuild(); render(); U.wantedUI();
-    if (found || left) U.toast((found ? `Loaded ${found} sample file${found === 1 ? '' : 's'} into the project. ` : '') + (left ? `${left} could not be found — click “Missing samples” to choose them.` : 'All of its samples are loaded.'), !found && !!left);
+    if (found || left) U.followUp((found ? `Loaded ${found} sample file${found === 1 ? '' : 's'} into the project. ` : '') + (left ? `${left} could not be found — click “Missing samples” to choose them.` : 'All of its samples are loaded.'), !found && !!left);
   };
   U.recStarted = () => {
     const r = U.recording;

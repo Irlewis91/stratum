@@ -49,9 +49,22 @@
     if (!w.length || !native()) return res(0);
     let n = 0;
     IO.found = async (name, data) => { if (await IO.offer(name, unb64(data).buffer)) n++; };
-    IO.foundDone = () => { S.ui.wantedDone(n); res(n); };
+    IO.foundDone = () => { try { S.ui.wantedDone(n); } catch (e) { S.ui.toast('Samples: ' + (e.message || e), true); } res(n); };
     native().postMessage({ op: 'findFiles', paths: [...new Set(w.map((x) => x.path))], near: IO.lastPath || '' });
   });
+  // VST instruments an imported project used: put the same plugin on the track when it is installed on this Mac.
+  IO.matchPlugins = async () => {
+    const proj = S.proj, want = proj.wantPlugins || [];
+    if (!want.length || !S.plug.available()) return;
+    const list = (await S.plug.list()).filter((p) => p.kind === 'inst'), clean = (s) => s.replace(/ \((VST2|VST3)\)$/, '').toLowerCase().trim(), found = [], missing = [];
+    for (const w of want) {
+      const t = proj.tracks.find((x) => x.id === w.t), hit = list.find((p) => clean(p.name) === clean(w.name));
+      if (t && hit) { t.plugin = { id: hit.id, name: hit.name, maker: hit.maker, state: '', fx: [] }; found.push(hit.name); } else missing.push(w.name);
+    }
+    proj.wantPlugins = want.filter((w) => missing.includes(w.name));
+    S.engine.rebuild(); S.ui.refresh();
+    S.ui.followUp((found.length ? `Loaded the installed plugin for: ${found.join(', ')} (with its default sound; the settings saved in the FL project are not transferred). ` : '') + (missing.length ? `Not installed on this Mac, so playing on a built-in sound: ${missing.join(', ')}.` : ''), !found.length);
+  };
   // Minimal zip reader (stored and deflated entries) for FL Studio "zipped loop packages".
   IO.unzip = async (ab) => {
     const v = new DataView(ab), u8 = new Uint8Array(ab), out = [];
@@ -307,19 +320,40 @@
       return new TextDecoder(wide ? 'utf-16le' : 'latin1').decode(b).replace(/\0/g, '');
     };
     let bpm = 0, chan = -1, pat = 0, title = '';
-    const clipItems = [];
+    const clipItems = [], remotes = [], fxNames = [];
+    let inMixer = false;
     const chans = {}, pats = {}, playlist = [];
     const ch = (i) => chans[i] || (chans[i] = { name: '', plugin: '' });
     while (o < end) {
       const id = u8[o++];
-      if (id < 64) { if (id === 21 && chan >= 0) ch(chan).type = u8[o]; o += 1; }
-      else if (id < 128) { const w = v.getUint16(o, true); o += 2; if (id === 64) { chan = w; ch(w); } else if (id === 65) pat = w; else if (id === 66 && !bpm) bpm = w; }
+      if (id < 64) { if (id === 21 && chan >= 0) ch(chan).type = u8[o]; else if (id === 22 && chan >= 0 && !inMixer) ch(chan).routed = v.getInt8(o); o += 1; }
+      else if (id < 128) { const w = v.getUint16(o, true); o += 2; if (id === 64) { chan = w; ch(w); inMixer = false; } else if (id === 98) inMixer = true; else if (id === 65) pat = w; else if (id === 66 && !bpm) bpm = w; }
       else if (id < 192) { const d = v.getUint32(o, true); o += 4; if (id === 156) bpm = d / 1000; }
       else {
         let len = 0, shift = 0, b;
         do { b = u8[o++]; len |= (b & 0x7f) << shift; shift += 7; } while (b & 0x80);
         if (id === 192 && chan >= 0) ch(chan).name = text(o, len);
         else if (id === 196 && chan >= 0) ch(chan).sample = text(o, len);
+        else if (id === 201) { if (inMixer) fxNames.push(text(o, len)); else if (chan >= 0) ch(chan).fl = text(o, len); }
+        else if (id === 213 && !inMixer && chan >= 0 && ch(chan).fl === 'Fruity Wrapper') {
+          // A hosted VST: a list of records (id, 64-bit length, data). 54 is the plugin's name, 56 its maker.
+          const vst = {};
+          for (let q = o + 4; q + 12 <= o + len;) {
+            const rid = v.getUint32(q, true), rl = v.getUint32(q + 4, true);
+            q += 12;
+            if (q + rl > o + len) break;
+            if (rid === 54) vst.name = text(q, rl); else if (rid === 56) vst.maker = text(q, rl);
+            q += rl;
+          }
+          if (vst.name) ch(chan).vst = vst;
+        }
+        else if (id === 234 && chan >= 0 && len >= 21) {
+          // Automation clip: points are 24 bytes each: time since the previous point in beats, value 0..1, tension, flags.
+          const pts = [];
+          for (let q = o + 21, n = v.getUint32(o + 17, true); n > 0 && q + 24 <= o + len; n--, q += 24) pts.push({ dt: v.getFloat64(q, true), v: v.getFloat64(q + 8, true) });
+          ch(chan).auto = pts;
+        }
+        else if (id === 227 && len >= 12) remotes.push({ src: v.getUint16(o + 2, true), param: v.getUint16(o + 8, true), dest: v.getUint16(o + 10, true) });
         else if (id === 203 && chan >= 0 && !ch(chan).plugin) ch(chan).plugin = text(o, len);
         else if (id === 193) (pats[pat] || (pats[pat] = { notes: [] })).name = text(o, len);
         else if (id === 194) title = text(o, len);
@@ -353,7 +387,7 @@
     const off = songBars ? 1 : 0;
     if (songBars) scenes.unshift({ name: 'Song', bars: songBars });
     const tracks = Object.keys(chans).map(Number).sort((a, b) => a - b).map((ci) => {
-      const nm = chans[ci].name || chans[ci].plugin || 'Channel ' + (ci + 1), dp = drumFor(nm), clips = {};
+      const nm = chans[ci].name || chans[ci].plugin || 'Channel ' + (ci + 1), dp = chans[ci].fl === 'Fruit Kick' ? 36 : drumFor(nm), clips = {};
       const conv = (n, shift) => ({ t: n.t + shift, d: n.d, p: dp || n.p, v: n.v });
       patIds.forEach((k, si) => {
         const notes = pats[k].notes.filter((n) => n.ch === ci).map((n) => conv(n, 0));
@@ -365,7 +399,7 @@
         if (song.length) clips[0] = { bars: songBars, notes: song };
       }
       return { name: nm, type: chans[ci].type === 4 ? 'audio' : dp ? 'drums' : 'synth', vol: chans[ci].vol, pan: chans[ci].pan, clips, ci, dp };
-    }).filter((t, i, all) => Object.keys(t.clips).length || chans[Object.keys(chans).map(Number).sort((a, b) => a - b)[i]].type !== 5);
+    }).filter((t) => chans[t.ci].type !== 5);   // automation clips are not tracks; they are read into automation below
     if (!tracks.length) throw new Error('No instrument channels found in this FL Studio project');
     const noteCount = patIds.reduce((a, k) => a + pats[k].notes.length, 0);
     if (!scenes.length) scenes.push({ name: 'Pattern 1', bars: 1 });
@@ -380,12 +414,49 @@
       else if (!c.type) proj.wanted.push({ t: t.id, kind: 'inst', path: c.sample, file, pitch: ft.dp || 0 });
     });
     const audioClips = clipItems.filter((it) => chans[it.ch] && chans[it.ch].type === 4).length;
+    // FL Studio's own instruments cannot be recreated; a few get a stand-in built-in sound, hosted VSTs are looked up later.
+    const STAND = { BooBass: { wave: 'sine', wave2: 'triangle', detune: 0, attack: 0.01, release: 0.15, cutoff: 0.35, res: 0.1 }, 'Plucked!': { wave: 'sawtooth', wave2: 'triangle', detune: 0.05, attack: 0, release: 0.35, cutoff: 0.7, res: 0.1 } };
+    const standIns = [], trackOf = {};
+    proj.wantPlugins = [];
+    tracks.forEach((ft, i) => {
+      const c = chans[ft.ci], t = proj.tracks[i];
+      trackOf[ft.ci] = t;
+      if (!t || c.type !== 2 || !c.fl) return;
+      if (c.vst) return proj.wantPlugins.push({ t: t.id, name: c.vst.name, maker: c.vst.maker || '' });
+      if (STAND[c.fl] && t.inst) Object.assign(t.inst, STAND[c.fl]);
+      standIns.push(c.fl);
+    });
+    // Automation clips: each is linked to what it controls and placed on the playlist. Channel volume and pan, mixer track
+    // volume and pan, and master volume become automation in STRATUM; anything else is counted and left out.
+    let autoRead = 0, autoSkipped = 0;
+    const lane = (obj, key, pts) => { if (!pts.length) return; obj.auto = obj.auto || {}; obj.auto[key] = (obj.auto[key] || []).concat(pts).sort((a, b) => a.t - b.t); autoRead++; };
+    for (const rc of remotes) {
+      const c = chans[rc.src], items = clipItems.filter((it) => it.ch === rc.src);
+      if (!c || !c.auto || !items.length) { autoSkipped++; continue; }
+      const curve = (fn) => { const out = []; for (const it of items) { let at = 0; for (const p of c.auto) { at += p.dt; if (it.len && at > it.len + 1e-6) break; out.push({ t: it.t + at, v: fn(Math.min(1, Math.max(0, p.v))) }); } } return out; };
+      const before = autoRead;
+      const masterFree = !(proj.master.auto && proj.master.auto.vol);
+      if (rc.dest & 0x4000) { if (rc.param === 0 && masterFree) lane(proj.master, 'vol', curve((x) => Math.min(1.25, (proj.master.vol * x) / 0.8))); }
+      else if (rc.dest & 0x2000) {
+        const ins = (rc.dest - 0x2000) >> 6, vol = rc.param === 0x1fc0, pan = rc.param === 0x1fc1;
+        if (ins === 0 && vol) { if (masterFree) lane(proj.master, 'vol', curve((x) => Math.min(1.25, (proj.master.vol * x) / 0.8))); }
+        else if (vol || pan) for (const ft of tracks) { const t = trackOf[ft.ci]; if (!t || (chans[ft.ci].routed || 0) !== ins || (t.auto && t.auto[vol ? 'vol' : 'pan'])) continue; lane(t, vol ? 'vol' : 'pan', curve(vol ? (x) => Math.min(1.25, (t.vol * x) / 0.8) : (x) => x * 2 - 1)); }
+      } else {
+        const t = trackOf[rc.dest];
+        if (t && rc.param === 0) lane(t, 'vol', curve((x) => Math.min(1.25, x)));
+        else if (t && rc.param === 1) lane(t, 'pan', curve((x) => x * 2 - 1));
+      }
+      if (autoRead === before) autoSkipped++;
+    }
+    const fxUsed = [...new Set(fxNames.filter(Boolean))], fake = [...new Set(standIns)];
     return {
       proj,
       report: `FL Studio project: ${tracks.length} channels, ${patIds.length} patterns, ${noteCount} notes, ` + (bpm ? `tempo ${Math.round(bpm)}` : 'tempo not found in the file so it is set to 140') + ', channel volume and pan kept. ' +
         (proj.wanted.length ? `It uses ${proj.wanted.length} sample files` + (audioClips ? ` (${audioClips} audio clips on the playlist)` : '') + '. An .flp only points at those files, so STRATUM looks for them on this Mac; use “Missing samples” to choose any it cannot find. ' : '') +
         (noteCount ? '' : 'This project has no pattern notes (it is built from audio or automation clips), so the tracks came in empty. ') +
-        (songBars ? `The playlist was read into a ${songBars}-bar “Song” scene.` : 'No playlist found, so each pattern is placed once in the arrangement.') + ' FL Studio\'s own plugins, automation and mixer inserts are not read.',
+        (songBars ? `The playlist was read into a ${songBars}-bar “Song” scene.` : 'No playlist found, so each pattern is placed once in the arrangement.') + ' ' + (autoRead ? `${autoRead} automation lanes read (volume and pan). ` : '') + (autoSkipped ? `${autoSkipped} automation clips control things STRATUM cannot automate (tempo, pitch or plugin settings) and were left out. ` : '') +
+        (fake.length ? `FL Studio's own instruments cannot be recreated, so these play on a stand-in built-in sound: ${fake.join(', ')}. ` : '') +
+        (fxUsed.length ? `Mixer effects not carried over: ${fxUsed.join(', ')}.` : ''),
     };
   };
 
@@ -622,7 +693,8 @@ ${lanes}    </Lanes>
         S.ui.imported(res);
         let n = 0;
         for (const f of files) if (f !== flp && (await IO.offer(f.name, f.data).catch(() => false))) n++;
-        return S.ui.wantedDone(n);
+        S.ui.wantedDone(n);
+        return IO.matchPlugins();
       }
       else if (ext === 'reason') res = IO.reasonIn(ab, base);
       else if (['rns', 'ptx', 'ptf', 'logicx', 'omf', 'aaf', 'dawproject'].includes(ext)) throw new Error('.' + ext + ' files cannot be opened in this version');
@@ -630,6 +702,7 @@ ${lanes}    </Lanes>
       else res = { audio: await IO.addAudio(fname, ab) };
       S.ui.imported(res);
       if (res.proj && res.proj.wanted && res.proj.wanted.length) await IO.seek();
+      if (res.proj && res.proj.wantPlugins && res.proj.wantPlugins.length) await IO.matchPlugins();
     } catch (e) {
       S.ui.toast('Could not open ' + fname + ': ' + (e.message || e), true);
     }

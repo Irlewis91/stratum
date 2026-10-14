@@ -104,7 +104,19 @@
   };
 
   const freq = (p, cents) => 440 * Math.pow(2, (p - 69 + (cents || 0) / 100) / 12);
+  // One-shot or held playback of a loaded sample. With `hold` the note gets an attack/release envelope and stops.
+  E.sample = (ctx, dest, buf, when, rate, gain, hold, att, rel, loop) => {
+    const s = ctx.createBufferSource(), a = ctx.createGain();
+    s.buffer = buf; s.playbackRate.value = rate; s.loop = !!loop;
+    s.connect(a); a.connect(dest); s.start(when);
+    if (hold == null) { a.gain.value = gain; return; }
+    const end = when + Math.max(hold, att);
+    a.gain.setValueAtTime(0, when); a.gain.linearRampToValueAtTime(gain, when + att); a.gain.setTargetAtTime(0, end, rel / 4);
+    s.stop(end + rel * 2 + 0.05);
+  };
   E.synth = (ctx, dest, inst, n, when, dur, prev) => {
+    const smp = inst.sample, rec = smp && S.buffers[smp.audio];
+    if (rec) return E.sample(ctx, dest, rec.buf, when, freq(n.p, n.c) / freq(smp.root == null ? 60 : smp.root), 0.6 * (n.v == null ? 0.8 : n.v), dur, 0.003 + inst.attack * 0.5, 0.02 + inst.release * 1.2, smp.loop);
     const f = freq(n.p, n.c), a = ctx.createGain(), o1 = ctx.createOscillator(), o2 = ctx.createOscillator(), g2 = ctx.createGain();
     o1.type = inst.wave; o2.type = inst.wave2; o2.detune.value = inst.detune * 50; g2.gain.value = 0.6;
     for (const o of [o1, o2]) {
@@ -121,7 +133,9 @@
     o1.start(when); o2.start(when);
     o1.stop(end + rel * 2); o2.stop(end + rel * 2);
   };
-  E.drum = (ctx, dest, pitch, vel, when) => {
+  E.drum = (ctx, dest, pitch, vel, when, tr) => {
+    const pad = tr && tr.pads && tr.pads[pitch], rec = pad && S.buffers[pad.audio];
+    if (rec) return E.sample(ctx, dest, rec.buf, when, Math.pow(2, (pad.tune || 0) / 12), (vel == null ? 0.8 : vel) * (pad.gain == null ? 1 : pad.gain));
     const p = S.drumMap(pitch), v = vel == null ? 0.8 : vel, a = ctx.createGain();
     a.connect(dest);
     const env = (peak, dec) => { a.gain.setValueAtTime(peak * v, when); a.gain.exponentialRampToValueAtTime(0.0008, when + dec); return when + dec + 0.02; };
@@ -250,7 +264,7 @@
       const when = toTime(beat);
       if (kind === 'note') {
         const dur = Math.min(n.d, info.end - beat) * spb;
-        if (tr.type === 'drums') E.drum(ctx, tg.input, n.p, n.v, when);
+        if (tr.type === 'drums') E.drum(ctx, tg.input, n.p, n.v, when, tr);
         else if (tr.type === 'synth') { E.synth(ctx, tg.input, tr.inst, n, when, Math.max(0.03, dur), tg.last); tg.last = n.p; }
         return;
       }
@@ -309,7 +323,7 @@
     const tg = E.graph.tracks[tr.id];
     if (!tg) return;
     const when = E.ctx.currentTime + 0.005;
-    if (tr.type === 'drums') E.drum(E.ctx, tg.input, p, v, when);
+    if (tr.type === 'drums') E.drum(E.ctx, tg.input, p, v, when, tr);
     else if (tr.type === 'synth') E.synth(E.ctx, tg.input, tr.inst, { p, v }, when, 0.3, null);
   };
 

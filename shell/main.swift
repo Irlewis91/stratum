@@ -104,7 +104,48 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
         if CommandLine.arguments.contains("--selftest") { selfTest() }
         if CommandLine.arguments.contains("--rec-test") { recTest() }
         if CommandLine.arguments.contains("--stem-test") { stemTest() }
+        if CommandLine.arguments.contains("--sampler-test") { samplerTest() }
         if let i = CommandLine.arguments.firstIndex(of: "--import-test") { importTest(Array(CommandLine.arguments[(i + 1)...])) }
+    }
+
+    // Sampler check: loads tone files through the same path as the file picker, then measures the pitch of what plays.
+    private func samplerTest() {
+        let js = """
+        let msg = ''; S.ui.toast = (m) => { msg = m; };
+        const ctx = S.engine.ensure();
+        const tone = (hz) => { const b = ctx.createBuffer(1, 22050, 44100), d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = 0.8 * Math.sin(2 * Math.PI * hz * i / 44100); return S.io.wav(b); };
+        const b64 = (u) => { let s = ''; for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000)); return btoa(s); };
+        // Dominant frequency by zero crossings over the loudest stretch.
+        const pitch = (buf) => { const d = buf.getChannelData(0); let z = 0, n = 0; for (let i = 3000; i < 12000; i++) { if (d[i - 1] <= 0 && d[i] > 0) z++; n++; } return Math.round(z * 44100 / n); };
+        const p = S.blankProject(); if (!p.scenes.length) S.newScene(p, 'A', 1);
+        const dr = S.newTrack(p, 'drums', 'Kit'), sy = S.newTrack(p, 'synth', 'Keys');
+        S.ui.imported({ proj: p, report: '' });
+        const sc = S.proj.scenes[0], D = S.proj.tracks[0], Y = S.proj.tracks[1];
+        S.ui.pendingSample = { t: D.id };
+        for (const [n, hz] of [['My Kick 01.wav', 1000], ['Crunchy Snare.wav', 1500], ['weird fx.wav', 3000], ['second kick.wav', 500]]) await S.io.nativeOpen(n, b64(tone(hz)));
+        S.ui.openDone();
+        const pads = Object.keys(D.pads).map((k) => k + ':' + D.pads[k].name);
+        const solo = async (track, notes) => { S.proj.tracks.forEach((t) => { t.mute = t !== track; t.clips = {}; }); track.clips[sc.id] = { bars: 1, notes }; return pitch(await S.engine.render(S.proj, 'scene', sc.id, 2)); };
+        const kick = await solo(D, [{ t: 0, d: 0.5, p: 36, v: 1 }]);
+        const extra = await solo(D, [{ t: 0, d: 0.5, p: 60, v: 1 }]);
+        D.pads[36].tune = 12; const kickUp = await solo(D, [{ t: 0, d: 0.5, p: 36, v: 1 }]);
+        const builtIn = await solo(D, [{ t: 0, d: 0.5, p: 42, v: 1 }]);
+        S.ui.pendingSample = { t: Y.id };
+        await S.io.nativeOpen('lead tone.wav', b64(tone(1000))); S.ui.openDone();
+        Y.inst.cutoff = 1;
+        const root = await solo(Y, [{ t: 0, d: 1, p: 60, v: 1 }]), octave = await solo(Y, [{ t: 0, d: 1, p: 72, v: 1 }]);
+        const saved = JSON.parse(await new Promise((res) => { S.io.saveFile = (n, d) => res(d); S.io.saveProject(); }));
+        return JSON.stringify({ pads, kick, extra, kickUp, builtIn, sample: Y.inst.sample, root, octave, savedBuffers: Object.keys(saved.buffers).length, rows: S.drumRows(D).map((r) => r.n), msg });
+        """
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            self.web.callAsyncJavaScript(js, arguments: [:], in: nil, in: .page) { result in
+                switch result {
+                case .success(let v): print("SAMPLER", v)
+                case .failure(let e): print("SAMPLER error", e)
+                }
+                NSApp.terminate(nil)
+            }
+        }
     }
 
     // Importer check: opens each file through the same path as File > Open and prints what came in.
@@ -274,16 +315,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
 
     // MARK: files
 
-    private func openFile() {
+    private func openFile(many: Bool = false) {
         let panel = NSOpenPanel()
-        panel.allowsMultipleSelection = false
+        panel.allowsMultipleSelection = many
         panel.canChooseDirectories = false
-        panel.message = "Open a STRATUM project, or import MIDI, Ableton .als, FL Studio .flp, a Reason song or an audio file"
+        panel.message = many ? "Choose one or more sound files" : "Open a STRATUM project, or import MIDI, Ableton .als, FL Studio .flp, a Reason song or an audio file"
         panel.beginSheetModal(for: window) { [weak self] result in
-            guard result == .OK, let url = panel.url, let self = self else { return }
-            guard let data = try? Data(contentsOf: url) else { return self.alert("Could not read \(url.lastPathComponent).") }
-            if data.count > 400_000_000 { return self.alert("That file is too large to import (limit 400 MB).") }
-            self.web.callAsyncJavaScript("await S.io.nativeOpen(name, b64);", arguments: ["name": url.lastPathComponent, "b64": data.base64EncodedString()], in: nil, in: .page, completionHandler: nil)
+            guard let self = self else { return }
+            var queue = result == .OK ? panel.urls : []
+            func next() {
+                guard !queue.isEmpty else { self.web.evaluateJavaScript("S.ui.openDone()", completionHandler: nil); return }
+                let url = queue.removeFirst()
+                guard let data = try? Data(contentsOf: url) else { self.alert("Could not read \(url.lastPathComponent)."); return next() }
+                if data.count > 400_000_000 { self.alert("That file is too large to import (limit 400 MB)."); return next() }
+                self.web.callAsyncJavaScript("await S.io.nativeOpen(name, b64);", arguments: ["name": url.lastPathComponent, "b64": data.base64EncodedString()], in: nil, in: .page) { _ in next() }
+            }
+            next()
         }
     }
 
@@ -375,7 +422,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
 
     func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {
         guard let body = message.body as? [String: Any], let op = body["op"] as? String else { return }
-        if op == "open" { openFile() }
+        if op == "open" { openFile(many: body["many"] as? Bool ?? false) }
         if op == "recStart" { startRecording(monitor: body["monitor"] as? Bool ?? false) }
         if op == "recStop" { stopRecording() }
         if op == "stems", let b64 = body["b64"] as? String { separateStems(wavBase64: b64) }

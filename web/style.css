@@ -198,3 +198,13 @@ kbd { background:var(--cell); border:1px solid var(--line); border-radius:4px; p
 .tklane canvas { position:absolute; top:0; height:46px; opacity:.45; pointer-events:none; }
 .tklane .use { position:absolute; top:0; bottom:0; background:color-mix(in srgb, var(--acc2) 38%, transparent); border:1px solid var(--acc2); pointer-events:none; }
 .tklane .paint { position:absolute; top:0; bottom:0; background:color-mix(in srgb, var(--txt) 25%, transparent); display:none; pointer-events:none; }
+
+/* sampler */
+.dev.pads { max-width:none; }
+.padgrid { display:flex; flex-wrap:wrap; gap:8px; }
+.padc { width:150px; padding:7px 8px; border:1px solid var(--line); border-radius:var(--r); background:var(--panel); display:flex; flex-direction:column; gap:5px; }
+.padc.on { border-color:var(--acc); }
+.padc b { cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.padc small { color:var(--dim); }
+.padc.add { border-style:dashed; cursor:pointer; justify-content:center; opacity:.85; }
+.smp { max-width:220px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:600; }

@@ -15,9 +15,11 @@
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 5000);
   };
-  IO.open = () => {
-    if (native()) native().postMessage({ op: 'open' });
-    else document.getElementById('file').click();
+  // `many` lets the picker return several files (used to load a set of drum sounds at once).
+  IO.open = (many) => {
+    const inp = document.getElementById('file');
+    if (native()) native().postMessage({ op: 'open', many: !!many });
+    else { inp.multiple = !!many; inp.click(); }
   };
   IO.nativeOpen = (name, data) => IO.importBytes(name, unb64(data).buffer);
   IO.native = native;
@@ -67,6 +69,8 @@
   IO.saveProject = () => {
     const used = new Set();
     for (const t of S.proj.tracks) {
+      for (const k in t.pads || {}) used.add(t.pads[k].audio);
+      if (t.inst && t.inst.sample) used.add(t.inst.sample.audio);
       for (const k in t.clips) if (t.clips[k].audio) used.add(t.clips[k].audio);
       for (const r of t.regions) { if (r.clip.audio) used.add(r.clip.audio); for (const tk of r.takes || []) used.add(tk.audio); }
     }

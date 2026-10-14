@@ -5,7 +5,7 @@
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const U = (S.ui = {
     skin: 'pattern', track: null, scene: null, note: null, block: -1, flip: false, keys: false, arm: null, scaleLock: true, lastLen: 1,
-    bottom: { pattern: 'editor', session: 'devices', arrange: 'editor' }, ptWin: 'edit', log: [], held: {}, octave: 0, pendingAudio: null, meters: [],
+    bottom: { pattern: 'editor', session: 'devices', arrange: 'editor' }, ptWin: 'edit', log: [], held: {}, octave: 0, pendingAudio: null, pendingSample: null, meters: [],
     region: null, playFrom: 0, pxb: 40, recording: null, monitor: false, sessionTop: 'session',
   });
   const P = () => S.proj;
@@ -103,7 +103,7 @@
       };
       if (t.type === 'drums') {
         h += `<div class="rkrow ${sel}">${head}</div>`;
-        for (const d of S.DRUMS) h += `<div class="rkrow sub ${sel}"><div class="rkh sub">${d.n}</div>${cells(d.p)}</div>`;
+        for (const d of S.drumRows(t)) h += `<div class="rkrow sub ${sel}"><div class="rkh sub" title="${esc(d.n)}">${esc(d.n)}</div>${cells(d.p)}</div>`;
       } else if (t.type === 'audio') {
         const rec = c && S.buffers[c.audio];
         h += `<div class="rkrow ${sel}">${head}<div class="rkaudio" data-act="selTrack" data-t="${t.id}">${rec ? '♪ ' + esc(rec.name) : `<button data-act="loadAudio" data-t="${t.id}">Load audio…</button>`}</div></div>`;
@@ -251,11 +251,20 @@
       h += P().lfos.map((l, i) => `<div class="dev lfo"><h4>LFO ${i + 1} · CV source</h4><div class="krow">${ctl('knob', { k: 'lfo', i, key: 'rate' }, l.rate, 'Rate')}${ctl('knob', { k: 'lfo', i, key: 'depth' }, l.depth, 'Depth')}</div><select data-chg="lfoShape" data-i="${i}">${opts(['sine', 'triangle', 'square', 'sawtooth'], l.shape)}</select><div class="jackw"><i class="jack out ${U.arm === i ? 'armed' : ''}" data-act="jackOut" data-i="${i}"></i><span>CV out</span></div></div>`).join('');
     }
     if (t.type === 'synth') {
-      const i = t.inst, waves = ['sine', 'triangle', 'sawtooth', 'square'];
-      h += `<div class="dev inst"><h4>Synth</h4>` + (back ? `<div class="krow">${jack(-1, 'cutoff', 'Cutoff CV')}${jack(-1, 'res', 'Resonance CV')}</div>` :
-        `<div class="krow"><label>Osc 1 <select data-chg="inst" data-key="wave">${opts(waves, i.wave)}</select></label><label>Osc 2 <select data-chg="inst" data-key="wave2">${opts(waves, i.wave2)}</select></label></div><div class="krow">` +
-        [['detune', 'Detune'], ['attack', 'Attack'], ['release', 'Release'], ['cutoff', 'Cutoff'], ['res', 'Resonance']].map(([k, l]) => ctl(kn, { k: 'inst', t: t.id, key: k }, i[k], l)).join('') + '</div>') + '</div>';
-    } else h += `<div class="dev inst"><h4>${t.type === 'drums' ? 'Drum Synth' : 'Audio Track'}</h4><p class="hint">${t.type === 'drums' ? 'Eight built-in synthesised drum sounds.' : 'Plays the audio clip in each scene.'}</p></div>`;
+      const i = t.inst, waves = ['sine', 'triangle', 'sawtooth', 'square'], smp = i.sample;
+      const src = smp ? `<div class="krow"><span class="smp" title="${esc(smp.name)}">Sample: ${esc(smp.name)}</span><label>Root note <input type="number" min="12" max="108" value="${smp.root}" data-chg="instRoot" style="width:52px"> ${S.noteName(smp.root)}</label><label><input type="checkbox" data-chg="instLoop" ${smp.loop ? 'checked' : ''}> Loop</label><button data-act="instLoad">Replace…</button><button data-act="instClear">Use oscillators</button></div><div class="krow">` +
+          [['attack', 'Attack'], ['release', 'Release'], ['cutoff', 'Cutoff'], ['res', 'Resonance']].map(([k, l]) => ctl(kn, { k: 'inst', t: t.id, key: k }, i[k], l)).join('') + '</div>'
+        : `<div class="krow"><label>Osc 1 <select data-chg="inst" data-key="wave">${opts(waves, i.wave)}</select></label><label>Osc 2 <select data-chg="inst" data-key="wave2">${opts(waves, i.wave2)}</select></label><button data-act="instLoad" title="Play one of your own sounds across the keys">Load sample…</button></div><div class="krow">` +
+          [['detune', 'Detune'], ['attack', 'Attack'], ['release', 'Release'], ['cutoff', 'Cutoff'], ['res', 'Resonance']].map(([k, l]) => ctl(kn, { k: 'inst', t: t.id, key: k }, i[k], l)).join('') + '</div>';
+      h += `<div class="dev inst"><h4>${smp ? 'Sampler' : 'Synth'}</h4>` + (back ? `<div class="krow">${jack(-1, 'cutoff', 'Cutoff CV')}${jack(-1, 'res', 'Resonance CV')}</div>` : src) + '</div>';
+    } else if (t.type === 'drums') {
+      const pads = t.pads || {};
+      h += `<div class="dev inst pads"><h4>Drum Sampler <span><button data-act="padKit" title="Pick several sound files; kicks, snares, claps and hats go to matching pads">Load sounds…</button></span></h4><p class="hint">Load your own one-shots onto any pad. Pads without a sample play the built-in sound.</p><div class="padgrid">` +
+        S.drumRows(t).map((d) => { const pd = pads[d.p]; return `<div class="padc ${pd ? 'on' : ''}"><b data-act="padPlay" data-p="${d.p}" title="Click to hear">${esc(d.n)}</b><small>${pd ? (d.base ? esc(d.base) + ' pad' : 'Extra pad') : 'Built-in'}</small>` +
+          (pd ? `<div class="krow">${ctl('hslider', { k: 'pad', t: t.id, p: d.p, key: 'tune' }, ((pd.tune || 0) + 12) / 24, 'Tune')}${ctl('hslider', { k: 'pad', t: t.id, p: d.p, key: 'gain' }, (pd.gain == null ? 1 : pd.gain) / 2, 'Level')}</div>` : '') +
+          `<div class="krow"><button data-act="padLoad" data-p="${d.p}">${pd ? 'Replace…' : 'Load…'}</button>${pd ? `<button data-act="padClear" data-p="${d.p}">${d.extra ? 'Remove' : 'Built-in'}</button>` : ''}</div></div>`; }).join('') +
+        `<div class="padc add" data-act="padAdd"><b>+ Add pads</b><small>Pick one or more sounds</small></div></div></div>`;
+    } else h += `<div class="dev inst"><h4>Audio Track</h4><p class="hint">Plays the audio clip in each scene.</p></div>`;
     t.fx.forEach((f, fi) => {
       h += `<div class="dev fx"><h4>${esc(f.name)} <button class="x" data-act="rmFx" data-i="${fi}" title="Remove">✕</button></h4>${f.prompt ? `<p class="hint">“${esc(f.prompt)}”</p>` : ''}<div class="krow">`;
       f.blocks.forEach((b, bi) => {
@@ -299,7 +308,7 @@
       `<div class="hint">Inserts</div>${t.fx.map((f) => `<div class="slot">${esc(f.name)}</div>`).join('')}<div class="slot empty" data-act="addFx" data-t="${t.id}">+ insert</div></div>`);
   }
 
-  const prRows = (t) => { if (t.type === 'drums') return S.DRUMS.map((d) => d.p); const r = []; for (let p = 96; p >= 24; p--) r.push(p); return r; };
+  const prRows = (t) => { if (t.type === 'drums') return S.drumRows(t).map((d) => d.p); const r = []; for (let p = 96; p >= 24; p--) r.push(p); return r; };
   const rowPitch = (t, n) => (t.type === 'drums' ? S.drumMap(n.p) : n.p);
   function renderNotes() {
     const el = $('#prNotes'), tg = target(), t = tg.t, c = tg.clip;
@@ -382,7 +391,7 @@
       (synth ? `<label><input type="checkbox" data-chg="scaleLock" ${U.scaleLock ? 'checked' : ''}> Scale lock</label>` : '') +
       (n ? `<span class="nsel">Note ${S.noteName(n.p)} ${ctl('hslider', { k: 'vel' }, n.v == null ? 0.8 : n.v, 'Velocity')}` + (synth ? `<label>Cents <input type="number" data-chg="cents" value="${n.c || 0}" min="-50" max="50" step="5"></label><label><input type="checkbox" data-chg="glide" ${n.g ? 'checked' : ''}> Glide</label>` : '') + `<button data-act="delNote">Delete</button></span>` : `<span class="hint">Click to add · drag to move · drag right edge to resize · Option-click to delete</span>`) + '</div>';
     h += `<div class="scroll" id="prScroll"><div class="pr" style="width:${60 + steps * CW}px;height:${rows.length * RH}px"><div class="prkeys">` +
-      rows.map((p) => { const black = synth && [1, 3, 6, 8, 10].includes(p % 12); return `<div class="${black ? 'bk' : ''}" data-act="key" data-p="${p}">${synth ? (p % 12 === 0 || p % 12 === P().root ? S.noteName(p) : '') : S.DRUMS.find((d) => d.p === p).n}</div>`; }).join('') +
+      rows.map((p) => { const black = synth && [1, 3, 6, 8, 10].includes(p % 12); return `<div class="${black ? 'bk' : ''}" data-act="key" data-p="${p}">${synth ? (p % 12 === 0 || p % 12 === P().root ? S.noteName(p) : '') : esc((S.drumRows(curTrack()).find((d) => d.p === p) || { n: '' }).n)}</div>`; }).join('') +
       `</div><div class="prgrid" id="prGrid" style="width:${steps * CW}px">` +
       rows.map((p, i) => `<div class="prrow ${synth && !S.inScale(p, P()) ? 'out' : ''} ${synth && p % 12 === P().root ? 'root' : ''}" style="top:${i * RH}px"></div>`).join('') +
       `<div class="ph" id="phPr"></div><div id="prNotes"></div></div></div></div>`;
@@ -455,6 +464,7 @@
     else if (d.k === 'master') p.master[d.key] = d.key === 'vol' ? v * 1.25 : v;
     else if (d.k === 'lfo') p.lfos[d.i][d.key] = v;
     else if (d.k === 'vel') { if (U.note) U.note.v = Math.max(0.05, v); return; }
+    else if (d.k === 'pad') { const pd = (tr(d.t).pads || {})[d.p]; if (pd) pd[d.key] = d.key === 'tune' ? Math.round(v * 24 - 12) : v * 2; return; }
     else if (d.k === 'inst') {
       tr(d.t).inst[d.key] = v;
       const ip = g && g.tracks[d.t] && g.tracks[d.t].instParams[d.key];
@@ -493,7 +503,7 @@
   function keyNote(code) {
     const t = curTrack();
     if (!t || t.type === 'audio') return null;
-    if (t.type === 'drums') { const i = DRUM_KEYS.indexOf(code); return i < 0 ? null : S.DRUMS[i].p; }
+    if (t.type === 'drums') { const r = S.drumRows(t)[DRUM_KEYS.indexOf(code)]; return r ? r.p : null; }
     return code in NOTE_KEYS ? 60 + U.octave * 12 + NOTE_KEYS[code] : null;
   }
 
@@ -565,7 +575,7 @@
     keys() { U.keys = !U.keys; syncHeader(); U.toast(U.keys ? 'Keys on: A–L row plays the selected track, Z / X change octave. Everything you play is captured for Dump Score Log.' : 'Keys off: letter keys are shortcuts again.'); },
     toggleMode() { $('#modeSel').value = $('#modeSel').value === 'scene' ? 'song' : 'scene'; C.mode($('#modeSel')); },
     new() { S.snap(); const p = S.blankProject(); S.newScene(p, 'Scene 1', 1); S.newTrack(p, 'drums', 'Drums'); S.newTrack(p, 'synth', 'Synth'); setProject(p); },
-    open() { U.pendingAudio = null; IO.open(); },
+    open() { U.pendingAudio = null; U.pendingSample = null; IO.open(); },
     save() { IO.saveProject(); },
     undo() { const s = S.undo.pop(); if (!s) return U.toast('Nothing to undo'); S.proj = JSON.parse(s); U.note = null; if (!tr(U.track)) U.track = P().tracks[0].id; if (!P().scenes.some((x) => x.id === U.scene)) U.scene = P().scenes[0].id; if (!P().scenes.some((x) => x.id === E.sceneId)) E.sceneId = U.scene; E.rebuild(); syncHeader(); render(); },
     help() {
@@ -664,7 +674,20 @@
       if (U.arm == null) return U.toast('Click an LFO “CV out” jack first, then this input.');
       structural(() => { t.cables.push({ src: U.arm, dev, key }); U.arm = null; });
     },
-    loadAudio(el) { U.pendingAudio = el.dataset.t; IO.open(); },
+    loadAudio(el) { U.pendingAudio = el.dataset.t; U.pendingSample = null; IO.open(); },
+    // Sampler: pick sound files for one pad, a whole kit, a new pad, or the sample a synth track plays.
+    padLoad(el) { U.pendingSample = { t: curTrack().id, p: +el.dataset.p }; IO.open(); },
+    padKit() { U.pendingSample = { t: curTrack().id }; IO.open(true); },
+    padAdd() { U.pendingSample = { t: curTrack().id, add: true }; IO.open(true); },
+    padPlay(el) { E.audition(curTrack(), +el.dataset.p, 0.9); },
+    padClear(el) {
+      const t = curTrack(), p = +el.dataset.p;
+      S.snap(); delete t.pads[p];
+      if (!S.DRUMS.some((d) => d.p === p)) { const keep = (c) => { if (c && c.notes) c.notes = c.notes.filter((n) => n.p !== p); }; Object.values(t.clips).forEach(keep); t.regions.forEach((r) => keep(r.clip)); }
+      changed(true);
+    },
+    instLoad() { U.pendingSample = { t: curTrack().id }; IO.open(); },
+    instClear() { S.snap(); delete curTrack().inst.sample; changed(true); },
     async stems() {
       const tg = target(), t = tg.t, c = tg.clip, rec = c && S.buffers[c.audio];
       if (!rec) return;
@@ -707,6 +730,25 @@
 
   U.imported = (res) => {
     if (res.proj) { S.snap(); setProject(res.proj); return U.toast(res.report); }
+    if (U.pendingSample && tr(U.pendingSample.t) && tr(U.pendingSample.t).type !== 'audio') {
+      const ps = U.pendingSample, t = tr(ps.t), nm = res.audio.name.replace(/\.[^.]+$/, '');
+      S.snap();
+      if (t.type === 'synth') t.inst.sample = { audio: res.audio.id, name: nm, root: 60, loop: false };
+      else {
+        t.pads = t.pads || {};
+        let p = ps.p;
+        if (p == null) {
+          const g = ps.add ? 0 : S.drumGuess(nm);
+          if (g && !t.pads[g]) p = g;
+          else { p = 60; while (p < 127 && (t.pads[p] || S.DRUMS.some((d) => d.p === p))) p++; }
+        }
+        t.pads[p] = { audio: res.audio.id, name: nm, tune: 0, gain: 1 };
+        ps.p = null;
+      }
+      U.track = t.id;
+      changed(true);
+      return U.toast(t.type === 'synth' ? `Sample loaded: ${nm}. It plays across the keys from its root note.` : `Loaded ${nm} onto a pad.`);
+    }
     const rec = res.audio, sc = curScene();
     S.snap();
     const t = (U.pendingAudio && tr(U.pendingAudio)) || S.newTrack(P(), 'audio', rec.name.replace(/\.[^.]+$/, ''));
@@ -718,6 +760,8 @@
     changed(true);
     U.toast(rec.bpm ? `Audio added: ${rec.name} — detected ${rec.bpm} BPM, warped to ${Math.round(P().bpm)}.` : `Audio added: ${rec.name}. Tempo was not detected; enter the Source BPM to warp it.`);
   };
+  // Called when a file-picker batch has finished (or was cancelled), so a later plain Open is not treated as a sample load.
+  U.openDone = () => { U.pendingSample = null; U.pendingAudio = null; };
   U.recStarted = () => {
     const r = U.recording;
     if (!r) return;
@@ -775,6 +819,8 @@
     cents(el) { if (U.note) { S.snap(); U.note.c = Math.min(50, Math.max(-50, +el.value || 0)); } },
     glide(el) { if (U.note) { S.snap(); U.note.g = el.checked; renderNotes(); } },
     inst(el) { S.snap(); curTrack().inst[el.dataset.key] = el.value; },
+    instRoot(el) { const s = curTrack().inst.sample; if (s) { S.snap(); s.root = Math.min(108, Math.max(12, Math.round(+el.value) || 60)); render(); } },
+    instLoop(el) { const s = curTrack().inst.sample; if (s) { S.snap(); s.loop = el.checked; } },
     lfoShape(el) { S.snap(); P().lfos[+el.dataset.i].shape = el.value; E.applyMix(); },
     srcBpm(el) { const c = target().clip, rec = c && S.buffers[c.audio]; if (!rec) return; rec.bpm = Math.min(240, Math.max(0, parseFloat(el.value) || 0)); rec.warpCache = null; c.bars = IO.audioBars(rec, c.warp); render(); },
     warp(el) { const c = target().clip, rec = c && S.buffers[c.audio]; if (!c) return; S.snap(); c.warp = el.checked; if (rec) c.bars = IO.audioBars(rec, c.warp); render(); },
@@ -821,9 +867,10 @@
     while (U.log.length && now - U.log[0].ms > 300000) U.log.shift();
   });
   $('#file').addEventListener('change', async (e) => {
-    const f = e.target.files[0];
+    const files = [...e.target.files];
     e.target.value = '';
-    if (f) IO.importBytes(f.name, await f.arrayBuffer());
+    for (const f of files) await IO.importBytes(f.name, await f.arrayBuffer());
+    U.openDone();
   });
   window.addEventListener('resize', drawCables);
   $('#devices').addEventListener('animationend', () => $('#devices').classList.remove('flipping'));

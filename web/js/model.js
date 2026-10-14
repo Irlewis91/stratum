@@ -27,6 +27,17 @@
     if (p > 50) return p % 2 ? 46 : 42;
     return p < 37 ? 36 : 38;
   };
+  // Rows of a drum track: the eight built-in sounds (renamed when a sample is loaded) plus any extra sample pads.
+  S.drumRows = (t) => {
+    const pads = (t && t.pads) || {}, rows = S.DRUMS.map((d) => ({ p: d.p, n: pads[d.p] ? pads[d.p].name : d.n, base: d.n }));
+    Object.keys(pads).map(Number).filter((p) => !S.DRUMS.some((d) => d.p === p)).sort((a, b) => a - b).forEach((p) => rows.push({ p, n: pads[p].name, extra: true }));
+    return rows;
+  };
+  // Guess which built-in pad a sample file belongs on from its name; 0 when nothing matches.
+  S.drumGuess = (name) => {
+    const w = (re) => new RegExp('(^|[^a-z])(' + re + ')', 'i').test(name);
+    return w('kick|bd|808') ? 36 : w('snare|sd|snr') ? 38 : w('clap') ? 39 : w('open ?hat|ohh?') ? 46 : w('hi-?hat|hat|hh') ? 42 : w('tom') ? 45 : w('rim') ? 37 : w('perc|cowbell') ? 56 : 0;
+  };
   S.COLORS = ['#ff8a3d', '#4fc3f7', '#b388ff', '#69db7c', '#ffd43b', '#ff6b9d', '#38d9a9', '#e599f7'];
   S.noteName = (p) => S.NOTES[((p % 12) + 12) % 12] + (Math.floor(p / 12) - 1);
   S.inScale = (p, proj) => S.SCALES[proj.scale].includes((((p - proj.root) % 12) + 12) % 12);

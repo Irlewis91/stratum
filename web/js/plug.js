@@ -10,7 +10,7 @@
   PL.available = () => !!native();
   PL.on = (t) => !!(t && t.plugin && t.type !== 'audio' && native());
   // Tracks that play their own audio (clips, drum pads, a loaded sample) move into the shell's engine once they have plugin effects.
-  PL.fxOn = (t) => !!(t && !t.plugin && t.pfx && t.pfx.length && native() && (t.type !== 'synth' || (t.inst && t.inst.sample)));
+  PL.fxOn = (t) => !!(t && !t.plugin && t.pfx && t.pfx.length && native());
   PL.native = (t) => PL.on(t) || PL.fxOn(t);
   PL.fxList = (t) => (t.plugin ? t.plugin.fx || (t.plugin.fx = []) : t.pfx || (t.pfx = []));
   // Audio the shell needs is sent once per buffer and then referred to by key.
@@ -57,6 +57,28 @@
     if (o.d != null) m.d = o.d;
     if (plug.sink) plug.sink.push({ ...m, at: when });
     else native().postMessage({ ...m, op: 'auPlay', delay: Math.max(0, when - ctx.currentTime + (ctx.outputLatency || 0)) });
+  };
+  // Built-in synth notes on a native track: each distinct note is rendered once with the track's oscillators, envelope and
+  // filter, kept, and then played as a sample. Notes still rendering during a mixdown are awaited through `plug.pending`.
+  const notes = new Map();
+  PL.synthNote = (plug, inst, n, when, dur, prev, ctx) => {
+    const d = Math.max(0.04, Math.round(dur * 50) / 50), glide = n.g && prev != null ? prev : null;
+    const key = JSON.stringify([inst.wave, inst.wave2, inst.detune, inst.attack, inst.release, inst.cutoff, inst.res, n.p, n.c || 0, d, glide]);
+    let e = notes.get(key);
+    if (!e) {
+      const tail = 0.02 + inst.release * 1.2, c = new OfflineAudioContext(2, Math.ceil((d + tail * 2 + 0.15) * 44100), 44100), f = c.createBiquadFilter();
+      f.type = 'lowpass'; f.frequency.value = S.dsp.expMap(150, 16000)(inst.cutoff); f.Q.value = S.dsp.lin(0.5, 14)(inst.res);
+      f.connect(c.destination);
+      E.synth(c, f, { ...inst, sample: null }, { p: n.p, c: n.c, g: n.g, v: 1 }, 0, d, glide);
+      if (notes.size > 600) notes.clear();
+      e = c.startRendering();
+      notes.set(key, e);
+      e.then((b) => { if (notes.get(key) === e) notes.set(key, b); });
+    }
+    const go = (buf) => PL.voice(plug, { buf, gain: n.v == null ? 0.8 : n.v }, when, ctx);
+    if (e instanceof AudioBuffer) return go(e);
+    const p = e.then(go);
+    if (plug.sink && plug.pending) plug.pending.push(p);
   };
   PL.transport = (playing, beat, delay) => { if (native() && S.proj) native().postMessage({ op: 'auTransport', bpm: S.proj.bpm, playing, beat: beat || 0, delay: delay || 0 }); };
   PL.list = async () => PL._list || (PL._list = (await ask({ op: 'auList' })) || []);

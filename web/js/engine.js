@@ -122,6 +122,7 @@
   E.synth = (ctx, dest, inst, n, when, dur, prev) => {
     const smp = inst.sample, rec = smp && S.buffers[smp.audio];
     if (rec) return E.sample(ctx, dest, rec.buf, when, freq(n.p, n.c) / freq(smp.root == null ? 60 : smp.root), 0.6 * (n.v == null ? 0.8 : n.v), dur, 0.003 + inst.attack * 0.5, 0.02 + inst.release * 1.2, smp.loop);
+    if (dest.plug) return S.plug.synthNote(dest.plug, inst, n, when, dur, prev, ctx);
     const f = freq(n.p, n.c), a = ctx.createGain(), o1 = ctx.createOscillator(), o2 = ctx.createOscillator(), g2 = ctx.createGain();
     o1.type = inst.wave; o2.type = inst.wave2; o2.detune.value = inst.detune * 50; g2.gain.value = 0.6;
     for (const o of [o1, o2]) {
@@ -348,10 +349,13 @@
   E.render = async (proj, mode, sceneId, beats) => {
     const spb = 60 / proj.bpm, sr = 44100, ctx = new OfflineAudioContext(2, Math.ceil((beats * spb + 2) * sr), sr), g = E.build(ctx, proj);
     g.plugEvents = [];
-    for (const id in g.tracks) if (g.tracks[id].input.plug) g.tracks[id].input.plug.sink = g.plugEvents;
+    const pending = [];
+    for (const id in g.tracks) if (g.tracks[id].input.plug) { g.tracks[id].input.plug.sink = g.plugEvents; g.tracks[id].input.plug.pending = pending; }
     E.scheduleRange(ctx, g, proj, mode, sceneId, 0, beats, (b) => 0.05 + b * spb, false, true);
     E.plugEvents = g.plugEvents;
-    return ctx.startRendering();
+    const out = await ctx.startRendering();
+    await Promise.all(pending);
+    return out;
   };
   E.peak = (an) => {
     E._pk = E._pk || {};

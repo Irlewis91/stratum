@@ -272,11 +272,11 @@
           `<div class="krow"><button data-act="padLoad" data-p="${d.p}">${pd ? 'Replace…' : 'Load…'}</button>${pd ? `<button data-act="padClear" data-p="${d.p}">${d.extra ? 'Remove' : 'Built-in'}</button>` : ''}</div></div>`; }).join('') +
         `<div class="padc add" data-act="padAdd"><b>+ Add pads</b><small>Pick one or more sounds</small></div></div></div>`;
     } else h += `<div class="dev inst"><h4>Audio Track</h4><p class="hint">Plays the audio clip in each scene.</p></div>`;
-    if (!t.plugin && !back && S.plug.available() && (t.type !== 'synth' || t.inst.sample)) {
+    if (!t.plugin && !back && S.plug.available()) {
       const pf = t.pfx || [];
       h += `<div class="dev inst plug"><h4>Plugin effects</h4>` + pf.map((f, fi) => `<div class="slot">${esc(f.name)} <button data-act="plugOpen" data-slot="${fi}">Open</button><button class="x" data-act="plugRmFx" data-i="${fi}" title="Remove">✕</button></div>`).join('') +
         `<div class="krow"><button data-act="plugPick" data-kind="fx">+ Plugin effect…</button></div>` +
-        (pf.length ? `<p class="hint">With a plugin effect on it, this track plays through the Mac's audio output directly, so the STRATUM effects on this track and the master section do not process it.</p>` : `<p class="hint">Audio Unit, VST3 or VST2 effects on this track's audio.</p>`) + `</div>`;
+        (pf.length ? `<p class="hint">With a plugin effect on it, this track plays through the Mac's audio output directly, so the STRATUM effects on this track and the master section do not process it${t.type === 'synth' && !t.inst.sample ? ', and CV cables to its filter have no effect' : ''}.</p>` : `<p class="hint">Audio Unit, VST3 or VST2 effects on this track's audio.</p>`) + `</div>`;
     }
     t.fx.forEach((f, fi) => {
       h += `<div class="dev fx"><h4>${esc(f.name)} <button class="x" data-act="rmFx" data-i="${fi}" title="Remove">✕</button></h4>${f.prompt ? `<p class="hint">“${esc(f.prompt)}”</p>` : ''}<div class="krow">`;

@@ -77,6 +77,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
     var window: NSWindow!
     var web: WKWebView!
     let recorder = Recorder()
+    let plugins = PluginHost()
     static weak var shared: AppDelegate?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -105,6 +106,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
         if CommandLine.arguments.contains("--rec-test") { recTest() }
         if CommandLine.arguments.contains("--stem-test") { stemTest() }
         if CommandLine.arguments.contains("--sampler-test") { samplerTest() }
+        if CommandLine.arguments.contains("--plugin-test") { pluginTest() }
         if let i = CommandLine.arguments.firstIndex(of: "--import-test") { importTest(Array(CommandLine.arguments[(i + 1)...])) }
     }
 
@@ -142,6 +144,43 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
                 switch result {
                 case .success(let v): print("SAMPLER", v)
                 case .failure(let e): print("SAMPLER error", e)
+                }
+                NSApp.terminate(nil)
+            }
+        }
+    }
+
+    // Plugin check: puts Apple's built-in DLS instrument and a delay on a track, plays it live, renders a mixdown and saves.
+    private func pluginTest() {
+        var livePeak: Float = 0
+        let js = """
+        let msg = ''; S.ui.toast = (m) => { msg = m; };
+        const list = await S.plug.list();
+        const inst = list.find((p) => p.id === 'aumu:dls :appl'), fx = list.find((p) => p.id === 'aufx:dely:appl');
+        const p = S.blankProject(); if (!p.scenes.length) S.newScene(p, 'A', 1);
+        const t = S.newTrack(p, 'synth', 'Plugin keys');
+        t.plugin = { id: inst.id, name: inst.name, maker: inst.maker, state: '', fx: [{ id: fx.id, name: fx.name, state: '' }] };
+        t.clips[p.scenes[0].id] = { bars: 1, notes: [{ t: 0, d: 1, p: 60, v: 1 }, { t: 2, d: 1, p: 67, v: 1 }] };
+        S.ui.imported({ proj: p, report: '' });
+        S.engine.ensure(); S.engine.rebuild();
+        await new Promise((r) => setTimeout(r, 1500));
+        S.engine.audition(S.proj.tracks[0], 64, 1);
+        await new Promise((r) => setTimeout(r, 900));
+        const buf = await S.engine.render(S.proj, 'scene', S.proj.scenes[0].id, 4), before = buf.getChannelData(0).reduce((m, x) => Math.max(m, Math.abs(x)), 0);
+        await S.plug.mixInto(buf, S.engine.plugEvents);
+        const d = buf.getChannelData(0), peak = d.reduce((m, x) => Math.max(m, Math.abs(x)), 0);
+        const rms = (a, b) => { let s = 0; for (let i = Math.floor(a * 44100); i < b * 44100 && i < d.length; i++) s += d[i] * d[i]; return +Math.sqrt(s / ((b - a) * 44100)).toFixed(4); };
+        const saved = JSON.parse(await new Promise((res) => { S.io.saveFile = (n, x) => res(x); S.io.saveProject(); }));
+        const sp = saved.proj.tracks[0].plugin;
+        return JSON.stringify({ installed: list.length, instruments: list.filter((x) => x.kind === 'inst').length, events: S.engine.plugEvents.length, webOnlyPeak: +before.toFixed(4), mixPeak: +peak.toFixed(4), firstNote: rms(0.1, 0.6), gap: rms(1.6, 2.0), secondNote: rms(2.2, 2.7), stateBytes: sp.state.length, fxStateBytes: sp.fx[0].state.length, msg });
+        """
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            _ = self.plugins.livePeak()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.2) { livePeak = self.plugins.livePeak() }
+            self.web.callAsyncJavaScript(js, arguments: [:], in: nil, in: .page) { result in
+                switch result {
+                case .success(let v): print("PLUGIN", v, "livePeak", livePeak)
+                case .failure(let e): print("PLUGIN error", e)
                 }
                 NSApp.terminate(nil)
             }
@@ -313,6 +352,34 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
         web.evaluateJavaScript("window.S && S.menu('\(action)')", completionHandler: nil)
     }
 
+    // MARK: plugins
+
+    private func reply(_ body: [String: Any], _ value: Any) {
+        guard let req = body["req"] as? Int, let d = try? JSONSerialization.data(withJSONObject: [value]), let json = String(data: d, encoding: .utf8) else { return }
+        web.evaluateJavaScript("S.plug.cb(\(req), \(json)[0])", completionHandler: nil)
+    }
+
+    private func pluginOp(_ op: String, _ body: [String: Any]) {
+        let track = body["t"] as? String ?? ""
+        switch op {
+        case "auList": reply(body, plugins.list())
+        case "auSync": plugins.sync(body["tracks"] as? [[String: Any]] ?? []) { [weak self] failed in self?.reply(body, failed) }
+        case "auMix":
+            for t in body["tracks"] as? [[String: Any]] ?? [] {
+                plugins.setMix(t["id"] as? String ?? "", vol: t["vol"] as? Double ?? 0.8, pan: t["pan"] as? Double ?? 0, mute: t["mute"] as? Bool ?? false)
+            }
+            plugins.setMaster(body["master"] as? Double ?? 1)
+        case "auNote": plugins.note(track, pitch: body["p"] as? Int ?? 60, velocity: body["v"] as? Double ?? 0.8, delay: body["delay"] as? Double ?? 0, duration: body["d"] as? Double ?? 0.25)
+        case "auOff": plugins.allOff()
+        case "auUI": plugins.showUI(track, slot: body["slot"] as? Int ?? -1, title: body["title"] as? String ?? "Plugin")
+        case "auStates": reply(body, plugins.states())
+        case "auRender":
+            let floats = (try? plugins.render(events: body["events"] as? [[String: Any]] ?? [], seconds: body["seconds"] as? Double ?? 0)) ?? []
+            reply(body, floats.withUnsafeBufferPointer { Data(buffer: $0) }.base64EncodedString())
+        default: break
+        }
+    }
+
     // MARK: files
 
     private func openFile(many: Bool = false) {
@@ -423,6 +490,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
     func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {
         guard let body = message.body as? [String: Any], let op = body["op"] as? String else { return }
         if op == "open" { openFile(many: body["many"] as? Bool ?? false) }
+        if op.hasPrefix("au") { return pluginOp(op, body) }
         if op == "recStart" { startRecording(monitor: body["monitor"] as? Bool ?? false) }
         if op == "recStop" { stopRecording() }
         if op == "stems", let b64 = body["b64"] as? String { separateStems(wavBase64: b64) }

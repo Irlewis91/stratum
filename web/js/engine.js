@@ -89,6 +89,7 @@
     m.drive.gain.value = d; m.makeup.gain.value = 1.1 / Math.sqrt(d);
     m.comp.threshold.value = -24 * proj.master.glue; m.comp.ratio.value = 1 + 3 * proj.master.glue;
     m.vol.gain.value = proj.master.vol;
+    if (S.plug && g === E.graph) S.plug.mix();
     proj.lfos.forEach((l, i) => {
       const gl = g.lfos[i];
       if (!gl) return;
@@ -98,6 +99,7 @@
     });
   };
   E.rebuild = () => {
+    if (S.plug) S.plug.sync();
     if (!E.ctx) return;
     if (E.graph) { try { E.graph.master.an.disconnect(); E.graph.lfos.forEach((l) => l.osc.stop()); } catch (e) {} }
     E.graph = E.build(E.ctx, S.proj);
@@ -264,6 +266,12 @@
       const when = toTime(beat);
       if (kind === 'note') {
         const dur = Math.min(n.d, info.end - beat) * spb;
+        if (S.plug && S.plug.on(tr)) {
+          // Plugin tracks sound in the Mac shell: live notes are sent with their delay, offline ones are collected for the mixdown.
+          if (live) S.plug.note(tr, n.p, n.v, when - ctx.currentTime + (ctx.outputLatency || 0), Math.max(0.03, dur));
+          else g.plugEvents.push({ t: tr.id, p: n.p, v: n.v == null ? 0.8 : n.v, at: when, d: Math.max(0.03, dur) });
+          return;
+        }
         if (tr.type === 'drums') E.drum(ctx, tg.input, n.p, n.v, when, tr);
         else if (tr.type === 'synth') { E.synth(ctx, tg.input, tr.inst, n, when, Math.max(0.03, dur), tg.last); tg.last = n.p; }
         return;
@@ -304,6 +312,7 @@
     clearInterval(E.timer);
     E.sources.forEach((s) => { try { s.stop(); } catch (e) {} });
     E.sources.clear();
+    if (S.plug) S.plug.allOff();
   };
   E.setBpm = (v) => {
     if (E.playing) { const now = E.ctx.currentTime, b = E.beatAt(now); S.proj.bpm = v; E.anchorT = now; E.anchorB = b; }
@@ -323,13 +332,16 @@
     const tg = E.graph.tracks[tr.id];
     if (!tg) return;
     const when = E.ctx.currentTime + 0.005;
+    if (S.plug && S.plug.on(tr)) return S.plug.note(tr, p, v, 0, 0.3);
     if (tr.type === 'drums') E.drum(E.ctx, tg.input, p, v, when, tr);
     else if (tr.type === 'synth') E.synth(E.ctx, tg.input, tr.inst, { p, v }, when, 0.3, null);
   };
 
   E.render = async (proj, mode, sceneId, beats) => {
     const spb = 60 / proj.bpm, sr = 44100, ctx = new OfflineAudioContext(2, Math.ceil((beats * spb + 2) * sr), sr), g = E.build(ctx, proj);
+    g.plugEvents = [];
     E.scheduleRange(ctx, g, proj, mode, sceneId, 0, beats, (b) => 0.05 + b * spb, false, true);
+    E.plugEvents = g.plugEvents;
     return ctx.startRendering();
   };
   E.peak = (an) => {

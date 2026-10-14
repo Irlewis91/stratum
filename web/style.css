@@ -208,3 +208,10 @@ kbd { background:var(--cell); border:1px solid var(--line); border-radius:4px; p
 .padc small { color:var(--dim); }
 .padc.add { border-style:dashed; cursor:pointer; justify-content:center; opacity:.85; }
 .smp { max-width:220px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:600; }
+
+/* plugins */
+.ikind { display:block; margin:0 0 8px; }
+.plist { display:flex; flex-direction:column; gap:4px; max-height:46vh; overflow:auto; margin:8px 0 12px; }
+.plist button { text-align:left; }
+.plist small { color:var(--dim); margin-left:6px; }
+.dev.plug .slot { display:flex; gap:6px; align-items:center; margin:4px 0; }

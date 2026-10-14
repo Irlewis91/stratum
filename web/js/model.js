@@ -61,6 +61,7 @@
     if (S.undo.length > 60) S.undo.shift();
   };
 
+  S.newInst = () => ({ wave: 'sawtooth', wave2: 'square', detune: 0.15, attack: 0.02, release: 0.2, cutoff: 0.6, res: 0.15 });
   S.newTrack = (proj, type, name) => {
     const i = proj.tracks.length;
     const t = {

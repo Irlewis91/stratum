@@ -66,7 +66,8 @@
     return new Uint8Array(out.buffer);
   };
 
-  IO.saveProject = () => {
+  IO.saveProject = async () => {
+    if (S.plug) await S.plug.capture();
     const used = new Set();
     for (const t of S.proj.tracks) {
       for (const k in t.pads || {}) used.add(t.pads[k].audio);
@@ -540,6 +541,7 @@ ${lanes}    </Lanes>
       S.ui.toast('Rendering audio…');
       await new Promise((r) => setTimeout(r, 30));
       const buf = await E.render(proj, song ? 'song' : 'scene', scene.id, song ? total : scene.bars * 4 * 4);
+      await S.plug.mixInto(buf, E.plugEvents);
       IO.saveFile(base + '.wav', IO.wav(buf));
       S.ui.toast('Mixdown rendered: ' + buf.duration.toFixed(1) + ' s');
     }

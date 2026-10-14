@@ -250,16 +250,23 @@
     if (back) {
       h += P().lfos.map((l, i) => `<div class="dev lfo"><h4>LFO ${i + 1} · CV source</h4><div class="krow">${ctl('knob', { k: 'lfo', i, key: 'rate' }, l.rate, 'Rate')}${ctl('knob', { k: 'lfo', i, key: 'depth' }, l.depth, 'Depth')}</div><select data-chg="lfoShape" data-i="${i}">${opts(['sine', 'triangle', 'square', 'sawtooth'], l.shape)}</select><div class="jackw"><i class="jack out ${U.arm === i ? 'armed' : ''}" data-act="jackOut" data-i="${i}"></i><span>CV out</span></div></div>`).join('');
     }
-    if (t.type === 'synth') {
+    const kindSel = t.type === 'audio' ? '' : `<label class="ikind">Instrument <select data-chg="instKind">${opts([['synth', 'Built-in synth'], ['sample', 'My own sample…'], ['drums', 'Drum kit / pads'], ['plugin', 'Plugin (Audio Unit)…']], t.plugin ? 'plugin' : t.type === 'drums' ? 'drums' : t.inst && t.inst.sample ? 'sample' : 'synth')}</select></label>`;
+    if (t.plugin && t.type !== 'audio') {
+      const pl = t.plugin, ok = S.plug.available();
+      h += `<div class="dev inst plug"><h4>Plugin · ${esc(pl.name)} <span class="hint">${esc(pl.maker || '')}</span></h4>${kindSel}` +
+        (ok ? `<div class="krow"><button data-act="plugOpen" data-slot="-1">Open plugin window</button><button data-act="plugPick" data-kind="inst">Change plugin…</button></div>` : `<p class="hint">Plugins run in the STRATUM Mac app; here the track plays the built-in sound.</p>`) +
+        `<div class="hint">Plugin effects</div>` + (pl.fx || []).map((f, fi) => `<div class="slot">${esc(f.name)} <button data-act="plugOpen" data-slot="${fi}">Open</button><button class="x" data-act="plugRmFx" data-i="${fi}" title="Remove">✕</button></div>`).join('') +
+        `<div class="krow"><button data-act="plugPick" data-kind="fx">+ Plugin effect…</button></div><p class="hint">Plugin tracks go straight to the Mac's audio output, so the STRATUM effects and master section do not process them.</p></div>`;
+    } else if (t.type === 'synth') {
       const i = t.inst, waves = ['sine', 'triangle', 'sawtooth', 'square'], smp = i.sample;
       const src = smp ? `<div class="krow"><span class="smp" title="${esc(smp.name)}">Sample: ${esc(smp.name)}</span><label>Root note <input type="number" min="12" max="108" value="${smp.root}" data-chg="instRoot" style="width:52px"> ${S.noteName(smp.root)}</label><label><input type="checkbox" data-chg="instLoop" ${smp.loop ? 'checked' : ''}> Loop</label><button data-act="instLoad">Replace…</button><button data-act="instClear">Use oscillators</button></div><div class="krow">` +
           [['attack', 'Attack'], ['release', 'Release'], ['cutoff', 'Cutoff'], ['res', 'Resonance']].map(([k, l]) => ctl(kn, { k: 'inst', t: t.id, key: k }, i[k], l)).join('') + '</div>'
         : `<div class="krow"><label>Osc 1 <select data-chg="inst" data-key="wave">${opts(waves, i.wave)}</select></label><label>Osc 2 <select data-chg="inst" data-key="wave2">${opts(waves, i.wave2)}</select></label><button data-act="instLoad" title="Play one of your own sounds across the keys">Load sample…</button></div><div class="krow">` +
           [['detune', 'Detune'], ['attack', 'Attack'], ['release', 'Release'], ['cutoff', 'Cutoff'], ['res', 'Resonance']].map(([k, l]) => ctl(kn, { k: 'inst', t: t.id, key: k }, i[k], l)).join('') + '</div>';
-      h += `<div class="dev inst"><h4>${smp ? 'Sampler' : 'Synth'}</h4>` + (back ? `<div class="krow">${jack(-1, 'cutoff', 'Cutoff CV')}${jack(-1, 'res', 'Resonance CV')}</div>` : src) + '</div>';
+      h += `<div class="dev inst"><h4>${smp ? 'Sampler' : 'Synth'}</h4>${back ? '' : kindSel}` + (back ? `<div class="krow">${jack(-1, 'cutoff', 'Cutoff CV')}${jack(-1, 'res', 'Resonance CV')}</div>` : src) + '</div>';
     } else if (t.type === 'drums') {
       const pads = t.pads || {};
-      h += `<div class="dev inst pads"><h4>Drum Sampler <span><button data-act="padKit" title="Pick several sound files; kicks, snares, claps and hats go to matching pads">Load sounds…</button></span></h4><p class="hint">Load your own one-shots onto any pad. Pads without a sample play the built-in sound.</p><div class="padgrid">` +
+      h += `<div class="dev inst pads"><h4>Drum Sampler <span><button data-act="padKit" title="Pick several sound files; kicks, snares, claps and hats go to matching pads">Load sounds…</button></span></h4>${kindSel}<p class="hint">Load your own one-shots onto any pad. Pads without a sample play the built-in sound.</p><div class="padgrid">` +
         S.drumRows(t).map((d) => { const pd = pads[d.p]; return `<div class="padc ${pd ? 'on' : ''}"><b data-act="padPlay" data-p="${d.p}" title="Click to hear">${esc(d.n)}</b><small>${pd ? (d.base ? esc(d.base) + ' pad' : 'Extra pad') : 'Built-in'}</small>` +
           (pd ? `<div class="krow">${ctl('hslider', { k: 'pad', t: t.id, p: d.p, key: 'tune' }, ((pd.tune || 0) + 12) / 24, 'Tune')}${ctl('hslider', { k: 'pad', t: t.id, p: d.p, key: 'gain' }, (pd.gain == null ? 1 : pd.gain) / 2, 'Level')}</div>` : '') +
           `<div class="krow"><button data-act="padLoad" data-p="${d.p}">${pd ? 'Replace…' : 'Load…'}</button>${pd ? `<button data-act="padClear" data-p="${d.p}">${d.extra ? 'Remove' : 'Built-in'}</button>` : ''}</div></div>`; }).join('') +
@@ -687,6 +694,24 @@
       changed(true);
     },
     instLoad() { U.pendingSample = { t: curTrack().id }; IO.open(); },
+    // Plugins: pick an installed Audio Unit as this track's instrument or as an effect after it.
+    async plugPick(el) {
+      if (!S.plug.available()) return U.toast('Plugins need the STRATUM Mac app.', true);
+      const kind = el.dataset.kind, list = (await S.plug.list()).filter((p) => p.kind === kind);
+      showPop(`<h3>${kind === 'inst' ? 'Choose an instrument plugin' : 'Add a plugin effect'} · ${esc(curTrack().name)}</h3><input placeholder="Type to filter" oninput="const q=this.value.toLowerCase();this.parentNode.querySelectorAll('.plist button').forEach(b=>b.hidden=!b.textContent.toLowerCase().includes(q))">` +
+        `<p class="hint">${list.length} Audio Unit ${kind === 'inst' ? 'instruments' : 'effects'} installed on this Mac.</p><div class="plist">` +
+        list.map((p) => `<button data-act="plugSet" data-kind="${kind}" data-id="${esc(p.id)}" data-name="${esc(p.name)}" data-maker="${esc(p.maker)}">${esc(p.name)} <small>${esc(p.maker)}</small></button>`).join('') + `</div><button data-act="closePop">Cancel</button>`);
+    },
+    plugSet(el) {
+      const t = curTrack(), d = el.dataset;
+      structural(() => {
+        if (d.kind === 'inst') t.plugin = { id: d.id, name: d.name, maker: d.maker, state: '', fx: (t.plugin && t.plugin.fx) || [] };
+        else if (t.plugin) t.plugin.fx.push({ id: d.id, name: d.name, state: '' });
+      });
+      closePop();
+    },
+    plugOpen(el) { S.plug.show(curTrack(), +el.dataset.slot); },
+    async plugRmFx(el) { await S.plug.capture(); structural(() => curTrack().plugin.fx.splice(+el.dataset.i, 1)); },
     instClear() { S.snap(); delete curTrack().inst.sample; changed(true); },
     async stems() {
       const tg = target(), t = tg.t, c = tg.clip, rec = c && S.buffers[c.audio];
@@ -819,6 +844,18 @@
     cents(el) { if (U.note) { S.snap(); U.note.c = Math.min(50, Math.max(-50, +el.value || 0)); } },
     glide(el) { if (U.note) { S.snap(); U.note.g = el.checked; renderNotes(); } },
     inst(el) { S.snap(); curTrack().inst[el.dataset.key] = el.value; },
+    // Switch what a note track plays: built-in synth, the producer's own sample, a drum kit, or a plugin.
+    instKind(el) {
+      const t = curTrack(), k = el.value;
+      if (k === 'plugin') { render(); return A.plugPick({ dataset: { kind: 'inst' } }); }
+      structural(() => {
+        delete t.plugin;
+        t.type = k === 'drums' ? 'drums' : 'synth';
+        if (t.type === 'synth' && !t.inst) t.inst = S.newInst();
+        if (k === 'synth' && t.inst) delete t.inst.sample;
+      });
+      if (k === 'sample' && !t.inst.sample) A.instLoad();
+    },
     instRoot(el) { const s = curTrack().inst.sample; if (s) { S.snap(); s.root = Math.min(108, Math.max(12, Math.round(+el.value) || 60)); render(); } },
     instLoop(el) { const s = curTrack().inst.sample; if (s) { S.snap(); s.loop = el.checked; } },
     lfoShape(el) { S.snap(); P().lfos[+el.dataset.i].shape = el.value; E.applyMix(); },

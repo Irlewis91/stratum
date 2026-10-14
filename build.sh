@@ -11,7 +11,7 @@ mkdir -p build "$APP/Contents/MacOS" "$APP/Contents/Resources"
 ORT="vendor/onnxruntime-osx-arm64-1.31.0"
 for arch in arm64 x86_64; do
   clang -O2 -c -target "$arch-apple-macos12.0" -I "$ORT/include" shell/stems.c -o "build/stems-$arch.o"
-  swiftc -O -target "$arch-apple-macos12.0" -import-objc-header shell/stems.h shell/main.swift "build/stems-$arch.o" -o "build/stratum-$arch"
+  swiftc -O -target "$arch-apple-macos12.0" -import-objc-header shell/stems.h shell/main.swift shell/plugins.swift "build/stems-$arch.o" -o "build/stratum-$arch"
 done
 lipo -create build/stratum-arm64 build/stratum-x86_64 -output "$APP/Contents/MacOS/STRATUM"
 

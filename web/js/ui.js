@@ -589,6 +589,12 @@
     toggleMode() { $('#modeSel').value = $('#modeSel').value === 'scene' ? 'song' : 'scene'; C.mode($('#modeSel')); },
     new() { S.snap(); const p = S.blankProject(); S.newScene(p, 'Scene 1', 1); S.newTrack(p, 'drums', 'Drums'); S.newTrack(p, 'synth', 'Synth'); setProject(p); },
     open() { U.pendingAudio = null; U.pendingSample = null; IO.open(); },
+    wanted() {
+      const w = P().wanted || [];
+      showPop(`<h3>Missing samples</h3><p class="hint">This project uses these sound files, but they are not on this Mac where the project says they are. Choose them (you can pick several at once); files are matched by name.</p><div class="plist">` +
+        w.map((x) => `<div title="${esc(x.path)}">${esc(x.file)}</div>`).join('') + `</div><button data-act="wantedPick">Choose sample files…</button> <button data-act="closePop">Close</button>`);
+    },
+    wantedPick() { closePop(); U.pendingAudio = null; U.pendingSample = null; U.locating = true; U.located = 0; IO.open(true); },
     save() { IO.saveProject(); },
     undo() { const s = S.undo.pop(); if (!s) return U.toast('Nothing to undo'); S.proj = JSON.parse(s); U.note = null; if (!tr(U.track)) U.track = P().tracks[0].id; if (!P().scenes.some((x) => x.id === U.scene)) U.scene = P().scenes[0].id; if (!P().scenes.some((x) => x.id === E.sceneId)) E.sceneId = U.scene; E.rebuild(); syncHeader(); render(); },
     help() {
@@ -760,7 +766,7 @@
   S.menu = (a) => (a.startsWith('export:') ? IO.exportAs(a.slice(7)) : A[a] && A[a]());
 
   U.imported = (res) => {
-    if (res.proj) { S.snap(); setProject(res.proj); return U.toast(res.report); }
+    if (res.proj) { S.snap(); setProject(res.proj); U.wantedUI(); return U.toast(res.report); }
     if (U.pendingSample && tr(U.pendingSample.t) && tr(U.pendingSample.t).type !== 'audio') {
       const ps = U.pendingSample, t = tr(ps.t), nm = res.audio.name.replace(/\.[^.]+$/, '');
       S.snap();
@@ -792,7 +798,17 @@
     U.toast(rec.bpm ? `Audio added: ${rec.name} — detected ${rec.bpm} BPM, warped to ${Math.round(P().bpm)}.` : `Audio added: ${rec.name}. Tempo was not detected; enter the Source BPM to warp it.`);
   };
   // Called when a file-picker batch has finished (or was cancelled), so a later plain Open is not treated as a sample load.
-  U.openDone = () => { U.pendingSample = null; U.pendingAudio = null; };
+  U.openDone = () => {
+    U.pendingSample = null; U.pendingAudio = null;
+    if (U.locating) { U.locating = false; U.wantedDone(U.located); }
+  };
+  // Samples the project points at: refresh the header button and say what was found.
+  U.wantedUI = () => { const n = (P().wanted || []).length, b = $('#wantBtn'); b.hidden = !n; b.textContent = `Missing samples (${n})`; };
+  U.wantedDone = (found) => {
+    const left = (P().wanted || []).length;
+    E.rebuild(); render(); U.wantedUI();
+    if (found || left) U.toast((found ? `Loaded ${found} sample file${found === 1 ? '' : 's'} into the project. ` : '') + (left ? `${left} could not be found — click “Missing samples” to choose them.` : 'All of its samples are loaded.'), !found && !!left);
+  };
   U.recStarted = () => {
     const r = U.recording;
     if (!r) return;

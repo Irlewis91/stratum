@@ -251,14 +251,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
             guard let data = try? Data(contentsOf: url) else { print("IMPORT", path, "unreadable"); next(); return }
             let js = """
             let msg = ''; S.ui.toast = (m) => { msg = m; };
-            await S.io.nativeOpen(name, b64);
+            await S.io.nativeOpen(name, b64, path);
             const p = S.proj;
             return JSON.stringify({ file: name, msg, bpm: p.bpm, scenes: p.scenes.map((s) => s.name + ':' + s.bars), sections: p.sections.length, songBeats: S.songEnd(p), regions: p.tracks.reduce((a, t) => a + t.regions.length, 0),
-              tracks: p.tracks.map((t) => [t.name, t.type, +t.vol.toFixed(2), +t.pan.toFixed(2), Object.values(t.clips).reduce((a, c) => a + (c.notes ? c.notes.length : 0), 0), t.regions.length, t.mute]),
+              tracks: p.tracks.map((t) => [t.name, t.type, +t.vol.toFixed(2), +t.pan.toFixed(2), Object.values(t.clips).reduce((a, c) => a + (c.notes ? c.notes.length : 0), 0), t.regions.length, t.mute, t.pads ? Object.values(t.pads).map((x) => x.name).join('+') : t.inst && t.inst.sample ? t.inst.sample.name : '']), wanted: (p.wanted || []).map((w) => w.file),
               firstRegions: p.tracks.map((t) => t.regions.slice(0, 3).map((r) => [+r.start.toFixed(3), +r.len.toFixed(3), +r.off.toFixed(3), r.clip.notes ? r.clip.notes.length + 'n' : 'audio'])),
               buffers: Object.values(S.buffers).map((b) => [b.name, +b.buf.duration.toFixed(2), b.bpm, +b.buf.getChannelData(0).reduce((m, x) => Math.max(m, Math.abs(x)), 0).toFixed(3)]) });
             """
-            web.callAsyncJavaScript(js, arguments: ["name": url.lastPathComponent, "b64": data.base64EncodedString()], in: nil, in: .page) { result in
+            web.callAsyncJavaScript(js, arguments: ["name": url.lastPathComponent, "b64": data.base64EncodedString(), "path": url.path], in: nil, in: .page) { result in
                 switch result {
                 case .success(let v): print("IMPORT", v)
                 case .failure(let e): print("IMPORT", url.lastPathComponent, "error", e.localizedDescription)
@@ -407,6 +407,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
         web.evaluateJavaScript("window.S && S.menu('\(action)')", completionHandler: nil)
     }
 
+    /// Looks for sample files a project points at: where it says they are, then beside the project file. Found files are handed
+    /// to the web side one at a time.
+    private func findFiles(_ paths: [String], near: String) {
+        let fm = FileManager.default, home = NSHomeDirectory()
+        let dir = near.isEmpty ? nil : URL(fileURLWithPath: near).deletingLastPathComponent()
+        let stem = near.isEmpty ? "" : URL(fileURLWithPath: near).deletingPathExtension().lastPathComponent
+        var queue: [(String, URL)] = []
+        for p in paths {
+            let name = (p.replacingOccurrences(of: "\\", with: "/") as NSString).lastPathComponent
+            var tries = [p.replacingOccurrences(of: "%FLStudioUserData%", with: home + "/Documents/Image-Line/FL Studio")]
+            if let d = dir { tries += [d.appendingPathComponent(name).path, d.appendingPathComponent("Samples/" + name).path, d.appendingPathComponent(stem + "/Samples/" + name).path, d.appendingPathComponent(stem + "/" + name).path] }
+            if let hit = tries.first(where: { var isDir: ObjCBool = false; return fm.fileExists(atPath: $0, isDirectory: &isDir) && !isDir.boolValue }) { queue.append((p, URL(fileURLWithPath: hit))) }
+        }
+        func next() {
+            guard !queue.isEmpty else { web.evaluateJavaScript("S.io.foundDone()", completionHandler: nil); return }
+            let (wanted, url) = queue.removeFirst()
+            guard let data = try? Data(contentsOf: url), data.count < 400_000_000 else { return next() }
+            web.callAsyncJavaScript("await S.io.found(name, b64);", arguments: ["name": (wanted.replacingOccurrences(of: "\\", with: "/") as NSString).lastPathComponent, "b64": data.base64EncodedString()], in: nil, in: .page) { _ in next() }
+        }
+        next()
+    }
+
     // MARK: plugins
 
     private func reply(_ body: [String: Any], _ value: Any) {
@@ -451,7 +473,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
         let panel = NSOpenPanel()
         panel.allowsMultipleSelection = many
         panel.canChooseDirectories = false
-        panel.message = many ? "Choose one or more sound files" : "Open a STRATUM project, or import MIDI, Ableton .als, FL Studio .flp, a Reason song or an audio file"
+        panel.message = many ? "Choose one or more sound files" : "Open a STRATUM project, or import MIDI, Ableton .als, FL Studio .flp or zipped loop package, a Reason song or an audio file"
         panel.beginSheetModal(for: window) { [weak self] result in
             guard let self = self else { return }
             var queue = result == .OK ? panel.urls : []
@@ -460,7 +482,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
                 let url = queue.removeFirst()
                 guard let data = try? Data(contentsOf: url) else { self.alert("Could not read \(url.lastPathComponent)."); return next() }
                 if data.count > 400_000_000 { self.alert("That file is too large to import (limit 400 MB)."); return next() }
-                self.web.callAsyncJavaScript("await S.io.nativeOpen(name, b64);", arguments: ["name": url.lastPathComponent, "b64": data.base64EncodedString()], in: nil, in: .page) { _ in next() }
+                self.web.callAsyncJavaScript("await S.io.nativeOpen(name, b64, path);", arguments: ["name": url.lastPathComponent, "b64": data.base64EncodedString(), "path": url.path], in: nil, in: .page) { _ in next() }
             }
             next()
         }
@@ -556,6 +578,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
         guard let body = message.body as? [String: Any], let op = body["op"] as? String else { return }
         if op == "open" { openFile(many: body["many"] as? Bool ?? false) }
         if op.hasPrefix("au") { return pluginOp(op, body) }
+        if op == "findFiles" { findFiles(body["paths"] as? [String] ?? [], near: body["near"] as? String ?? "") }
         if op == "recStart" { startRecording(monitor: body["monitor"] as? Bool ?? false) }
         if op == "recStop" { stopRecording() }
         if op == "stems", let b64 = body["b64"] as? String { separateStems(wavBase64: b64) }

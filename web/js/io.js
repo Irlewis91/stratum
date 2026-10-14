@@ -21,7 +21,52 @@
     if (native()) native().postMessage({ op: 'open', many: !!many });
     else { inp.multiple = !!many; inp.click(); }
   };
-  IO.nativeOpen = (name, data) => IO.importBytes(name, unb64(data).buffer);
+  IO.nativeOpen = (name, data, path) => { IO.lastPath = path || ''; return IO.importBytes(name, unb64(data).buffer); };
+
+  // ---- samples a project refers to but does not contain (FL Studio projects point at files on disk) ----
+  // proj.wanted: [{t: track id, kind: 'inst' | 'clip', path, file, pitch?, items?: [{t, len}]}]
+  IO.attach = (proj, w, rec) => {
+    const t = proj.tracks.find((x) => x.id === w.t), nm = w.file.replace(/\.[^.]+$/, '');
+    if (!t) return;
+    if (w.kind === 'clip') {
+      const beats = (rec.buf.duration * proj.bpm) / 60, bars = Math.max(1, Math.ceil(beats / 4));
+      for (const it of w.items || []) t.regions.push({ id: S.uid(), start: it.t, len: Math.max(0.25, Math.min(it.len || beats, beats)), off: 0, clip: { audio: rec.id, warp: false, bars, gain: 1 } });
+    } else if (t.type === 'drums') { t.pads = t.pads || {}; t.pads[w.pitch || 36] = { audio: rec.id, name: nm, tune: 0, gain: 1 }; }
+    else if (t.inst) t.inst.sample = { audio: rec.id, name: nm, root: 60, loop: false };
+  };
+  // Offer a file to the open project: used when its name matches a missing sample. Resolves true when it was used.
+  IO.offer = async (name, ab) => {
+    const proj = S.proj, base = name.split(/[\\/]/).pop().toLowerCase(), ws = (proj.wanted || []).filter((w) => w.file.toLowerCase() === base);
+    if (!ws.length) return false;
+    const rec = await IO.addAudio(base === name.toLowerCase() ? name : name.split(/[\\/]/).pop(), ab);
+    ws.forEach((w) => IO.attach(proj, w, rec));
+    proj.wanted = proj.wanted.filter((w) => !ws.includes(w));
+    return true;
+  };
+  // After an import, ask the Mac shell to look for the missing files where the project says they are and beside the project file.
+  IO.seek = () => new Promise((res) => {
+    const w = (S.proj && S.proj.wanted) || [];
+    if (!w.length || !native()) return res(0);
+    let n = 0;
+    IO.found = async (name, data) => { if (await IO.offer(name, unb64(data).buffer)) n++; };
+    IO.foundDone = () => { S.ui.wantedDone(n); res(n); };
+    native().postMessage({ op: 'findFiles', paths: [...new Set(w.map((x) => x.path))], near: IO.lastPath || '' });
+  });
+  // Minimal zip reader (stored and deflated entries) for FL Studio "zipped loop packages".
+  IO.unzip = async (ab) => {
+    const v = new DataView(ab), u8 = new Uint8Array(ab), out = [];
+    let e = u8.length - 22;
+    while (e >= 0 && v.getUint32(e, true) !== 0x06054b50) e--;
+    if (e < 0) throw new Error('Not a zip file');
+    let o = v.getUint32(e + 16, true);
+    for (let i = v.getUint16(e + 10, true); i > 0 && v.getUint32(o, true) === 0x02014b50; i--) {
+      const method = v.getUint16(o + 10, true), csize = v.getUint32(o + 20, true), nl = v.getUint16(o + 28, true), xl = v.getUint16(o + 30, true), cl = v.getUint16(o + 32, true), lo = v.getUint32(o + 42, true);
+      const name = new TextDecoder().decode(u8.subarray(o + 46, o + 46 + nl)), start = lo + 30 + v.getUint16(lo + 26, true) + v.getUint16(lo + 28, true), raw = u8.subarray(start, start + csize);
+      if (!name.endsWith('/')) out.push({ name, data: method === 0 ? raw.slice().buffer : method === 8 ? await new Response(new Blob([raw]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer() : null });
+      o += 46 + nl + xl + cl;
+    }
+    return out.filter((f) => f.data);
+  };
   IO.native = native;
   // AI stem separation runs in the Mac shell. Resolves with four AudioBuffers: drums, bass, other, vocals.
   IO.separate = async (buf, onProgress) => {
@@ -261,7 +306,8 @@
       const b = u8.subarray(a, a + len), wide = len > 1 && b[1] === 0;
       return new TextDecoder(wide ? 'utf-16le' : 'latin1').decode(b).replace(/\0/g, '');
     };
-    let bpm = 0, chan = -1, pat = 0, title = '', audioClips = 0;
+    let bpm = 0, chan = -1, pat = 0, title = '';
+    const clipItems = [];
     const chans = {}, pats = {}, playlist = [];
     const ch = (i) => chans[i] || (chans[i] = { name: '', plugin: '' });
     while (o < end) {
@@ -273,6 +319,7 @@
         let len = 0, shift = 0, b;
         do { b = u8[o++]; len |= (b & 0x7f) << shift; shift += 7; } while (b & 0x80);
         if (id === 192 && chan >= 0) ch(chan).name = text(o, len);
+        else if (id === 196 && chan >= 0) ch(chan).sample = text(o, len);
         else if (id === 203 && chan >= 0 && !ch(chan).plugin) ch(chan).plugin = text(o, len);
         else if (id === 193) (pats[pat] || (pats[pat] = { notes: [] })).name = text(o, len);
         else if (id === 194) title = text(o, len);
@@ -283,7 +330,7 @@
           for (let q = o; size && q + size <= o + len; q += size) {
             const base = v.getUint16(q + 4, true), idx = v.getUint16(q + 6, true);
             if (idx > base) playlist.push({ pat: idx - base, t: v.getUint32(q, true) / ppq, len: v.getUint32(q + 8, true) / ppq });
-            else audioClips++;
+            else clipItems.push({ ch: idx, t: v.getUint32(q, true) / ppq, len: v.getUint32(q + 8, true) / ppq });
           }
         }
         else if (id === 224) {
@@ -317,17 +364,28 @@
         for (const it of items) for (const n of pats[it.pat].notes) if (n.ch === ci && (!it.len || n.t < it.len)) song.push(conv(n, it.t));
         if (song.length) clips[0] = { bars: songBars, notes: song };
       }
-      return { name: nm, type: dp ? 'drums' : 'synth', vol: chans[ci].vol, pan: chans[ci].pan, clips };
+      return { name: nm, type: chans[ci].type === 4 ? 'audio' : dp ? 'drums' : 'synth', vol: chans[ci].vol, pan: chans[ci].pan, clips, ci, dp };
     }).filter((t, i, all) => Object.keys(t.clips).length || chans[Object.keys(chans).map(Number).sort((a, b) => a - b)[i]].type !== 5);
     if (!tracks.length) throw new Error('No instrument channels found in this FL Studio project');
     const noteCount = patIds.reduce((a, k) => a + pats[k].notes.length, 0);
     if (!scenes.length) scenes.push({ name: 'Pattern 1', bars: 1 });
+    const proj = S.fromFlat({ name: title || name, bpm: bpm || 140, scenes, tracks, arrangement: songBars ? [{ scene: 0, reps: 1 }] : undefined });
+    // Sampler channels and playlist audio clips name a sample file; list them so the files can be found and loaded.
+    proj.wanted = [];
+    tracks.forEach((ft, i) => {
+      const c = chans[ft.ci], t = proj.tracks[i];
+      if (!c.sample || !t) return;
+      const file = c.sample.split(/[\\/]/).pop();
+      if (c.type === 4) proj.wanted.push({ t: t.id, kind: 'clip', path: c.sample, file, items: clipItems.filter((it) => it.ch === ft.ci).map((it) => ({ t: it.t, len: it.len })) });
+      else if (!c.type) proj.wanted.push({ t: t.id, kind: 'inst', path: c.sample, file, pitch: ft.dp || 0 });
+    });
+    const audioClips = clipItems.filter((it) => chans[it.ch] && chans[it.ch].type === 4).length;
     return {
-      proj: S.fromFlat({ name: title || name, bpm: bpm || 140, scenes, tracks, arrangement: songBars ? [{ scene: 0, reps: 1 }] : undefined }),
+      proj,
       report: `FL Studio project: ${tracks.length} channels, ${patIds.length} patterns, ${noteCount} notes, ` + (bpm ? `tempo ${Math.round(bpm)}` : 'tempo not found in the file so it is set to 140') + ', channel volume and pan kept. ' +
-        (audioClips ? `${audioClips} audio clips on the playlist were skipped: an .flp only points at sample files on the computer that made it, it does not contain them. ` : '') +
+        (proj.wanted.length ? `It uses ${proj.wanted.length} sample files` + (audioClips ? ` (${audioClips} audio clips on the playlist)` : '') + '. An .flp only points at those files, so STRATUM looks for them on this Mac; use “Missing samples” to choose any it cannot find. ' : '') +
         (noteCount ? '' : 'This project has no pattern notes (it is built from audio or automation clips), so the tracks came in empty. ') +
-        (songBars ? `The playlist was read into a ${songBars}-bar “Song” scene.` : 'No playlist found, so each pattern is placed once in the arrangement.') + ' Samples, plugins, automation and mixer inserts are not read.',
+        (songBars ? `The playlist was read into a ${songBars}-bar “Song” scene.` : 'No playlist found, so each pattern is placed once in the arrangement.') + ' FL Studio\'s own plugins, automation and mixer inserts are not read.',
     };
   };
 
@@ -455,7 +513,7 @@
         'Audio recordings came in with their clip positions and are stretched to the song tempo. ' +
         (kinds.length ? `Reason devices are not recreated: ${kinds.join(', ')} tracks play on STRATUM's built-in sounds. ` : '') +
         (nMuted ? `${nMuted} muted clips were left out. ` : '') + (nLost ? `${nLost} audio tracks had no readable recording. ` : '') +
-        'Mixer levels, effects, automation and samples inside devices are not read.',
+        'Mixer levels, effects, automation and samples inside devices are not read. To bring a device\'s real sound across, bounce its track to audio in Reason and save the song again: audio tracks come in as recorded.',
     };
   };
 
@@ -556,10 +614,22 @@ ${lanes}    </Lanes>
       else if (ext === 'mid' || ext === 'midi') res = IO.midiIn(ab, base);
       else if (ext === 'als') res = IO.alsIn(await IO.gunzip(ab), base);
       else if (ext === 'flp') res = IO.flpIn(ab, base);
+      else if (ext === 'zip') {
+        // FL Studio zipped loop package: the project plus the samples it uses.
+        const files = await IO.unzip(ab), flp = files.find((f) => /\.flp$/i.test(f.name));
+        if (!flp) throw new Error('No FL Studio project found inside this zip');
+        res = IO.flpIn(flp.data, flp.name.split('/').pop().replace(/\.flp$/i, ''));
+        S.ui.imported(res);
+        let n = 0;
+        for (const f of files) if (f !== flp && (await IO.offer(f.name, f.data).catch(() => false))) n++;
+        return S.ui.wantedDone(n);
+      }
       else if (ext === 'reason') res = IO.reasonIn(ab, base);
       else if (['rns', 'ptx', 'ptf', 'logicx', 'omf', 'aaf', 'dawproject'].includes(ext)) throw new Error('.' + ext + ' files cannot be opened in this version');
+      else if (S.ui.locating) { if (await IO.offer(fname, ab)) S.ui.located++; return; }
       else res = { audio: await IO.addAudio(fname, ab) };
       S.ui.imported(res);
+      if (res.proj && res.proj.wanted && res.proj.wanted.length) await IO.seek();
     } catch (e) {
       S.ui.toast('Could not open ' + fname + ': ' + (e.message || e), true);
     }

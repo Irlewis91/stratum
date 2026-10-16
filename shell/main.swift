@@ -1,6 +1,7 @@
 // STRATUM macOS shell: a native window, menu bar and file dialogs around the bundled web app.
 import AVFoundation
 import Cocoa
+import Photos
 import WebKit
 
 // Captures the Mac's audio input. Monitoring goes input -> output inside this engine, so it bypasses every effect in the mixer.
@@ -283,13 +284,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
             self.web.callAsyncJavaScript(js, arguments: [:], in: nil, in: .page) { result in
                 let dir = FileManager.default.urls(for: .moviesDirectory, in: .userDomainMask)[0].appendingPathComponent("STRATUM")
-                for f in ["Since I Been Away.mp4", "Since I Been Away.m4a"] {
+                for f in ["Since I Been Away 9x16.mp4", "Since I Been Away.m4a"] {
                     let u = dir.appendingPathComponent(f), a = AVURLAsset(url: u)
                     let size = (try? FileManager.default.attributesOfItem(atPath: u.path)[.size] as? Int) ?? 0
                     print("SHARETEST", f, "seconds", String(format: "%.2f", a.duration.seconds), "bytes", size, "video", a.tracks(withMediaType: .video).first?.naturalSize ?? .zero, "audioTracks", a.tracks(withMediaType: .audio).count)
                 }
-                ShareRenderer.preview(title: "Since I Been Away", artist: "Slade", peaks: (0..<96).map { Float(0.25 + 0.75 * abs(sin(Double($0) * 0.37))) }, progress: 0.4,
-                                      to: URL(fileURLWithPath: CommandLine.arguments.last!))
+                let peaks = (0..<96).map { Float(0.25 + 0.75 * abs(sin(Double($0) * 0.37))) }, png = CommandLine.arguments.last!
+                ShareRenderer.preview(title: "Since I Been Away", artist: "Slade", peaks: peaks, progress: 0.4, to: URL(fileURLWithPath: png))
+                // The other post shapes: previews, plus a real render from the audio just made.
+                for (target, _) in ShareBrand.shapes where target == "ig_post" || target == "x" {
+                    let sh = ShareBrand.shape(target)
+                    ShareRenderer.preview(title: "Since I Been Away", artist: "Slade", peaks: peaks, progress: 0.4, to: URL(fileURLWithPath: png.replacingOccurrences(of: ".png", with: "-\(sh.label).png")), width: sh.w, height: sh.h)
+                    let sem = DispatchSemaphore(value: 0)
+                    DispatchQueue.global().async {
+                        ShareRenderer.render(.init(wav: dir.appendingPathComponent("Since I Been Away.m4a"), title: "Since I Been Away", artist: "Slade", peaks: peaks, outDir: dir.appendingPathComponent("shapes"), width: sh.w, height: sh.h, label: sh.label), progress: { _ in }) { r in
+                            if case .success(let o) = r { let a = AVURLAsset(url: o.video); print("SHARETEST", sh.label, a.tracks(withMediaType: .video).first?.naturalSize ?? .zero, String(format: "%.2f s", a.duration.seconds)) } else { print("SHARETEST", sh.label, "failed") }
+                            sem.signal()
+                        }
+                    }
+                    while sem.wait(timeout: .now() + 0.05) == .timedOut { RunLoop.main.run(until: Date().addingTimeInterval(0.05)) }
+                }
                 if case .success(let v) = result { print("SHARETEST", v) } else if case .failure(let e) = result { print("SHARETEST error", e) }
                 NSApp.terminate(nil)
             }
@@ -569,12 +583,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
         guard let data = Data(base64Encoded: body["b64"] as? String ?? "") else { return }
         let title = body["title"] as? String ?? "Untitled", artist = body["artist"] as? String ?? "", target = body["target"] as? String ?? "save"
         let peaks = (body["peaks"] as? [Double] ?? []).map { Float($0) }
-        let key = "\(title)|\(artist)|\(data.count)|\(data.hashValue)"
+        let shape = ShareBrand.shape(target)
+        let key = "\(title)|\(artist)|\(data.count)|\(data.hashValue)|\(shape.label)"
         if let l = lastShare, l.key == key, FileManager.default.fileExists(atPath: l.out.video.path) { return deliver(l.out, target: target, title: title, artist: artist) }
         let wav = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".wav")
         do { try data.write(to: wav) } catch { return shareDone(false, "Could not prepare the audio: \(error.localizedDescription)") }
         let out = FileManager.default.urls(for: .moviesDirectory, in: .userDomainMask)[0].appendingPathComponent("STRATUM")
-        ShareRenderer.render(.init(wav: wav, title: title, artist: artist, peaks: peaks, outDir: out), progress: { [weak self] f in
+        ShareRenderer.render(.init(wav: wav, title: title, artist: artist, peaks: peaks, outDir: out, width: shape.w, height: shape.h, label: shape.label), progress: { [weak self] f in
             self?.web.evaluateJavaScript("S.ui.shareProgress(\(f))", completionHandler: nil)
         }) { [weak self] result in
             try? FileManager.default.removeItem(at: wav)
@@ -605,6 +620,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
         case "mail": send(.composeEmail, [line, o.audio], subject: "\(title) \u{2014} made with STRATUM", done: "Mail is open with your track attached.")
         case "messages": send(.composeMessage, [line, o.video], done: "Messages is open with your video attached.")
         case "airdrop": send(.sendViaAirDrop, [o.video], done: "Choose who to AirDrop your video to.")
+        case "ig_story":
+            // Instagram Stories can only be posted from the phone app, so the video goes into Photos (which iCloud Photos
+            // carries to the phone) and is shown in Finder for AirDrop.
+            NSWorkspace.shared.activateFileViewerSelecting([o.video])
+            PHPhotoLibrary.requestAuthorization(for: .addOnly) { status in
+                guard status == .authorized || status == .limited else {
+                    return DispatchQueue.main.async { self.shareDone(true, "Your Story video is selected in Finder \u{2014} AirDrop it to your phone, then in Instagram tap + \u{203A} Story.") }
+                }
+                PHPhotoLibrary.shared().performChanges({ PHAssetCreationRequest.creationRequestForAssetFromVideo(atFileURL: o.video) }) { ok, _ in
+                    DispatchQueue.main.async {
+                        self.shareDone(true, ok ? "Saved to Photos. With iCloud Photos it appears on your phone \u{2014} in Instagram tap + \u{203A} Story and pick it. (It is also selected in Finder for AirDrop.)"
+                                           : "Your Story video is selected in Finder \u{2014} AirDrop it to your phone, then in Instagram tap + \u{203A} Story.")
+                    }
+                }
+            }
         case "more":
             let picker = NSSharingServicePicker(items: [o.video, o.audio])
             picker.show(relativeTo: NSRect(x: web.bounds.midX, y: web.bounds.maxY - 40, width: 1, height: 1), of: web, preferredEdge: .minY)

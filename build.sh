@@ -59,6 +59,7 @@ cat > "$APP/Contents/Info.plist" <<EOF
   <key>CFBundleVersion</key><string>1</string>
   <key>LSMinimumSystemVersion</key><string>12.0</string>
   <key>LSApplicationCategoryType</key><string>public.app-category.music</string>
+  <key>NSPhotoLibraryAddUsageDescription</key><string>STRATUM saves your shared track videos to Photos so you can post them from your phone, for example as an Instagram Story.</string>
   <key>NSMicrophoneUsageDescription</key><string>STRATUM records audio from your microphone or audio interface onto the tracks you arm.</string>
   <key>NSHighResolutionCapable</key><true/>
   <key>NSPrincipalClass</key><string>NSApplication</string>

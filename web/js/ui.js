@@ -696,12 +696,16 @@
         `<label>Title <input id="shTitle" value="${esc(p.name || 'Untitled')}"></label><label>Artist <input id="shArtist" value="${esc(p.artist || '')}" placeholder="Your artist name"></label>` +
         `<label>Length <select id="shClip">${opts([['', 'Whole track'], ['60', 'First 60 seconds'], ['30', 'First 30 seconds'], ['15', 'First 15 seconds']], '')}</select></label>` +
         `<div class="stock"><b>Send</b> ${go('messages', 'Text (Messages)')}${go('mail', 'Email')}${go('airdrop', 'AirDrop')}${go('more', 'More…')}</div>` +
-        `<div class="stock"><b>Post</b> ${go('tiktok', 'TikTok')}${go('instagram', 'Instagram')}${go('youtube', 'YouTube')}${go('x', 'X')}</div>` +
-        `<p class="hint">For TikTok, Instagram, YouTube and X, STRATUM opens the upload page and shows the video in Finder, ready to drag in.</p>` +
+        `<div class="stock"><b>Post</b> ${go('ig_story', 'Instagram Story')}${go('ig_reel', 'Instagram Reel')}${go('ig_post', 'Instagram Post')}${go('facebook', 'Facebook')}${go('tiktok', 'TikTok')}${go('x', 'X (Twitter)')}${go('threads', 'Threads')}${go('youtube', 'YouTube Shorts')}</div>` +
+        `<p class="hint">Each gets the right shape: 9:16 for Stories, Reels, TikTok and Shorts, 4:5 for Instagram, Facebook and Threads posts, square for X. STRATUM opens the upload page and shows the video in Finder, ready to drag in. Instagram Stories can only be posted from the phone app, so that video is saved to Photos.</p>` +
         `${go('save', 'Just save the files')} <button data-act="closePop">Cancel</button>`);
     },
     shareGo(el) {
-      const title = ($('#shTitle').value || '').trim() || 'Untitled', artist = ($('#shArtist').value || '').trim(), clip = +$('#shClip').value || 0;
+      const title = ($('#shTitle').value || '').trim() || 'Untitled', artist = ($('#shArtist').value || '').trim();
+      // Platform length limits: Stories 60 s per story, X 2:20 for most accounts, Reels 3 minutes.
+      const limit = { ig_story: 60, x: 140, ig_reel: 180 }[el.dataset.target], chosen = +$('#shClip').value || 0;
+      const clip = limit && (!chosen || chosen > limit) ? limit : chosen;
+      if (clip !== chosen) U.toast(`${el.textContent} allows ${limit} seconds, so the first ${limit} seconds will be used.`);
       P().artist = artist;
       closePop();
       if (!IO.native()) return U.toast('Sharing needs the STRATUM Mac app. Use Export to save a WAV file instead.', true);

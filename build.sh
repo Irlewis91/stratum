@@ -12,7 +12,8 @@ ORT="vendor/onnxruntime-osx-arm64-1.31.0"
 for arch in arm64 x86_64; do
   clang -O2 -c -target "$arch-apple-macos12.0" -I "$ORT/include" shell/stems.c -o "build/stems-$arch.o"
   ./build-vst3.sh "$arch"
-  swiftc -O -target "$arch-apple-macos12.0" -import-objc-header shell/bridge.h -I vendor/vst3sdk shell/main.swift shell/plugins.swift shell/share.swift "build/stems-$arch.o" "build/libv3-$arch.a" -Xlinker -lc++ -o "build/stratum-$arch"
+  ./build-airwin.sh "$arch"
+  swiftc -O -target "$arch-apple-macos12.0" -import-objc-header shell/bridge.h -I vendor/vst3sdk shell/main.swift shell/plugins.swift shell/share.swift "build/stems-$arch.o" "build/libv3-$arch.a" "build/libaw-$arch.a" -Xlinker -lc++ -o "build/stratum-$arch"
 done
 lipo -create build/stratum-arm64 build/stratum-x86_64 -output "$APP/Contents/MacOS/STRATUM"
 
@@ -31,6 +32,7 @@ fi
 mkdir -p "$APP/Contents/Resources/licenses" "$APP/Contents/Resources/brand"
 sips -s format png assets/stratum-wordmark.webp --out "$APP/Contents/Resources/brand/stratum-wordmark.png" >/dev/null
 cp vendor/vst3sdk/public.sdk/LICENSE.txt "$APP/Contents/Resources/licenses/vst3sdk-LICENSE.txt"
+cp vendor/airwin2rack/LICENSE.md "$APP/Contents/Resources/licenses/airwindows-consolidated-LICENSE.txt"
 
 swift shell/icon.swift assets/stratum-icon.png build/icon.png
 mkdir -p build/AppIcon.iconset

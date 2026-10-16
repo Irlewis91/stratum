@@ -100,6 +100,8 @@
   };
   PL.mix = () => { if (native() && S.proj) native().postMessage({ op: 'auMix', tracks: mixOf(S.proj), master: S.proj.master.vol }); };
   PL.note = (t, p, v, delay, dur) => native().postMessage({ op: 'auNote', t: t.id, p, v: v == null ? 0.8 : v, delay: Math.max(0, delay), d: dur });
+  PL.params = (t, slot) => ask({ op: 'auParams', t: t.id, slot });
+  PL.setParam = (t, slot, i, v) => ask({ op: 'auSetParam', t: t.id, slot, i, v });
   PL.allOff = () => { if (native()) native().postMessage({ op: 'auOff' }); };
   PL.show = (t, slot) => native() && native().postMessage({ op: 'auUI', t: t.id, slot, title: (slot < 0 ? t.plugin.name : PL.fxList(t)[slot].name) + ' — ' + t.name });
   // Copy each plugin's current settings into the project so they are saved with it.

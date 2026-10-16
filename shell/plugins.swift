@@ -148,6 +148,7 @@ final class PluginHost {
             }
         }
         out += VST3Unit.catalogue()
+        out += AirwinUnit.catalogue()
         return out.sorted { ($0["maker"]!.lowercased(), $0["name"]!.lowercased()) < ($1["maker"]!.lowercased(), $1["name"]!.lowercased()) }
     }
 
@@ -195,6 +196,20 @@ final class PluginHost {
                 VST3Unit.pending = (path: p[2], cid: p[1])
                 self?.finish(p[0] == "vst3i" ? VST3Unit.instrument : VST3Unit.effect, state: state) { unit in
                     VST3Unit.pending = nil
+                    self?.v3Busy = false
+                    done(unit)
+                    self?.nextVST3()
+                }
+            }
+            return nextVST3()
+        }
+        if id.hasPrefix("aw|") {   // Airwindows effects are built in and created through the same one-at-a-time queue
+            let name = String(id.dropFirst(3))
+            v3Queue.append { [weak self] in
+                AirwinUnit.register()
+                AirwinUnit.pending = name
+                self?.finish(AirwinUnit.effect, state: state) { unit in
+                    AirwinUnit.pending = nil
                     self?.v3Busy = false
                     done(unit)
                     self?.nextVST3()
@@ -390,6 +405,27 @@ final class PluginHost {
     // MARK: plugin windows and state
 
     /// Slot -1 is the instrument; 0... are the effects.
+    private func unit(_ track: String, _ slot: Int) -> AVAudioUnit? {
+        guard let s = strips[track] else { return nil }
+        return slot < 0 ? s.inst : (slot < s.fx.count ? s.fx[slot] : nil)
+    }
+
+    /// A plugin's controls as STRATUM shows them: [{i, name, v (0...1), text}].
+    func params(_ track: String, slot: Int) -> [[String: Any]] {
+        guard let u = unit(track, slot), let tree = u.auAudioUnit.parameterTree else { return [] }
+        return tree.allParameters.prefix(64).map { p in
+            let span = max(1e-9, p.maxValue - p.minValue)
+            return ["i": Int(p.address), "name": p.displayName, "v": Double((p.value - p.minValue) / span), "text": p.string(fromValue: nil)]
+        }
+    }
+
+    /// Sets one control from a 0...1 position and returns its new display text.
+    func setParam(_ track: String, slot: Int, address: Int, value: Double) -> String {
+        guard let u = unit(track, slot), let p = u.auAudioUnit.parameterTree?.parameter(withAddress: AUParameterAddress(address)) else { return "" }
+        p.value = p.minValue + Float(max(0, min(1, value))) * (p.maxValue - p.minValue)
+        return p.string(fromValue: nil)
+    }
+
     func showUI(_ track: String, slot: Int, title: String) {
         guard let s = strips[track], let unit = slot < 0 ? s.inst : (slot < s.fx.count ? s.fx[slot] : nil) else { return }
         if let w = s.windows[slot] { w.makeKeyAndOrderFront(nil); return }
@@ -627,5 +663,112 @@ final class VST3Unit: AUAudioUnit {
         }
         defaults.set(cache.filter { seen.contains($0.key) }, forKey: "vst3scan")
         return out
+    }
+}
+
+// MARK: - Airwindows
+
+/// One Airwindows effect (compiled in from Airwindows Consolidated, MIT licence) wrapped as an Audio Unit effect, with its
+/// controls published as Audio Unit parameters so STRATUM can show them.
+final class AirwinUnit: AUAudioUnit {
+    static let effect = AudioComponentDescription(componentType: kAudioUnitType_Effect, componentSubType: 0x61776678, componentManufacturer: 0x5374726D, componentFlags: 0, componentFlagsMask: 0)
+    static let stateKey = "stratum.airwindows"
+    /// The effect the next instance should be. Instances are created one at a time (see PluginHost).
+    static var pending: String?
+    private static var registered = false
+    static func register() {
+        guard !registered else { return }
+        registered = true
+        AUAudioUnit.registerSubclass(AirwinUnit.self, as: effect, name: "STRATUM: Airwindows", version: 1)
+    }
+
+    static func catalogue() -> [[String: String]] {
+        (0..<Int(aw_count())).map { i in
+            ["id": "aw|" + String(cString: aw_name(Int32(i))), "name": String(cString: aw_name(Int32(i))), "maker": "Airwindows", "kind": "fx",
+             "category": String(cString: aw_category(Int32(i))), "what": String(cString: aw_what(Int32(i))), "collections": String(cString: aw_collections(Int32(i)))]
+        }
+    }
+
+    private let fx: UnsafeMutableRawPointer
+    private var inputs: AUAudioUnitBusArray!
+    private var outputs: AUAudioUnitBusArray!
+    private var frames = 0
+    private var bufs: [UnsafeMutablePointer<Float>] = []
+    private let inPtrs = UnsafeMutablePointer<UnsafeMutablePointer<Float>?>.allocate(capacity: 2)
+    private let outPtrs = UnsafeMutablePointer<UnsafeMutablePointer<Float>?>.allocate(capacity: 2)
+    private let abl = AudioBufferList.allocate(maximumBuffers: 2)
+
+    override init(componentDescription: AudioComponentDescription, options: AudioComponentInstantiationOptions = []) throws {
+        guard let name = AirwinUnit.pending, let made = aw_create(name, 44100) else { throw NSError(domain: "STRATUM", code: 5, userInfo: [NSLocalizedDescriptionKey: "Unknown Airwindows effect"]) }
+        fx = made
+        try super.init(componentDescription: componentDescription, options: options)
+        let format = AVAudioFormat(standardFormatWithSampleRate: 44100, channels: 2)!
+        outputs = AUAudioUnitBusArray(audioUnit: self, busType: .output, busses: [try AUAudioUnitBus(format: format)])
+        inputs = AUAudioUnitBusArray(audioUnit: self, busType: .input, busses: [try AUAudioUnitBus(format: format)])
+        maximumFramesToRender = 4096
+        let params: [AUParameter] = (0..<Int(aw_params(fx))).map { i in
+            var t = [CChar](repeating: 0, count: 256)
+            aw_param_name(fx, Int32(i), &t, 256)
+            let p = AUParameterTree.createParameter(withIdentifier: "p\(i)", name: String(cString: t), address: AUParameterAddress(i), min: 0, max: 1, unit: .generic, unitName: nil,
+                                                    flags: [.flag_IsReadable, .flag_IsWritable], valueStrings: nil, dependentParameters: nil)
+            p.value = aw_get(fx, Int32(i))
+            return p
+        }
+        let tree = AUParameterTree.createTree(withChildren: params), fx = self.fx
+        tree.implementorValueObserver = { p, v in aw_set(fx, Int32(p.address), v) }
+        tree.implementorValueProvider = { p in aw_get(fx, Int32(p.address)) }
+        tree.implementorStringFromValueCallback = { p, _ in
+            var t = [CChar](repeating: 0, count: 256)
+            aw_param_display(fx, Int32(p.address), &t, 256)
+            return String(cString: t)
+        }
+        parameterTree = tree
+    }
+    deinit {
+        aw_destroy(fx)
+        bufs.forEach { $0.deallocate() }
+        inPtrs.deallocate(); outPtrs.deallocate(); free(abl.unsafeMutablePointer)
+    }
+
+    override var inputBusses: AUAudioUnitBusArray { inputs }
+    override var outputBusses: AUAudioUnitBusArray { outputs }
+
+    override func allocateRenderResources() throws {
+        try super.allocateRenderResources()
+        aw_set_rate(fx, outputs[0].format.sampleRate)
+        let n = Int(maximumFramesToRender)
+        if n > frames { bufs.forEach { $0.deallocate() }; bufs = (0..<4).map { _ in .allocate(capacity: n) }; frames = n }
+    }
+
+    override var internalRenderBlock: AUInternalRenderBlock {
+        let fx = self.fx, inPtrs = self.inPtrs, outPtrs = self.outPtrs, abl = self.abl, bufs = { [unowned self] in self.bufs }, cap = { [unowned self] in self.frames }
+        return { _, timestamp, frameCount, _, outputData, _, pull in
+            let b = bufs(), n = min(Int(frameCount), cap())
+            guard b.count == 4, n > 0 else { return noErr }
+            for c in 0..<2 { abl[c] = AudioBuffer(mNumberChannels: 1, mDataByteSize: UInt32(n * 4), mData: UnsafeMutableRawPointer(b[c])) }
+            abl.unsafeMutablePointer.pointee.mNumberBuffers = 2
+            var flags = AudioUnitRenderActionFlags()
+            if let pull = pull, pull(&flags, timestamp, AUAudioFrameCount(n), 0, abl.unsafeMutablePointer) == noErr {
+                for c in 0..<2 { inPtrs[c] = abl[c].mData?.assumingMemoryBound(to: Float.self) ?? b[c] }
+            } else {
+                for c in 0..<2 { b[c].update(repeating: 0, count: n); inPtrs[c] = b[c] }
+            }
+            let out = UnsafeMutableAudioBufferListPointer(outputData)
+            for c in 0..<2 {
+                let i = min(c, out.count - 1)
+                if out[i].mData == nil { out[i].mData = UnsafeMutableRawPointer(b[2 + c]) }
+                outPtrs[c] = out[i].mData!.assumingMemoryBound(to: Float.self)
+            }
+            aw_process(fx, inPtrs, outPtrs, Int32(n))
+            return noErr
+        }
+    }
+
+    override var fullState: [String: Any]? {
+        get { [AirwinUnit.stateKey: (0..<Int(aw_params(fx))).map { Double(aw_get(fx, Int32($0))) }] }
+        set {
+            guard let v = newValue?[AirwinUnit.stateKey] as? [Double] else { return }
+            for (i, x) in v.enumerated() { aw_set(fx, Int32(i), Float(x)); parameterTree?.parameter(withAddress: AUParameterAddress(i))?.value = Float(x) }
+        }
     }
 }

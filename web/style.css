@@ -215,3 +215,8 @@ kbd { background:var(--cell); border:1px solid var(--line); border-radius:4px; p
 .plist button { text-align:left; }
 .plist small { color:var(--dim); margin-left:6px; }
 .dev.plug .slot { display:flex; gap:6px; align-items:center; margin:4px 0; }
+
+.pctl { display:grid; grid-template-columns:repeat(auto-fill, minmax(190px, 1fr)); gap:4px 14px; margin:2px 0 10px; }
+.prm { display:grid; grid-template-columns:78px 1fr 64px; align-items:center; gap:6px; font-size:11px; }
+.prm .pn { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.prm .pv { color:var(--dim); text-align:right; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }

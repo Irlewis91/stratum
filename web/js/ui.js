@@ -5,7 +5,7 @@
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const U = (S.ui = {
     skin: 'pattern', track: null, scene: null, note: null, block: -1, flip: false, keys: false, arm: null, scaleLock: true, lastLen: 1,
-    bottom: { pattern: 'editor', session: 'devices', arrange: 'editor' }, ptWin: 'edit', log: [], held: {}, octave: 0, pendingAudio: null, pendingSample: null, meters: [],
+    bottom: { pattern: 'editor', session: 'devices', arrange: 'editor' }, ptWin: 'edit', log: [], held: {}, octave: 0, pendingAudio: null, pendingSample: null, pctl: {}, meters: [],
     region: null, playFrom: 0, pxb: 40, recording: null, monitor: false, sessionTop: 'session',
   });
   const P = () => S.proj;
@@ -245,6 +245,24 @@
   }
 
   const NOCV = { 'reverb.size': 1 };
+  // One plugin effect in the Devices panel, with its controls underneath when they are open. Airwindows effects have no
+  // window of their own, so their controls start open.
+  const fxRow = (t, f, fi) => {
+    const aw = f.id.startsWith('aw|'), key = t.id + ':' + fi, open = U.pctl[key] == null ? aw : U.pctl[key];
+    return `<div class="slot">${esc(f.name)}${aw ? ' <span class="hint">Airwindows</span>' : ''} ${aw ? '' : `<button data-act="plugOpen" data-slot="${fi}">Open</button>`}` +
+      `<button data-act="plugCtl" data-slot="${fi}" data-open="${open ? 1 : 0}">${open ? 'Hide controls' : 'Controls'}</button><button class="x" data-act="plugRmFx" data-i="${fi}" title="Remove">✕</button></div>` +
+      (open ? `<div class="pctl" data-slot="${fi}"><span class="hint">Loading controls…</span></div>` : '');
+  };
+  // Fill open control panels from the plugin itself; a plugin that is still loading is asked again shortly.
+  const fillControls = (tries) => {
+    const t = curTrack();
+    document.querySelectorAll('#devices .pctl').forEach(async (el) => {
+      const slot = +el.dataset.slot, list = (await S.plug.params(t, slot)) || [];
+      if (!list.length && (tries || 0) < 6) return setTimeout(() => el.isConnected && fillControls((tries || 0) + 1), 500);
+      el.innerHTML = list.length ? list.map((q) => `<label class="prm"><span class="pn">${esc(q.name)}</span><input type="range" min="0" max="1" step="0.001" value="${q.v}" data-chg="plugParam" data-slot="${slot}" data-i="${q.i}"><span class="pv">${esc(q.text)}</span></label>`).join('')
+        : '<span class="hint">No controls to show here; use Open for the plugin\'s own window.</span>';
+    });
+  };
   function renderDevices() {
     const t = curTrack();
     if (!t) return setHTML('devices', '');
@@ -260,7 +278,7 @@
       const pl = t.plugin, ok = S.plug.available();
       h += `<div class="dev inst plug"><h4>Plugin · ${esc(pl.name)} <span class="hint">${esc(pl.maker || '')}</span></h4>${kindSel}` +
         (ok ? `<div class="krow"><button data-act="plugOpen" data-slot="-1">Open plugin window</button><button data-act="plugPick" data-kind="inst">Change plugin…</button></div>` : `<p class="hint">Plugins run in the STRATUM Mac app; here the track plays the built-in sound.</p>`) +
-        `<div class="hint">Plugin effects</div>` + (pl.fx || []).map((f, fi) => `<div class="slot">${esc(f.name)} <button data-act="plugOpen" data-slot="${fi}">Open</button><button class="x" data-act="plugRmFx" data-i="${fi}" title="Remove">✕</button></div>`).join('') +
+        `<div class="hint">Plugin effects</div>` + (pl.fx || []).map((f, fi) => fxRow(t, f, fi)).join('') +
         `<div class="krow"><button data-act="plugPick" data-kind="fx">+ Plugin effect…</button></div><p class="hint">Plugin tracks go straight to the Mac's audio output, so the STRATUM effects and master section do not process them.</p></div>`;
     } else if (t.type === 'synth') {
       const i = t.inst, waves = ['sine', 'triangle', 'sawtooth', 'square'], smp = i.sample;
@@ -279,7 +297,7 @@
     } else h += `<div class="dev inst"><h4>Audio Track</h4><p class="hint">Plays the audio clip in each scene.</p></div>`;
     if (!t.plugin && !back && S.plug.available()) {
       const pf = t.pfx || [];
-      h += `<div class="dev inst plug"><h4>Plugin effects</h4>` + pf.map((f, fi) => `<div class="slot">${esc(f.name)} <button data-act="plugOpen" data-slot="${fi}">Open</button><button class="x" data-act="plugRmFx" data-i="${fi}" title="Remove">✕</button></div>`).join('') +
+      h += `<div class="dev inst plug"><h4>Plugin effects</h4>` + pf.map((f, fi) => fxRow(t, f, fi)).join('') +
         `<div class="krow"><button data-act="plugPick" data-kind="fx">+ Plugin effect…</button></div>` +
         (pf.length ? `<p class="hint">With a plugin effect on it, this track plays through the Mac's audio output directly, so the STRATUM effects on this track and the master section do not process it${t.type === 'synth' && !t.inst.sample ? ', and CV cables to its filter have no effect' : ''}.</p>` : `<p class="hint">Audio Unit, VST3 or VST2 effects on this track's audio.</p>`) + `</div>`;
     }
@@ -298,6 +316,7 @@
     if (!t.fx.length && !back) h += `<div class="dev ghost" data-act="addFx" data-t="${t.id}"><h4>Empty insert</h4><p class="hint">Click to describe an effect in plain words.</p></div>`;
     if (back) h += `<p class="hint pad">Click an LFO “CV out” jack, then a device jack to patch a cable. Click a patched jack to unplug it.</p>`;
     setHTML('devices', h + '</div></div>');
+    if (S.plug.available()) fillControls();
     drawCables();
   }
   function drawCables() {
@@ -736,7 +755,7 @@
       const kind = el.dataset.kind, list = (await S.plug.list()).filter((p) => p.kind === kind);
       showPop(`<h3>${kind === 'inst' ? 'Choose an instrument plugin' : 'Add a plugin effect'} · ${esc(curTrack().name)}</h3><input placeholder="Type to filter" oninput="const q=this.value.toLowerCase();this.parentNode.querySelectorAll('.plist button').forEach(b=>b.hidden=!b.textContent.toLowerCase().includes(q))">` +
         `<p class="hint">${list.length} Audio Unit and VST3 ${kind === 'inst' ? 'instruments' : 'effects'} installed on this Mac.</p><div class="plist">` +
-        list.map((p) => `<button data-act="plugSet" data-kind="${kind}" data-id="${esc(p.id)}" data-name="${esc(p.name)}" data-maker="${esc(p.maker)}">${esc(p.name)} <small>${esc(p.maker)}</small></button>`).join('') + `</div><button data-act="closePop">Cancel</button>`);
+        list.sort((a, b) => (/Recommended/.test(b.collections || '') ? 1 : 0) - (/Recommended/.test(a.collections || '') ? 1 : 0)).map((p) => `<button data-act="plugSet" data-kind="${kind}" data-id="${esc(p.id)}" data-name="${esc(p.name)}" data-maker="${esc(p.maker)}" title="${esc(p.what || '')}">${esc(p.name)} <small>${esc(p.maker)}${p.category ? ' · ' + esc(p.category) : ''}${/Recommended/.test(p.collections || '') ? ' · recommended' : ''}</small></button>`).join('') + `</div><button data-act="closePop">Cancel</button>`);
     },
     plugSet(el) {
       const t = curTrack(), d = el.dataset;
@@ -747,6 +766,7 @@
       closePop();
     },
     plugOpen(el) { S.plug.show(curTrack(), +el.dataset.slot); },
+    plugCtl(el) { U.pctl[curTrack().id + ':' + el.dataset.slot] = el.dataset.open !== '1'; renderDevices(); },
     async plugRmFx(el) { await S.plug.capture(); structural(() => S.plug.fxList(curTrack()).splice(+el.dataset.i, 1)); },
     instClear() { S.snap(); delete curTrack().inst.sample; changed(true); },
     async stems() {
@@ -873,6 +893,11 @@
   };
 
   // ---------- change handlers ----------
+  // Plugin controls move while dragging, not only when released.
+  document.addEventListener('input', (e) => {
+    const el = e.target;
+    if (el.dataset && el.dataset.chg === 'plugParam') S.plug.setParam(curTrack(), +el.dataset.slot, +el.dataset.i, +el.value).then((txt) => { const v = el.parentNode.querySelector('.pv'); if (v && txt != null) v.textContent = txt; });
+  });
   const C = {
     bpm(el) { const v = Math.min(240, Math.max(40, parseFloat(el.value) || 120)); E.setBpm(v); el.value = v; },
     root(el) { S.snap(); P().root = +el.value; S.regenPlayers(P()); render(); },
@@ -891,6 +916,7 @@
     glide(el) { if (U.note) { S.snap(); U.note.g = el.checked; renderNotes(); } },
     inst(el) { S.snap(); curTrack().inst[el.dataset.key] = el.value; },
     // Switch what a note track plays: built-in synth, the producer's own sample, a drum kit, or a plugin.
+    plugParam() {},   // handled while dragging (see the input listener above)
     instKind(el) {
       const t = curTrack(), k = el.value;
       if (k === 'plugin') { render(); return A.plugPick({ dataset: { kind: 'inst' } }); }

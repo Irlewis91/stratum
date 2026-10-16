@@ -205,7 +205,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
         let js = """
         let msg = ''; S.ui.toast = (m) => { msg = m; };
         const ctx = S.engine.ensure(), list = await S.plug.list(), v = list.filter((p) => p.id.startsWith('vst3'));
-        const fx = vst3 ? v.find((p) => p.kind === 'fx' && /testgain|delay/i.test(p.name)) : list.find((p) => p.id === 'aufx:dely:appl');
+        const fx = aw ? list.find((p) => p.id === 'aw|' + aw) : vst3 ? v.find((p) => p.kind === 'fx' && /testgain|delay/i.test(p.name)) : list.find((p) => p.id === 'aufx:dely:appl');
         if (!fx) return JSON.stringify({ error: 'effect not found' });
         const tone = (hz, sec) => { const b = ctx.createBuffer(2, Math.floor(44100 * sec), 44100); for (let c = 0; c < 2; c++) { const d = b.getChannelData(c); for (let i = 0; i < d.length; i++) d[i] = 0.5 * Math.sin(2 * Math.PI * hz * i / 44100); } const id = S.uid(); S.buffers[id] = { id, name: 'tone', buf: b, bpm: 0 }; return id; };
         const p = S.blankProject(); p.bpm = 97; if (!p.scenes.length) S.newScene(p, 'A', 1);
@@ -227,14 +227,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
         await new Promise((r) => setTimeout(r, 300));
         const dbg = await new Promise((res) => { const id = 99999; S.plug.cb0 = S.plug.cb; window.webkit.messageHandlers.stratum.postMessage({ op: 'auDebug', req: id }); const old = S.plug.cb; S.plug.cb = (i, x) => (i === id ? (S.plug.cb = old, res(x)) : old(i, x)); });
         const [wet, webPeak] = await render(), spb = 60 / 97;
+        const controls = await S.plug.params(S.proj.tracks[0], 0), turned = controls.length ? await S.plug.setParam(S.proj.tracks[0], 0, controls[0].i, 0.9) : '';
         const saved = JSON.parse(await new Promise((res) => { S.io.saveFile = (n, x) => res(x); S.io.saveProject(); }));
         const win = (d) => ({ loop: rms(d, 0.1, 0.5), afterLoop: rms(d, 1.05, 1.2), pad: rms(d, 0.05 + 2 * spb, 0.05 + 2 * spb + 0.12), hat: rms(d, 0.05 + 3 * spb, 0.05 + 3 * spb + 0.04), beforeSynth: rms(d, 0.05 + 4.2 * spb, 0.05 + 4.45 * spb), synth: rms(d, 0.05 + 4.55 * spb, 0.05 + 4.95 * spb) });
-        return JSON.stringify({ effect: fx.name, withoutPlugin: win(dry), withPlugin: win(wet), webAudioPeakWithPlugin: +webPeak.toFixed(4), events: S.engine.plugEvents.length, tempo: dbg, fxStateBytes: saved.proj.tracks.map((t) => t.pfx[0].state.length), synthPitchHz: (() => { let z = 0; const a = Math.floor((0.05 + 4.6 * spb) * 44100), b = Math.floor((0.05 + 4.9 * spb) * 44100); for (let i = a + 1; i < b; i++) if (wet[i - 1] <= 0 && wet[i] > 0) z++; return Math.round(z * 44100 / (b - a)); })(), msg });
+        return JSON.stringify({ airwindows: list.filter((p) => p.id.startsWith('aw|')).length, controls: controls.map((q) => q.name + '=' + q.text), firstControlAt90: turned, effect: fx.name, withoutPlugin: win(dry), withPlugin: win(wet), webAudioPeakWithPlugin: +webPeak.toFixed(4), events: S.engine.plugEvents.length, tempo: dbg, fxStateBytes: saved.proj.tracks.map((t) => t.pfx[0].state.length), synthPitchHz: (() => { let z = 0; const a = Math.floor((0.05 + 4.6 * spb) * 44100), b = Math.floor((0.05 + 4.9 * spb) * 44100); for (let i = a + 1; i < b; i++) if (wet[i - 1] <= 0 && wet[i] > 0) z++; return Math.round(z * 44100 / (b - a)); })(), msg });
         """
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
             _ = self.plugins.livePeak()
             DispatchQueue.main.asyncAfter(deadline: .now() + 3.4) { livePeak = self.plugins.livePeak() }
-            self.web.callAsyncJavaScript(js, arguments: ["vst3": CommandLine.arguments.contains("--vst3")], in: nil, in: .page) { result in
+            self.web.callAsyncJavaScript(js, arguments: ["vst3": CommandLine.arguments.contains("--vst3"), "aw": CommandLine.arguments.firstIndex(of: "--aw").map { CommandLine.arguments[$0 + 1] } ?? ""], in: nil, in: .page) { result in
                 switch result {
                 case .success(let v): print("FXTEST", v, "livePeak", livePeak)
                 case .failure(let e): print("FXTEST error", e)
@@ -566,6 +567,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
             t.beat0 = body["beat"] as? Double ?? 0; t.t0 = CFAbsoluteTimeGetCurrent() + (body["delay"] as? Double ?? 0)
         case "auUI": plugins.showUI(track, slot: body["slot"] as? Int ?? -1, title: body["title"] as? String ?? "Plugin")
         case "auStates": reply(body, plugins.states())
+        case "auParams": reply(body, plugins.params(track, slot: body["slot"] as? Int ?? 0))
+        case "auSetParam": reply(body, plugins.setParam(track, slot: body["slot"] as? Int ?? 0, address: body["i"] as? Int ?? 0, value: body["v"] as? Double ?? 0))
         case "auDebug": reply(body, ["tempoSeenByVST": Transport.shared.seenByVST, "livePeakSoFar": Double(plugins.livePeak())])
         case "auRender":
             if let bpm = body["bpm"] as? Double { Transport.shared.bpm = max(20, bpm) }

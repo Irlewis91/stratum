@@ -6,6 +6,7 @@
   const waits = {};
   let seq = 0;
   const ask = (msg) => new Promise((res) => { if (!native()) return res(null); const id = ++seq; waits[id] = res; native().postMessage({ ...msg, req: id }); });
+  PL.ask = ask;
   PL.cb = (id, v) => { const f = waits[id]; delete waits[id]; if (f) f(v); };
   PL.available = () => !!native();
   PL.on = (t) => !!(t && t.plugin && t.type !== 'audio' && native());

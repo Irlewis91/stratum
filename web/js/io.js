@@ -683,6 +683,9 @@ ${lanes}    </Lanes>
     const top = Math.max(1e-6, ...peaks);
     native().postMessage({ op: 'share', target, title, artist, peaks: peaks.map((p) => +(p / top).toFixed(3)), b64: b64(IO.wav(buf)) });
   };
+  // ---- built-in sound library (CC0 sounds bundled with the Mac app) ----
+  IO.libList = async () => IO._lib || (IO._lib = native() ? JSON.parse((await S.plug.ask({ op: 'libList' })) || '[]') : []);
+  IO.libRead = async (path) => { const b = await S.plug.ask({ op: 'libRead', path }); return b ? unb64(b).buffer : null; };
   IO.exportAs = async (kind) => {
     const proj = S.proj, base = proj.name || 'Untitled';
     if (kind === 'mid') return IO.saveFile(base + '.mid', IO.midiOut(proj));

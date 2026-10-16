@@ -110,6 +110,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
         if CommandLine.arguments.contains("--fx-test") { fxTest() }
         if CommandLine.arguments.contains("--auto-test") { autoTest() }
         if CommandLine.arguments.contains("--share-test") { shareTest() }
+        if CommandLine.arguments.contains("--lib-test") { libTest() }
         if let i = CommandLine.arguments.firstIndex(of: "--import-test") { importTest(Array(CommandLine.arguments[(i + 1)...])) }
     }
 
@@ -289,6 +290,32 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
                 ShareRenderer.preview(title: "Since I Been Away", artist: "Slade", peaks: (0..<96).map { Float(0.25 + 0.75 * abs(sin(Double($0) * 0.37))) }, progress: 0.4,
                                       to: URL(fileURLWithPath: CommandLine.arguments.last!))
                 if case .success(let v) = result { print("SHARETEST", v) } else if case .failure(let e) = result { print("SHARETEST error", e) }
+                NSApp.terminate(nil)
+            }
+        }
+    }
+
+    // Sound library check: lists the bundled sounds, decodes one of each kind, and uses them through the Sounds browser.
+    private func libTest() {
+        let js = """
+        const all = await S.io.libList(), P = S.proj, cats = {};
+        for (const x of all) cats[x.category] = (cats[x.category] || 0) + 1;
+        const ctx = S.engine.ensure(), pick = (c) => all.findIndex((x) => x.category === c);
+        const decoded = {};
+        for (const c of ['Kicks', 'Vocal Shouts', 'Percussion']) { const ab = await S.io.libRead(all[pick(c)].path); const b = await ctx.decodeAudioData(ab); decoded[c] = [+b.duration.toFixed(2), b.numberOfChannels, +b.getChannelData(0).reduce((m, v) => Math.max(m, Math.abs(v)), 0).toFixed(3)]; }
+        const drums = P.tracks.find((t) => t.type === 'drums'), synth = P.tracks.find((t) => t.type === 'synth');
+        S.ui.track = drums.id; await S.ui.act('libUse', { dataset: { i: pick('Kicks') } });
+        S.ui.track = synth.id; await S.ui.act('libUse', { dataset: { i: pick('Vocal Shouts') } });
+        const regionsBefore = synth.regions.length; await S.ui.act('libUse', { dataset: { i: pick('MIDI') } });
+        const outside = await S.io.libRead('../Info.plist');
+        return JSON.stringify({ sounds: all.length, cats, decoded, drumPads: Object.values(drums.pads || {}).map((p) => p.name), synthSample: synth.inst.sample && synth.inst.sample.name, midiRegionAdded: synth.regions.length - regionsBefore, midiNotes: synth.regions[synth.regions.length - 1].clip.notes.length, readOutsideLibrary: outside ? 'ALLOWED' : 'blocked' });
+        """
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            self.web.callAsyncJavaScript(js, arguments: [:], in: nil, in: .page) { result in
+                switch result {
+                case .success(let v): print("LIBTEST", v)
+                case .failure(let e): print("LIBTEST error", e)
+                }
                 NSApp.terminate(nil)
             }
         }
@@ -567,6 +594,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
             t.beat0 = body["beat"] as? Double ?? 0; t.t0 = CFAbsoluteTimeGetCurrent() + (body["delay"] as? Double ?? 0)
         case "auUI": plugins.showUI(track, slot: body["slot"] as? Int ?? -1, title: body["title"] as? String ?? "Plugin")
         case "auStates": reply(body, plugins.states())
+        case "libList":
+            let index = Bundle.main.resourceURL!.appendingPathComponent("library/library.json")
+            reply(body, (try? String(contentsOf: index, encoding: .utf8)) ?? "[]")
+        case "libRead":
+            // Only files inside the bundled library can be read.
+            let root = Bundle.main.resourceURL!.appendingPathComponent("library").standardizedFileURL
+            let file = root.appendingPathComponent(body["path"] as? String ?? "").standardizedFileURL
+            reply(body, file.path.hasPrefix(root.path + "/") ? ((try? Data(contentsOf: file))?.base64EncodedString() ?? "") : "")
         case "auParams": reply(body, plugins.params(track, slot: body["slot"] as? Int ?? 0))
         case "auSetParam": reply(body, plugins.setParam(track, slot: body["slot"] as? Int ?? 0, address: body["i"] as? Int ?? 0, value: body["v"] as? Double ?? 0))
         case "auDebug": reply(body, ["tempoSeenByVST": Transport.shared.seenByVST, "livePeakSoFar": Double(plugins.livePeak())])
@@ -688,7 +723,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
     func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {
         guard let body = message.body as? [String: Any], let op = body["op"] as? String else { return }
         if op == "open" { openFile(many: body["many"] as? Bool ?? false) }
-        if op.hasPrefix("au") { return pluginOp(op, body) }
+        if op.hasPrefix("au") || op.hasPrefix("lib") { return pluginOp(op, body) }
         if op == "share" { share(body) }
         if op == "findFiles" { findFiles(body["paths"] as? [String] ?? [], near: body["near"] as? String ?? "") }
         if op == "recStart" { startRecording(monitor: body["monitor"] as? Bool ?? false) }

@@ -220,3 +220,8 @@ kbd { background:var(--cell); border:1px solid var(--line); border-radius:4px; p
 .prm { display:grid; grid-template-columns:78px 1fr 64px; align-items:center; gap:6px; font-size:11px; }
 .prm .pn { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .prm .pv { color:var(--dim); text-align:right; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+.plist.lib { max-height:52vh; }
+.lrow { display:flex; align-items:center; gap:8px; padding:2px 0; }
+.lrow span[title] { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.stock button.on { border-color:var(--acc); color:var(--acc); }

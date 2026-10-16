@@ -30,6 +30,8 @@ if [ -f vendor/model/htdemucs.onnx ] && [ -f "$ORT/lib/libonnxruntime.1.31.0.dyl
 fi
 
 mkdir -p "$APP/Contents/Resources/licenses" "$APP/Contents/Resources/brand"
+# Built-in sound library (CC0 sounds, fetched by fetch-library.sh).
+[ -f vendor/library/library.json ] && cp -R vendor/library "$APP/Contents/Resources/library"
 sips -s format png assets/stratum-wordmark.webp --out "$APP/Contents/Resources/brand/stratum-wordmark.png" >/dev/null
 cp vendor/vst3sdk/public.sdk/LICENSE.txt "$APP/Contents/Resources/licenses/vst3sdk-LICENSE.txt"
 cp vendor/airwin2rack/LICENSE.md "$APP/Contents/Resources/licenses/airwindows-consolidated-LICENSE.txt"

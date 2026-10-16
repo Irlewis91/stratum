@@ -86,6 +86,8 @@
   }
   U.setProject = setProject;
   U.refresh = () => render();
+  U.act = (name, el) => A[name](el);
+  U.libSearch = (v) => { U.libQuery = v; clearTimeout(U.libT); U.libT = setTimeout(() => A.sounds(), 250); };
   U.shareProgress = (f) => U.toast(`Making your STRATUM video… ${Math.round(f * 100)}%`);
   U.shareDone = (ok, msg) => U.toast(msg, !ok);
   // A follow-up to an import (samples found, plugins matched): shown after the import report so that is not lost.
@@ -614,6 +616,46 @@
     toggleMode() { $('#modeSel').value = $('#modeSel').value === 'scene' ? 'song' : 'scene'; C.mode($('#modeSel')); },
     new() { S.snap(); const p = S.blankProject(); S.newScene(p, 'Scene 1', 1); S.newTrack(p, 'drums', 'Drums'); S.newTrack(p, 'synth', 'Synth'); setProject(p); },
     open() { U.pendingAudio = null; U.pendingSample = null; IO.open(); },
+    // Sounds browser: built-in CC0 sounds by category, with search, preview, and a button that puts the sound where it fits
+    // the selected track (a drum pad, the sampler, an audio clip, or for MIDI files the notes themselves).
+    async sounds(el) {
+      if (!IO.native()) return U.toast('The sound library comes with the STRATUM Mac app.', true);
+      const all = await IO.libList(), cats = [...new Set(all.map((x) => x.category))].sort(), t = curTrack();
+      U.libCat = (el && el.dataset && el.dataset.cat) || U.libCat || cats[0];
+      const q = (U.libQuery || '').toLowerCase(), list = all.filter((x) => (q ? (x.name + ' ' + x.category).toLowerCase().includes(q) : x.category === U.libCat)).slice(0, 300);
+      const verb = (x) => (/\.mid$/i.test(x.path) ? (t.type === 'audio' ? '' : 'Add notes') : t.type === 'drums' ? 'Add to pad' : t.type === 'synth' ? 'Use as sample' : 'Add as clip');
+      const pretty = (x) => x.name.replace(/^(VPFX|DVS|DVSV2|PP|HPR) - /, '');
+      showPop(`<h3>Sounds <span class="hint">· ${all.length} free sounds (public domain, CC0) · adding to “${esc(t.name)}”</span></h3>` +
+        `<input id="libQ" placeholder="Search all sounds" value="${esc(U.libQuery || '')}" oninput="S.ui.libSearch(this.value)">` +
+        `<div class="stock">${cats.map((c) => `<button data-act="sounds" data-cat="${esc(c)}" class="${!q && c === U.libCat ? 'on' : ''}">${esc(c)} <small>${all.filter((x) => x.category === c).length}</small></button>`).join('')}</div>` +
+        `<div class="plist lib">${list.map((x, i) => `<div class="lrow">${/\.mid$/i.test(x.path) ? '<span class="hint">MIDI</span>' : `<button data-act="libPlay" data-i="${all.indexOf(x)}" title="Preview">▶</button>`}<span title="${esc(x.collection)}">${esc(pretty(x))}</span>${verb(x) ? `<button data-act="libUse" data-i="${all.indexOf(x)}">${verb(x)}</button>` : ''}</div>`).join('') || '<span class="hint">No sounds match.</span>'}</div>` +
+        `<p class="hint">Sounds from the Stargate sample pack and Producer Space, released as public domain (CC0): free to use in anything, no credit needed.</p><button data-act="closePop">Close</button>`);
+      const box = $('#libQ'); if (box && U.libQuery) { box.focus(); box.setSelectionRange(box.value.length, box.value.length); }
+    },
+    async libPlay(el) {
+      const x = (await IO.libList())[+el.dataset.i], ab = x && (await IO.libRead(x.path));
+      if (!ab) return;
+      const ctx = E.ensure(), buf = await ctx.decodeAudioData(ab);
+      try { U.libSrc && U.libSrc.stop(); } catch (e) {}
+      const src = ctx.createBufferSource(); src.buffer = buf; src.connect(ctx.destination); src.start(); U.libSrc = src;
+    },
+    async libUse(el) {
+      const x = (await IO.libList())[+el.dataset.i], t = curTrack(), ab = x && (await IO.libRead(x.path));
+      if (!ab) return U.toast('That sound could not be read.', true);
+      const file = x.name + (/\.mid$/i.test(x.path) ? '.mid' : '.flac');
+      if (/\.mid$/i.test(x.path)) {
+        // Notes from the MIDI file become a new region on the selected track at the play position.
+        const src = IO.midiIn(ab, x.name).proj, notes = [];
+        for (const st of src.tracks) { for (const r of st.regions || []) for (const n of r.clip.notes || []) notes.push({ ...n, t: n.t + r.start - (r.off || 0) }); for (const k in st.clips) for (const n of st.clips[k].notes || []) notes.push({ ...n }); }
+        if (!notes.length) return U.toast('That MIDI file has no notes.', true);
+        const len = Math.max(4, Math.ceil(Math.max(...notes.map((n) => n.t + n.d)) / 4) * 4);
+        structural(() => t.regions.push({ id: S.uid(), start: U.playFrom || 0, len, off: 0, clip: { bars: len / 4, notes: notes.map((n) => ({ t: n.t, d: n.d, p: t.type === 'drums' ? S.drumMap(n.p) : n.p, v: n.v == null ? 0.8 : n.v })) } }));
+        return U.toast(`Added ${notes.length} notes from “${x.name}” to ${t.name}.`);
+      }
+      if (t.type === 'audio') U.pendingAudio = t.id; else U.pendingSample = { t: t.id };
+      await IO.importBytes(file, ab);
+      U.openDone();
+    },
     share() {
       const p = P(), go = (t, label) => `<button data-act="shareGo" data-target="${t}">${label}</button>`;
       showPop(`<h3>Share your track</h3><p class="hint">STRATUM makes a branded vertical video (for TikTok, Reels, Shorts and X) and an audio file, and saves both in your Movies › STRATUM folder.</p>` +

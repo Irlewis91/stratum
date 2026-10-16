@@ -149,6 +149,7 @@ final class PluginHost {
         }
         out += VST3Unit.catalogue()
         out += AirwinUnit.catalogue()
+        out += WaveUnit.catalogue()
         return out.sorted { ($0["maker"]!.lowercased(), $0["name"]!.lowercased()) < ($1["maker"]!.lowercased(), $1["name"]!.lowercased()) }
     }
 
@@ -202,6 +203,10 @@ final class PluginHost {
                 }
             }
             return nextVST3()
+        }
+        if id == WaveUnit.id {
+            WaveUnit.register()
+            return finish(WaveUnit.instrument, state: state, done: done)
         }
         if id.hasPrefix("aw|") {   // Airwindows effects are built in and created through the same one-at-a-time queue
             let name = String(id.dropFirst(3))
@@ -415,7 +420,9 @@ final class PluginHost {
         guard let u = unit(track, slot), let tree = u.auAudioUnit.parameterTree else { return [] }
         return tree.allParameters.prefix(64).map { p in
             let span = max(1e-9, p.maxValue - p.minValue)
-            return ["i": Int(p.address), "name": p.displayName, "v": Double((p.value - p.minValue) / span), "text": p.string(fromValue: nil)]
+            var e: [String: Any] = ["i": Int(p.address), "name": p.displayName, "v": Double((p.value - p.minValue) / span), "text": p.string(fromValue: nil)]
+            if let opts = p.valueStrings { e["options"] = opts; e["index"] = Int(p.value.rounded()) }
+            return e
         }
     }
 
@@ -423,7 +430,27 @@ final class PluginHost {
     func setParam(_ track: String, slot: Int, address: Int, value: Double) -> String {
         guard let u = unit(track, slot), let p = u.auAudioUnit.parameterTree?.parameter(withAddress: AUParameterAddress(address)) else { return "" }
         p.value = p.minValue + Float(max(0, min(1, value))) * (p.maxValue - p.minValue)
+        if p.valueStrings != nil { p.value = p.value.rounded() }
         return p.string(fromValue: nil)
+    }
+
+    // STRATUM Wave on a track: presets, wavetable import and the waveform display.
+    private func wave(_ track: String) -> WaveUnit? { unit(track, -1)?.auAudioUnit as? WaveUnit }
+    func wavePresets() -> [String] { (0..<Int(ws_preset_count())).map { String(cString: ws_preset_name(Int32($0))) } }
+    func wavePreset(_ track: String, _ i: Int) -> Bool {
+        guard let w = wave(track) else { return false }
+        ws_preset(w.synth, Int32(i)); w.refreshParameters(); return true
+    }
+    func waveTable(_ track: String, osc: Int, data: Data, name: String) -> Bool {
+        guard let w = wave(track), data.count >= 2048 * 4 else { return false }
+        data.withUnsafeBytes { ws_load_table(w.synth, Int32(osc), $0.bindMemory(to: Float.self).baseAddress, Int32(data.count / (2048 * 4)), name) }
+        w.refreshParameters(); return true
+    }
+    func waveFrame(_ track: String, osc: Int) -> [Double] {
+        guard let w = wave(track) else { return [] }
+        var out = [Float](repeating: 0, count: 128)
+        ws_frame(w.synth, Int32(osc), &out, 128)
+        return out.map { Double($0) }
     }
 
     func showUI(_ track: String, slot: Int, title: String) {
@@ -769,6 +796,119 @@ final class AirwinUnit: AUAudioUnit {
         set {
             guard let v = newValue?[AirwinUnit.stateKey] as? [Double] else { return }
             for (i, x) in v.enumerated() { aw_set(fx, Int32(i), Float(x)); parameterTree?.parameter(withAddress: AUParameterAddress(i))?.value = Float(x) }
+        }
+    }
+}
+
+// MARK: - STRATUM Wave
+
+/// STRATUM's own wavetable synthesizer (wavesynth.cpp) as an Audio Unit instrument. Its controls are Audio Unit parameters,
+/// so the Devices panel can show them; custom wavetables travel in the saved state.
+final class WaveUnit: AUAudioUnit {
+    static let instrument = AudioComponentDescription(componentType: kAudioUnitType_MusicDevice, componentSubType: 0x77617665, componentManufacturer: 0x5374726D, componentFlags: 0, componentFlagsMask: 0)
+    static let id = "stratum|wave"
+    private static var registered = false
+    static func register() {
+        guard !registered else { return }
+        registered = true
+        AUAudioUnit.registerSubclass(WaveUnit.self, as: instrument, name: "STRATUM: Wave", version: 1)
+    }
+    static func catalogue() -> [[String: String]] {
+        [["id": id, "name": "STRATUM Wave", "maker": "STRATUM", "kind": "inst", "category": "Wavetable synth", "what": "STRATUM's own wavetable synthesizer.", "collections": "Recommended"]]
+    }
+
+    let synth: UnsafeMutableRawPointer
+    private var outputs: AUAudioUnitBusArray!
+    private var frames = 0
+    private var bufs: [UnsafeMutablePointer<Float>] = []
+
+    override init(componentDescription: AudioComponentDescription, options: AudioComponentInstantiationOptions = []) throws {
+        synth = ws_create(44100)
+        try super.init(componentDescription: componentDescription, options: options)
+        outputs = AUAudioUnitBusArray(audioUnit: self, busType: .output, busses: [try AUAudioUnitBus(format: AVAudioFormat(standardFormatWithSampleRate: 44100, channels: 2)!)])
+        maximumFramesToRender = 4096
+        let s = synth
+        let params: [AUParameter] = (0..<Int(ws_param_count())).map { i in
+            let name = String(cString: ws_param_name(Int32(i))), n = Int(ws_param_options(Int32(i)))
+            let indexed = ws_param_kind(Int32(i)) == 1
+            let labels = indexed ? (0..<n).map { String(cString: ws_param_option(Int32(i), Int32($0))) } : nil
+            let p = AUParameterTree.createParameter(withIdentifier: "w\(i)", name: name, address: AUParameterAddress(i), min: 0, max: indexed ? AUValue(n - 1) : 1,
+                                                    unit: indexed ? .indexed : .generic, unitName: nil, flags: [.flag_IsReadable, .flag_IsWritable], valueStrings: labels, dependentParameters: nil)
+            p.value = ws_get(s, Int32(i))
+            return p
+        }
+        let tree = AUParameterTree.createTree(withChildren: params)
+        tree.implementorValueObserver = { p, v in ws_set(s, Int32(p.address), v) }
+        tree.implementorValueProvider = { p in ws_get(s, Int32(p.address)) }
+        tree.implementorStringFromValueCallback = { p, _ in
+            var t = [CChar](repeating: 0, count: 128)
+            ws_display(s, Int32(p.address), &t, 128)
+            return String(cString: t)
+        }
+        parameterTree = tree
+    }
+    deinit { ws_destroy(synth); bufs.forEach { $0.deallocate() } }
+
+    override var outputBusses: AUAudioUnitBusArray { outputs }
+
+    override func allocateRenderResources() throws {
+        try super.allocateRenderResources()
+        ws_set_rate(synth, outputs[0].format.sampleRate)
+        let n = Int(maximumFramesToRender)
+        if n > frames { bufs.forEach { $0.deallocate() }; bufs = (0..<2).map { _ in .allocate(capacity: n) }; frames = n }
+    }
+
+    /// Re-reads every parameter after the engine changed them itself (a preset or an imported table).
+    func refreshParameters() {
+        for p in parameterTree?.allParameters ?? [] { p.setValue(ws_get(synth, Int32(p.address)), originator: nil) }
+    }
+
+    override var internalRenderBlock: AUInternalRenderBlock {
+        let s = synth, bufs = { [unowned self] in self.bufs }, cap = { [unowned self] in self.frames }
+        return { _, timestamp, frameCount, _, outputData, events, _ in
+            let b = bufs(), n = min(Int(frameCount), cap())
+            guard b.count == 2, n > 0 else { return noErr }
+            let now = AUEventSampleTime(timestamp.pointee.mSampleTime)
+            var ev = events
+            while let e = ev {
+                if e.pointee.head.eventType == .MIDI {
+                    let m = e.pointee.MIDI, status = m.data.0 & 0xF0, off = Int32(max(0, min(AUEventSampleTime(n - 1), m.eventSampleTime - now)))
+                    if status == 0x90 && m.data.2 > 0 { ws_note(s, 1, Int32(m.data.1), Float(m.data.2) / 127, off) }
+                    else if status == 0x80 || status == 0x90 { ws_note(s, 0, Int32(m.data.1), 0, off) }
+                    else if status == 0xB0 && (m.data.1 == 123 || m.data.1 == 120) { ws_all_off(s) }
+                }
+                ev = UnsafePointer(e.pointee.head.next)
+            }
+            let tr = Transport.shared
+            ws_transport(s, tr.bpm, tr.beat)
+            let out = UnsafeMutableAudioBufferListPointer(outputData)
+            for c in 0..<min(2, out.count) where out[c].mData == nil { out[c].mData = UnsafeMutableRawPointer(b[c]) }
+            let l = out[0].mData!.assumingMemoryBound(to: Float.self), r = out.count > 1 ? out[1].mData!.assumingMemoryBound(to: Float.self) : b[1]
+            ws_process(s, l, r, Int32(n))
+            return noErr
+        }
+    }
+
+    override var fullState: [String: Any]? {
+        get {
+            var st: [String: Any] = ["stratum.wave": (0..<Int(ws_param_count())).map { Double(ws_get(synth, Int32($0))) }]
+            for osc in 0..<2 {
+                var data: UnsafePointer<Float>?, name: UnsafePointer<CChar>?
+                let n = Int(ws_custom_table(synth, Int32(osc), &data, &name))
+                if n > 0, let d = data { st["stratum.wave.table\(osc)"] = Data(bytes: d, count: n * 2048 * 4); st["stratum.wave.name\(osc)"] = String(cString: name!) }
+            }
+            return st
+        }
+        set {
+            guard let st = newValue else { return }
+            for osc in 0..<2 {
+                if let d = st["stratum.wave.table\(osc)"] as? Data {
+                    let name = st["stratum.wave.name\(osc)"] as? String ?? "Imported"
+                    d.withUnsafeBytes { ws_load_table(synth, Int32(osc), $0.bindMemory(to: Float.self).baseAddress, Int32(d.count / (2048 * 4)), name) }
+                }
+            }
+            if let v = st["stratum.wave"] as? [Double] { for (i, x) in v.enumerated() { ws_set(synth, Int32(i), Float(x)) } }
+            refreshParameters()
         }
     }
 }

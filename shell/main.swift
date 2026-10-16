@@ -111,6 +111,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
         if CommandLine.arguments.contains("--auto-test") { autoTest() }
         if CommandLine.arguments.contains("--share-test") { shareTest() }
         if CommandLine.arguments.contains("--lib-test") { libTest() }
+        if CommandLine.arguments.contains("--wave-test") { waveTest() }
         if let i = CommandLine.arguments.firstIndex(of: "--import-test") { importTest(Array(CommandLine.arguments[(i + 1)...])) }
     }
 
@@ -315,6 +316,58 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
                 switch result {
                 case .success(let v): print("LIBTEST", v)
                 case .failure(let e): print("LIBTEST error", e)
+                }
+                NSApp.terminate(nil)
+            }
+        }
+    }
+
+    // STRATUM Wave check: every preset renders a chord, a custom wavetable loads and survives saving, and a dense
+    // 8-voice supersaw passage renders faster than real time.
+    private func waveTest() {
+        let js = """
+        const p = S.blankProject(); p.bpm = 120; if (!p.scenes.length) S.newScene(p, 'A', 1);
+        const t = S.newTrack(p, 'synth', 'Wave'); t.vol = 1;
+        t.plugin = { id: 'stratum|wave', name: 'STRATUM Wave', maker: 'STRATUM', state: '', fx: [] };
+        const chord = (n) => [48, 55, 60, 64].map((q) => ({ t: 0, d: n, p: q, v: 0.9 }));
+        t.regions.push({ id: S.uid(), start: 0, len: 4, off: 0, clip: { bars: 1, notes: chord(2) } });
+        S.ui.imported({ proj: p, report: '' }); S.engine.ensure(); S.engine.rebuild();
+        await new Promise((r) => setTimeout(r, 1500));
+        const T = S.proj.tracks[0], ask = S.plug.ask;
+        const render = async (beats) => { const b = await S.engine.render(S.proj, 'song', S.proj.scenes[0].id, beats); const t0 = Date.now(); await S.plug.mixInto(b, S.engine.plugEvents); return [b.getChannelData(0), b.getChannelData(1), Date.now() - t0, b.duration]; };
+        const rms = (d, a, b) => { let s = 0; for (let i = Math.floor(a * 44100); i < b * 44100 && i < d.length; i++) s += d[i] * d[i]; return +Math.sqrt(s / ((b - a) * 44100)).toFixed(4); };
+        const zc = (d, a, b) => { let z = 0; for (let i = Math.floor(a * 44100) + 1; i < b * 44100; i++) if (d[i - 1] <= 0 && d[i] > 0) z++; return Math.round(z / (b - a)); };
+        const peak = (d) => +d.reduce((m, x) => Math.max(m, Math.abs(x)), 0).toFixed(3);
+        const names = await ask({ op: 'auWavePresets' }), params = await S.plug.params(T, -1), out = {};
+        for (let i = 0; i < names.length; i++) {
+          await ask({ op: 'auWavePreset', t: T.id, i });
+          const [L, R] = await render(4);
+          out[names[i]] = { held: rms(L, 0.3, 0.9), afterRelease: rms(L, 1.9, 2.0), peak: peak(L), stereoDiff: rms(L.map((x, k) => x - R[k]), 0.3, 0.9), zeroCross: zc(L, 0.3, 0.9) };
+        }
+        // Custom wavetable: 8 frames from a sine to a square.
+        const frames = 8, data = new Float32Array(frames * 2048);
+        for (let f = 0; f < frames; f++) for (let i = 0; i < 2048; i++) { const s = Math.sin(2 * Math.PI * i / 2048); data[f * 2048 + i] = Math.tanh(s * (1 + f * 3)); }
+        let bin = ''; const u8 = new Uint8Array(data.buffer); for (let i = 0; i < u8.length; i += 0x8000) bin += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000));
+        await ask({ op: 'auWavePreset', t: T.id, i: 0 });
+        const loaded = await ask({ op: 'auWaveTable', t: T.id, osc: 0, name: 'Test Table', b64: btoa(bin) });
+        const tableParam = (await S.plug.params(T, -1)).find((q) => q.name === 'Osc A · Wavetable').text;
+        await S.plug.capture();
+        const saved = T.plugin.state.length;
+        T.type = 'audio'; await S.plug.sync(); T.type = 'synth'; await S.plug.sync();
+        await new Promise((r) => setTimeout(r, 800));
+        const afterReload = (await S.plug.params(T, -1)).find((q) => q.name === 'Osc A · Wavetable').text;
+        const frame = await ask({ op: 'auWaveFrame', t: T.id });
+        // Dense passage: Supersaw Lead (two 7- and 5-voice unison oscillators), 4-note chords for 16 seconds.
+        await ask({ op: 'auWavePreset', t: T.id, i: names.indexOf('Supersaw Lead') });
+        T.regions = [{ id: S.uid(), start: 0, len: 32, off: 0, clip: { bars: 8, notes: [0, 4, 8, 12, 16, 20, 24, 28].flatMap((b) => chord(4).map((n) => ({ ...n, t: b }))) } }];
+        const [D, , ms, dur] = await render(32);
+        return JSON.stringify({ params: params.length, groups: [...new Set(params.map((q) => q.name.split(' · ')[0]))], presets: out, customLoaded: loaded, tableParam, stateBytes: saved, afterReload, framePoints: frame[0].length, frameShapeMinMax: [Math.min(...frame[0]).toFixed(2), Math.max(...frame[0]).toFixed(2)], dense: { seconds: dur.toFixed(1), renderMs: ms, peak: peak(D) } });
+        """
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            self.web.callAsyncJavaScript(js, arguments: [:], in: nil, in: .page) { result in
+                switch result {
+                case .success(let v): print("WAVETEST", v)
+                case .failure(let e): print("WAVETEST error", e)
                 }
                 NSApp.terminate(nil)
             }
@@ -594,6 +647,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
             t.beat0 = body["beat"] as? Double ?? 0; t.t0 = CFAbsoluteTimeGetCurrent() + (body["delay"] as? Double ?? 0)
         case "auUI": plugins.showUI(track, slot: body["slot"] as? Int ?? -1, title: body["title"] as? String ?? "Plugin")
         case "auStates": reply(body, plugins.states())
+        case "auWavePresets": reply(body, plugins.wavePresets())
+        case "auWavePreset": reply(body, plugins.wavePreset(track, body["i"] as? Int ?? 0))
+        case "auWaveTable": reply(body, plugins.waveTable(track, osc: body["osc"] as? Int ?? 0, data: Data(base64Encoded: body["b64"] as? String ?? "") ?? Data(), name: body["name"] as? String ?? "Imported"))
+        case "auWaveFrame": reply(body, [plugins.waveFrame(track, osc: 0), plugins.waveFrame(track, osc: 1)])
         case "libList":
             let index = Bundle.main.resourceURL!.appendingPathComponent("library/library.json")
             reply(body, (try? String(contentsOf: index, encoding: .utf8)) ?? "[]")

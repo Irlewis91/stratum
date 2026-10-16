@@ -225,3 +225,11 @@ kbd { background:var(--cell); border:1px solid var(--line); border-radius:4px; p
 .lrow { display:flex; align-items:center; gap:8px; padding:2px 0; }
 .lrow span[title] { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .stock button.on { border-color:var(--acc); color:var(--acc); }
+
+.wavedev { max-width:none; }
+.wavebox { display:flex; flex-direction:column; gap:4px; }
+.wavebox canvas { background:var(--panel); border:1px solid var(--line); border-radius:6px; width:240px; height:70px; }
+.pctl.grouped { display:flex; flex-wrap:wrap; gap:10px; }
+.pgrp { border:1px solid var(--line); border-radius:var(--r); padding:6px 8px; min-width:220px; flex:1 1 220px; display:flex; flex-direction:column; gap:3px; }
+.pgrp h5 { margin:0 0 3px; font-size:11px; color:var(--acc); text-transform:uppercase; letter-spacing:.06em; }
+.prm select { min-width:0; }

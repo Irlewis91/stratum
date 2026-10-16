@@ -86,6 +86,27 @@
   }
   U.setProject = setProject;
   U.refresh = () => render();
+  // STRATUM Wave: fill the preset menu and draw what each oscillator is playing.
+  U.wavePresetList = async () => {
+    const sel = $('#wavePreset');
+    if (!sel || sel.options.length > 1) return;
+    U._wavePresets = U._wavePresets || (await S.plug.ask({ op: 'auWavePresets' })) || [];
+    sel.insertAdjacentHTML('beforeend', U._wavePresets.map((n, i) => `<option value="${i}">${esc(n)}</option>`).join(''));
+  };
+  U.waveRefresh = async () => {
+    const t = curTrack(), pts = await S.plug.ask({ op: 'auWaveFrame', t: t.id });
+    if (!pts) return;
+    ['waveA', 'waveB'].forEach((id, o) => {
+      const c = $('#' + id), d = pts[o] || [];
+      if (!c || !d.length) return;
+      const g = c.getContext('2d'), w = c.width, h = c.height, css = getComputedStyle(document.body);
+      g.clearRect(0, 0, w, h);
+      g.strokeStyle = css.getPropertyValue('--line') || '#333'; g.beginPath(); g.moveTo(0, h / 2); g.lineTo(w, h / 2); g.stroke();
+      g.strokeStyle = css.getPropertyValue('--acc') || '#e39a12'; g.lineWidth = 2; g.beginPath();
+      d.forEach((y, i) => { const x = (i / (d.length - 1)) * w, yy = h / 2 - y * (h / 2 - 4); i ? g.lineTo(x, yy) : g.moveTo(x, yy); });
+      g.stroke();
+    });
+  };
   U.act = (name, el) => A[name](el);
   U.libSearch = (v) => { U.libQuery = v; clearTimeout(U.libT); U.libT = setTimeout(() => A.sounds(), 250); };
   U.shareProgress = (f) => U.toast(`Making your STRATUM video… ${Math.round(f * 100)}%`);
@@ -261,8 +282,15 @@
     document.querySelectorAll('#devices .pctl').forEach(async (el) => {
       const slot = +el.dataset.slot, list = (await S.plug.params(t, slot)) || [];
       if (!list.length && (tries || 0) < 6) return setTimeout(() => el.isConnected && fillControls((tries || 0) + 1), 500);
-      el.innerHTML = list.length ? list.map((q) => `<label class="prm"><span class="pn">${esc(q.name)}</span><input type="range" min="0" max="1" step="0.001" value="${q.v}" data-chg="plugParam" data-slot="${slot}" data-i="${q.i}"><span class="pv">${esc(q.text)}</span></label>`).join('')
+      const one = (q, label) => q.options
+        ? `<label class="prm"><span class="pn">${esc(label)}</span><select data-chg="plugSel" data-slot="${slot}" data-i="${q.i}" data-n="${q.options.length}">${q.options.map((o, k) => `<option value="${k}" ${k === q.index ? 'selected' : ''}>${esc(k === q.index ? q.text : o)}</option>`).join('')}</select><span class="pv"></span></label>`
+        : `<label class="prm"><span class="pn">${esc(label)}</span><input type="range" min="0" max="1" step="0.001" value="${q.v}" data-chg="plugParam" data-slot="${slot}" data-i="${q.i}"><span class="pv">${esc(q.text)}</span></label>`;
+      // Controls named "Section · Control" are shown in sections.
+      const groups = [];
+      for (const q of list) { const [g, l] = q.name.includes(' · ') ? q.name.split(' · ') : ['', q.name]; let G = groups.find((x) => x.g === g); if (!G) groups.push((G = { g, items: [] })); G.items.push(one(q, l)); }
+      el.innerHTML = list.length ? groups.map((G) => (G.g ? `<div class="pgrp"><h5>${esc(G.g)}</h5>${G.items.join('')}</div>` : G.items.join(''))).join('')
         : '<span class="hint">No controls to show here; use Open for the plugin\'s own window.</span>';
+      if (slot < 0 && t.plugin && t.plugin.id === 'stratum|wave') U.waveRefresh();
     });
   };
   function renderDevices() {
@@ -275,11 +303,16 @@
     if (back) {
       h += P().lfos.map((l, i) => `<div class="dev lfo"><h4>LFO ${i + 1} · CV source</h4><div class="krow">${ctl('knob', { k: 'lfo', i, key: 'rate' }, l.rate, 'Rate')}${ctl('knob', { k: 'lfo', i, key: 'depth' }, l.depth, 'Depth')}</div><select data-chg="lfoShape" data-i="${i}">${opts(['sine', 'triangle', 'square', 'sawtooth'], l.shape)}</select><div class="jackw"><i class="jack out ${U.arm === i ? 'armed' : ''}" data-act="jackOut" data-i="${i}"></i><span>CV out</span></div></div>`).join('');
     }
-    const kindSel = t.type === 'audio' ? '' : `<label class="ikind">Instrument <select data-chg="instKind">${opts([['synth', 'Built-in synth'], ['sample', 'My own sample…'], ['drums', 'Drum kit / pads'], ['plugin', 'Plugin (Audio Unit / VST3)…']], t.plugin ? 'plugin' : t.type === 'drums' ? 'drums' : t.inst && t.inst.sample ? 'sample' : 'synth')}</select></label>`;
+    const kindSel = t.type === 'audio' ? '' : `<label class="ikind">Instrument <select data-chg="instKind">${opts([['synth', 'Built-in synth'], ['wave', 'Wavetable synth (STRATUM Wave)'], ['sample', 'My own sample…'], ['drums', 'Drum kit / pads'], ['plugin', 'Plugin (Audio Unit / VST3 / VST2)…']], t.plugin ? (t.plugin.id === 'stratum|wave' ? 'wave' : 'plugin') : t.type === 'drums' ? 'drums' : t.inst && t.inst.sample ? 'sample' : 'synth')}</select></label>`;
     if (t.plugin && t.type !== 'audio') {
       const pl = t.plugin, ok = S.plug.available();
-      h += `<div class="dev inst plug"><h4>Plugin · ${esc(pl.name)} <span class="hint">${esc(pl.maker || '')}</span></h4>${kindSel}` +
-        (ok ? `<div class="krow"><button data-act="plugOpen" data-slot="-1">Open plugin window</button><button data-act="plugPick" data-kind="inst">Change plugin…</button></div>` : `<p class="hint">Plugins run in the STRATUM Mac app; here the track plays the built-in sound.</p>`) +
+      const wave = pl.id === 'stratum|wave';
+      h += `<div class="dev inst plug ${wave ? 'wavedev' : ''}"><h4>${wave ? 'STRATUM Wave <span class="hint">wavetable synth</span>' : `Plugin · ${esc(pl.name)} <span class="hint">${esc(pl.maker || '')}</span>`}</h4>${kindSel}` +
+        (ok && wave ? `<div class="krow"><label>Preset <select id="wavePreset" data-chg="wavePreset"><option value="">Choose…</option></select></label>` +
+          `<div class="wavebox"><canvas id="waveA" width="240" height="70"></canvas><button data-act="waveLoad" data-osc="0">Load wavetable A…</button></div>` +
+          `<div class="wavebox"><canvas id="waveB" width="240" height="70"></canvas><button data-act="waveLoad" data-osc="1">Load wavetable B…</button></div></div>` +
+          `<div class="pctl grouped" data-slot="-1"><span class="hint">Loading controls…</span></div>` : '') +
+        (ok && !wave ? `<div class="krow"><button data-act="plugOpen" data-slot="-1">Open plugin window</button><button data-act="plugPick" data-kind="inst">Change plugin…</button></div>` : '') + (ok ? '' : `<p class="hint">Plugins run in the STRATUM Mac app; here the track plays the built-in sound.</p>`) +
         `<div class="hint">Plugin effects</div>` + (pl.fx || []).map((f, fi) => fxRow(t, f, fi)).join('') +
         `<div class="krow"><button data-act="plugPick" data-kind="fx">+ Plugin effect…</button></div><p class="hint">Plugin tracks go straight to the Mac's audio output, so the STRATUM effects and master section do not process them.</p></div>`;
     } else if (t.type === 'synth') {
@@ -319,6 +352,7 @@
     if (back) h += `<p class="hint pad">Click an LFO “CV out” jack, then a device jack to patch a cable. Click a patched jack to unplug it.</p>`;
     setHTML('devices', h + '</div></div>');
     if (S.plug.available()) fillControls();
+    if (S.plug.available() && t.plugin && t.plugin.id === 'stratum|wave') U.wavePresetList();
     drawCables();
   }
   function drawCables() {
@@ -885,7 +919,7 @@
   };
   // Called when a file-picker batch has finished (or was cancelled), so a later plain Open is not treated as a sample load.
   U.openDone = () => {
-    U.pendingSample = null; U.pendingAudio = null;
+    U.pendingSample = null; U.pendingAudio = null; U.pendingWave = null;
     if (U.locating) { U.locating = false; U.wantedDone(U.located); }
   };
   // Samples the project points at: refresh the header button and say what was found.
@@ -938,7 +972,7 @@
   // Plugin controls move while dragging, not only when released.
   document.addEventListener('input', (e) => {
     const el = e.target;
-    if (el.dataset && el.dataset.chg === 'plugParam') S.plug.setParam(curTrack(), +el.dataset.slot, +el.dataset.i, +el.value).then((txt) => { const v = el.parentNode.querySelector('.pv'); if (v && txt != null) v.textContent = txt; });
+    if (el.dataset && el.dataset.chg === 'plugParam') S.plug.setParam(curTrack(), +el.dataset.slot, +el.dataset.i, +el.value).then((txt) => { const v = el.parentNode.querySelector('.pv'); if (v && txt != null) v.textContent = txt; if (+el.dataset.slot < 0) U.waveRefresh(); });
   });
   const C = {
     bpm(el) { const v = Math.min(240, Math.max(40, parseFloat(el.value) || 120)); E.setBpm(v); el.value = v; },
@@ -958,10 +992,23 @@
     glide(el) { if (U.note) { S.snap(); U.note.g = el.checked; renderNotes(); } },
     inst(el) { S.snap(); curTrack().inst[el.dataset.key] = el.value; },
     // Switch what a note track plays: built-in synth, the producer's own sample, a drum kit, or a plugin.
-    plugParam() {},   // handled while dragging (see the input listener above)
+    plugParam() {},
+    plugSel(el) {
+      const n = +el.dataset.n, t = curTrack(), slot = +el.dataset.slot;
+      S.plug.setParam(t, slot, +el.dataset.i, n > 1 ? +el.value / (n - 1) : 0).then(() => { if (slot < 0) fillControls(); });
+    },
+    wavePreset(el) {
+      if (el.value === '') return;
+      const t = curTrack();
+      S.plug.ask({ op: 'auWavePreset', t: t.id, i: +el.value }).then(() => { fillControls(); U.toast('Preset loaded: ' + el.selectedOptions[0].textContent); });
+    },   // handled while dragging (see the input listener above)
     instKind(el) {
       const t = curTrack(), k = el.value;
       if (k === 'plugin') { render(); return A.plugPick({ dataset: { kind: 'inst' } }); }
+      if (k === 'wave') {
+        if (!S.plug.available()) { render(); return U.toast('STRATUM Wave runs in the STRATUM Mac app.', true); }
+        return structural(() => { t.type = t.type === 'audio' ? 'synth' : t.type; t.plugin = { id: 'stratum|wave', name: 'STRATUM Wave', maker: 'STRATUM', state: '', fx: (t.plugin && t.plugin.fx) || t.pfx || [] }; delete t.pfx; });
+      }
       structural(() => {
         delete t.plugin;
         t.type = k === 'drums' ? 'drums' : 'synth';
@@ -970,6 +1017,7 @@
       });
       if (k === 'sample' && !t.inst.sample) A.instLoad();
     },
+    waveLoad(el) { U.pendingWave = { t: curTrack().id, osc: +el.dataset.osc }; U.pendingSample = null; U.pendingAudio = null; IO.open(); },
     instRoot(el) { const s = curTrack().inst.sample; if (s) { S.snap(); s.root = Math.min(108, Math.max(12, Math.round(+el.value) || 60)); render(); } },
     instLoop(el) { const s = curTrack().inst.sample; if (s) { S.snap(); s.loop = el.checked; } },
     lfoShape(el) { S.snap(); P().lfos[+el.dataset.i].shape = el.value; E.applyMix(); },

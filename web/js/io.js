@@ -719,6 +719,21 @@ ${lanes}    </Lanes>
       }
       else if (ext === 'reason') res = IO.reasonIn(ab, base);
       else if (['rns', 'ptx', 'ptf', 'logicx', 'omf', 'aaf', 'dawproject'].includes(ext)) throw new Error('.' + ext + ' files cannot be opened in this version');
+      else if (S.ui.pendingWave && !['stratum', 'json', 'mid', 'midi', 'als', 'flp', 'zip', 'reason'].includes(ext)) {
+        // Audio becomes a wavetable for STRATUM Wave: up to 64 single cycles of 2048 samples, evenly spaced through the file.
+        const w = S.ui.pendingWave, buf = await E.ensure().decodeAudioData(ab), n = buf.length, mono = new Float32Array(n);
+        for (let c = 0; c < buf.numberOfChannels; c++) { const d = buf.getChannelData(c); for (let i = 0; i < n; i++) mono[i] += d[i] / buf.numberOfChannels; }
+        const frames = n < 2048 ? 1 : Math.min(64, Math.floor(n / 2048)), out = new Float32Array(frames * 2048);
+        for (let f = 0; f < frames; f++) {
+          if (n < 2048) { for (let i = 0; i < 2048; i++) out[i] = mono[Math.floor((i * n) / 2048)]; continue; }
+          const at = frames > 1 ? Math.round((f * (n - 2048)) / (frames - 1)) : 0;
+          out.set(mono.subarray(at, at + 2048), f * 2048);
+        }
+        const ok = await S.plug.ask({ op: 'auWaveTable', t: w.t, osc: w.osc, name: base, b64: b64(new Uint8Array(out.buffer)) });
+        S.ui.toast(ok ? `Wavetable loaded on oscillator ${w.osc ? 'B' : 'A'}: ${base} (${frames} frame${frames === 1 ? '' : 's'}).` : 'The wavetable could not be loaded.', !ok);
+        S.ui.refresh();
+        return;
+      }
       else if (S.ui.locating) { if (await IO.offer(fname, ab)) S.ui.located++; return; }
       else res = { audio: await IO.addAudio(fname, ab) };
       S.ui.imported(res);

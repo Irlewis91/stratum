@@ -661,16 +661,34 @@ ${lanes}    </Lanes>
     return IO.zip([['project.xml', enc.encode(xml)], ['metadata.xml', enc.encode(meta)]]);
   };
 
+  // The whole song (or the current scene when nothing is arranged) rendered offline, plugin tracks included.
+  IO.mixdown = async () => {
+    const proj = S.proj, total = E.songBeats(proj), song = total > 0, scene = S.ui.currentScene();
+    S.ui.toast('Rendering audio…');
+    await new Promise((r) => setTimeout(r, 30));
+    const buf = await E.render(proj, song ? 'song' : 'scene', scene.id, song ? total : scene.bars * 4 * 4);
+    return S.plug.mixInto(buf, E.plugEvents);
+  };
+  // Share: render the mixdown (optionally only the first `clip` seconds, faded out), then let the Mac app make the branded
+  // video and audio file and hand them to Messages, Mail, AirDrop or an upload page.
+  IO.share = async (target, title, artist, clip) => {
+    const full = await IO.mixdown(), sr = full.sampleRate, n = clip ? Math.min(full.length, Math.round(clip * sr)) : full.length;
+    const buf = E.ensure().createBuffer(2, n, sr), fade = n < full.length ? Math.min(n, Math.round(1.5 * sr)) : 0;
+    for (let c = 0; c < 2; c++) {
+      const from = full.getChannelData(Math.min(c, full.numberOfChannels - 1)), to = buf.getChannelData(c);
+      for (let i = 0; i < n; i++) to[i] = from[i] * (i >= n - fade ? (n - i) / fade : 1);
+    }
+    const bins = 96, peaks = [], L = buf.getChannelData(0), R = buf.getChannelData(1);
+    for (let b = 0; b < bins; b++) { let m = 0; for (let i = Math.floor((b * n) / bins), e = Math.floor(((b + 1) * n) / bins); i < e; i += 4) m = Math.max(m, Math.abs(L[i]), Math.abs(R[i])); peaks.push(m); }
+    const top = Math.max(1e-6, ...peaks);
+    native().postMessage({ op: 'share', target, title, artist, peaks: peaks.map((p) => +(p / top).toFixed(3)), b64: b64(IO.wav(buf)) });
+  };
   IO.exportAs = async (kind) => {
     const proj = S.proj, base = proj.name || 'Untitled';
     if (kind === 'mid') return IO.saveFile(base + '.mid', IO.midiOut(proj));
     if (kind === 'dawproject') return IO.saveFile(base + '.dawproject', IO.dawprojectOut(proj));
     if (kind === 'wav') {
-      const total = E.songBeats(proj), song = total > 0, scene = S.ui.currentScene();
-      S.ui.toast('Rendering audio…');
-      await new Promise((r) => setTimeout(r, 30));
-      const buf = await E.render(proj, song ? 'song' : 'scene', scene.id, song ? total : scene.bars * 4 * 4);
-      await S.plug.mixInto(buf, E.plugEvents);
+      const buf = await IO.mixdown();
       IO.saveFile(base + '.wav', IO.wav(buf));
       S.ui.toast('Mixdown rendered: ' + buf.duration.toFixed(1) + ' s');
     }

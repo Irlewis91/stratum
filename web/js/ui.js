@@ -86,6 +86,8 @@
   }
   U.setProject = setProject;
   U.refresh = () => render();
+  U.shareProgress = (f) => U.toast(`Making your STRATUM video… ${Math.round(f * 100)}%`);
+  U.shareDone = (ok, msg) => U.toast(msg, !ok);
   // A follow-up to an import (samples found, plugins matched): shown after the import report so that is not lost.
   U.followUp = (msg, err) => { U.report = (U.report ? U.report + ' ' : '') + msg; U.toast(U.report, err); };
 
@@ -593,6 +595,23 @@
     toggleMode() { $('#modeSel').value = $('#modeSel').value === 'scene' ? 'song' : 'scene'; C.mode($('#modeSel')); },
     new() { S.snap(); const p = S.blankProject(); S.newScene(p, 'Scene 1', 1); S.newTrack(p, 'drums', 'Drums'); S.newTrack(p, 'synth', 'Synth'); setProject(p); },
     open() { U.pendingAudio = null; U.pendingSample = null; IO.open(); },
+    share() {
+      const p = P(), go = (t, label) => `<button data-act="shareGo" data-target="${t}">${label}</button>`;
+      showPop(`<h3>Share your track</h3><p class="hint">STRATUM makes a branded vertical video (for TikTok, Reels, Shorts and X) and an audio file, and saves both in your Movies › STRATUM folder.</p>` +
+        `<label>Title <input id="shTitle" value="${esc(p.name || 'Untitled')}"></label><label>Artist <input id="shArtist" value="${esc(p.artist || '')}" placeholder="Your artist name"></label>` +
+        `<label>Length <select id="shClip">${opts([['', 'Whole track'], ['60', 'First 60 seconds'], ['30', 'First 30 seconds'], ['15', 'First 15 seconds']], '')}</select></label>` +
+        `<div class="stock"><b>Send</b> ${go('messages', 'Text (Messages)')}${go('mail', 'Email')}${go('airdrop', 'AirDrop')}${go('more', 'More…')}</div>` +
+        `<div class="stock"><b>Post</b> ${go('tiktok', 'TikTok')}${go('instagram', 'Instagram')}${go('youtube', 'YouTube')}${go('x', 'X')}</div>` +
+        `<p class="hint">For TikTok, Instagram, YouTube and X, STRATUM opens the upload page and shows the video in Finder, ready to drag in.</p>` +
+        `${go('save', 'Just save the files')} <button data-act="closePop">Cancel</button>`);
+    },
+    shareGo(el) {
+      const title = ($('#shTitle').value || '').trim() || 'Untitled', artist = ($('#shArtist').value || '').trim(), clip = +$('#shClip').value || 0;
+      P().artist = artist;
+      closePop();
+      if (!IO.native()) return U.toast('Sharing needs the STRATUM Mac app. Use Export to save a WAV file instead.', true);
+      IO.share(el.dataset.target, title, artist, clip).catch((e) => U.toast('Could not share: ' + (e.message || e), true));
+    },
     clearAuto() { structural(() => { delete curTrack().auto; delete P().master.auto; }); },
     wanted() {
       const w = P().wanted || [];

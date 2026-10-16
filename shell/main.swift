@@ -109,6 +109,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
         if CommandLine.arguments.contains("--plugin-test") { pluginTest() }
         if CommandLine.arguments.contains("--fx-test") { fxTest() }
         if CommandLine.arguments.contains("--auto-test") { autoTest() }
+        if CommandLine.arguments.contains("--share-test") { shareTest() }
         if let i = CommandLine.arguments.firstIndex(of: "--import-test") { importTest(Array(CommandLine.arguments[(i + 1)...])) }
     }
 
@@ -265,6 +266,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
                 case .success(let v): print("AUTOTEST", v)
                 case .failure(let e): print("AUTOTEST error", e)
                 }
+                NSApp.terminate(nil)
+            }
+        }
+    }
+
+    // Share check: renders the demo song's first 12 seconds to the branded video and audio file, then reports what was made.
+    private func shareTest() {
+        let js = """
+        await new Promise((res) => { S.ui.shareDone = (ok, msg) => res([ok, msg]); S.io.share('save', 'Since I Been Away', 'Slade', 12); }).then((r) => window.__shared = r);
+        return JSON.stringify(window.__shared);
+        """
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            self.web.callAsyncJavaScript(js, arguments: [:], in: nil, in: .page) { result in
+                let dir = FileManager.default.urls(for: .moviesDirectory, in: .userDomainMask)[0].appendingPathComponent("STRATUM")
+                for f in ["Since I Been Away.mp4", "Since I Been Away.m4a"] {
+                    let u = dir.appendingPathComponent(f), a = AVURLAsset(url: u)
+                    let size = (try? FileManager.default.attributesOfItem(atPath: u.path)[.size] as? Int) ?? 0
+                    print("SHARETEST", f, "seconds", String(format: "%.2f", a.duration.seconds), "bytes", size, "video", a.tracks(withMediaType: .video).first?.naturalSize ?? .zero, "audioTracks", a.tracks(withMediaType: .audio).count)
+                }
+                ShareRenderer.preview(title: "Since I Been Away", artist: "Slade", peaks: (0..<96).map { Float(0.25 + 0.75 * abs(sin(Double($0) * 0.37))) }, progress: 0.4,
+                                      to: URL(fileURLWithPath: CommandLine.arguments.last!))
+                if case .success(let v) = result { print("SHARETEST", v) } else if case .failure(let e) = result { print("SHARETEST error", e) }
                 NSApp.terminate(nil)
             }
         }
@@ -457,6 +480,63 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
         next()
     }
 
+    // MARK: sharing
+
+    private var lastShare: (key: String, out: ShareRenderer.Output)?
+
+    private func share(_ body: [String: Any]) {
+        guard let data = Data(base64Encoded: body["b64"] as? String ?? "") else { return }
+        let title = body["title"] as? String ?? "Untitled", artist = body["artist"] as? String ?? "", target = body["target"] as? String ?? "save"
+        let peaks = (body["peaks"] as? [Double] ?? []).map { Float($0) }
+        let key = "\(title)|\(artist)|\(data.count)|\(data.hashValue)"
+        if let l = lastShare, l.key == key, FileManager.default.fileExists(atPath: l.out.video.path) { return deliver(l.out, target: target, title: title, artist: artist) }
+        let wav = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".wav")
+        do { try data.write(to: wav) } catch { return shareDone(false, "Could not prepare the audio: \(error.localizedDescription)") }
+        let out = FileManager.default.urls(for: .moviesDirectory, in: .userDomainMask)[0].appendingPathComponent("STRATUM")
+        ShareRenderer.render(.init(wav: wav, title: title, artist: artist, peaks: peaks, outDir: out), progress: { [weak self] f in
+            self?.web.evaluateJavaScript("S.ui.shareProgress(\(f))", completionHandler: nil)
+        }) { [weak self] result in
+            try? FileManager.default.removeItem(at: wav)
+            switch result {
+            case .success(let o): self?.lastShare = (key, o); self?.deliver(o, target: target, title: title, artist: artist)
+            case .failure(let e): self?.shareDone(false, "Could not make the video: \(e.localizedDescription)")
+            }
+        }
+    }
+
+    private func shareDone(_ ok: Bool, _ msg: String) {
+        guard let d = try? JSONSerialization.data(withJSONObject: [msg]), let json = String(data: d, encoding: .utf8) else { return }
+        web.evaluateJavaScript("S.ui.shareDone(\(ok), \(json)[0])", completionHandler: nil)
+    }
+
+    private func deliver(_ o: ShareRenderer.Output, target: String, title: String, artist: String) {
+        let line = "\u{201C}\(title)\u{201D}\(artist.isEmpty ? "" : " by \(artist)") \u{2014} made with STRATUM. \(ShareBrand.linkURL)"
+        func send(_ name: NSSharingService.Name, _ items: [Any], subject: String? = nil, done: String) {
+            guard let s = NSSharingService(named: name), s.canPerform(withItems: items) else {
+                NSWorkspace.shared.activateFileViewerSelecting([o.video, o.audio])
+                return shareDone(false, "That sharing option is not set up on this Mac. Your video and audio are in Movies \u{203A} STRATUM.")
+            }
+            if let subject = subject { s.subject = subject }
+            s.perform(withItems: items)
+            shareDone(true, done)
+        }
+        switch target {
+        case "mail": send(.composeEmail, [line, o.audio], subject: "\(title) \u{2014} made with STRATUM", done: "Mail is open with your track attached.")
+        case "messages": send(.composeMessage, [line, o.video], done: "Messages is open with your video attached.")
+        case "airdrop": send(.sendViaAirDrop, [o.video], done: "Choose who to AirDrop your video to.")
+        case "more":
+            let picker = NSSharingServicePicker(items: [o.video, o.audio])
+            picker.show(relativeTo: NSRect(x: web.bounds.midX, y: web.bounds.maxY - 40, width: 1, height: 1), of: web, preferredEdge: .minY)
+            shareDone(true, "Choose where to send your track.")
+        default:
+            NSWorkspace.shared.activateFileViewerSelecting([o.video])
+            if let page = ShareBrand.uploadPages[target], let url = URL(string: page) {
+                NSWorkspace.shared.open(url)
+                shareDone(true, "The upload page is open and your video is selected in Finder \u{2014} drag it in to post.")
+            } else { shareDone(true, "Saved in Movies \u{203A} STRATUM: \(o.video.lastPathComponent) and \(o.audio.lastPathComponent).") }
+        }
+    }
+
     // MARK: plugins
 
     private func reply(_ body: [String: Any], _ value: Any) {
@@ -606,6 +686,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
         guard let body = message.body as? [String: Any], let op = body["op"] as? String else { return }
         if op == "open" { openFile(many: body["many"] as? Bool ?? false) }
         if op.hasPrefix("au") { return pluginOp(op, body) }
+        if op == "share" { share(body) }
         if op == "findFiles" { findFiles(body["paths"] as? [String] ?? [], near: body["near"] as? String ?? "") }
         if op == "recStart" { startRecording(monitor: body["monitor"] as? Bool ?? false) }
         if op == "recStop" { stopRecording() }

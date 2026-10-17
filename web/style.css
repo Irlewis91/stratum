@@ -294,3 +294,27 @@ body.phone .rkh { width:118px; }
 .popbox .discord { background:#5865f2; border-color:#5865f2; color:#fff; }
 #syList .lrow { display:flex; align-items:center; gap:8px; padding:6px 0; border-bottom:1px solid var(--line); }
 #syList .lrow > span { flex:1; min-width:0; }
+
+/* STRATUM Visuals */
+#visuals { position:fixed; inset:0; z-index:50; background:#000; display:flex; flex-direction:column; }
+#visuals[hidden] { display:none; }
+#visCanvas, #visOverlay { position:absolute; inset:0; width:100%; height:100%; }
+#visOverlay { pointer-events:none; }
+#visBar { position:absolute; left:0; right:0; bottom:0; max-height:46vh; overflow:auto; background:rgba(12,13,18,.92); border-top:1px solid var(--line); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); padding:6px 10px calc(8px + env(safe-area-inset-bottom)); }
+#visBar[hidden] { display:none; }
+#visBar button { white-space:nowrap; }
+#visBar button.on { background:var(--acc); color:#111; border-color:var(--acc); }
+.vtabs { display:flex; gap:4px; align-items:center; flex-wrap:wrap; margin-bottom:6px; }
+.vspace { flex:1; }
+.vnow { margin-right:8px; }
+.vcats, .vmodes, .vrow { display:flex; gap:5px; flex-wrap:wrap; align-items:center; margin:5px 0; }
+.vsl { display:inline-flex; flex-direction:column; gap:2px; min-width:120px; font-size:11px; color:var(--dim); }
+.vsl input { width:130px; }
+.vpals { display:flex; gap:4px; flex-wrap:wrap; margin:6px 0; }
+.vpal { width:34px; height:22px; padding:0; border-radius:4px; }
+.vpal.on { outline:2px solid var(--txt); }
+.vslot { display:inline-flex; gap:4px; align-items:center; font-size:11px; }
+.vslot select { max-width:130px; }
+.vchip { display:inline-flex; }
+#visText { width:100%; box-sizing:border-box; background:var(--panel2); color:var(--txt); border:1px solid var(--line); border-radius:6px; padding:6px; font:13px var(--font); }
+input[type=color] { width:34px; height:24px; padding:0; border:1px solid var(--line); background:none; }

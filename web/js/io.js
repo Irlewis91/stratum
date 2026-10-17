@@ -908,7 +908,8 @@ ${lanes}    </Lanes>
   };
   // Share: render the mixdown (optionally only the first `clip` seconds, faded out), then let the Mac app make the branded
   // video and audio file and hand them to Messages, Mail, AirDrop or an upload page.
-  IO.share = async (target, title, artist, clip) => {
+  // `local`: return the audio instead of handing it to the Mac app (used when the video is drawn here, from Visuals).
+  IO.share = async (target, title, artist, clip, local) => {
     const full = await IO.mixdown(), sr = full.sampleRate, n = clip ? Math.min(full.length, Math.round(clip * sr)) : full.length;
     const buf = E.ensure().createBuffer(2, n, sr), fade = n < full.length ? Math.min(n, Math.round(1.5 * sr)) : 0;
     for (let c = 0; c < 2; c++) {
@@ -918,7 +919,7 @@ ${lanes}    </Lanes>
     const bins = 96, peaks = [], L = buf.getChannelData(0), R = buf.getChannelData(1);
     for (let b = 0; b < bins; b++) { let m = 0; for (let i = Math.floor((b * n) / bins), e = Math.floor(((b + 1) * n) / bins); i < e; i += 4) m = Math.max(m, Math.abs(L[i]), Math.abs(R[i])); peaks.push(m); }
     const top = Math.max(1e-6, ...peaks);
-    if (!native()) return { buf, peaks: peaks.map((p) => p / top) };
+    if (!native() || local) return { buf, peaks: peaks.map((p) => p / top) };
     native().postMessage({ op: 'share', target, title, artist, peaks: peaks.map((p) => +(p / top).toFixed(3)), b64: b64(IO.wav(buf)) });
   };
   // ---- built-in sound library (CC0 sounds bundled with the Mac app) ----

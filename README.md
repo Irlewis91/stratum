@@ -13,6 +13,10 @@ STRATUM has one project model and four switchable layouts ("Comfort Skins"): Pat
 
 Requires macOS 12 or later. Runs on Apple silicon and Intel; AI stem separation is Apple silicon only.
 
+### Visuals
+
+**Visuals** in the toolbar opens full-window, audio-reactive visuals that follow the whole mix or one track: 44 modes in 11 categories (Scope, Lava, Arcade, Cosmos, Code, Color Field, TV, Pixel, Text, Plasma, Spectrum), Glass / Dither / Texture / Track effects, 24 palettes or your own colours, your own image, lyrics and font, 50 factory presets plus your own, grids of up to 36 tiles, and a performance mode (presets on keys 1–9, flash, shake, blackout, presets that change with each scene). The same looks can be used for share videos and, on the Mac, for Go live.
+
 ### Windows
 
 Download `STRATUM-Windows.zip` from the Releases page, unzip it, and double-click `STRATUM.exe` (keep it next to the `app` folder). Windows 10 or 11, 64-bit. STRATUM is not code-signed yet, so Windows SmartScreen may warn: choose **More info › Run anyway**. The Windows version has not been tested on a Windows PC yet.

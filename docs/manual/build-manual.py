@@ -114,7 +114,7 @@ add(f"""<section class="cover"><img class="wm" src="{mark}" alt="STRATUM"><h1>Ow
 chapters = ["Welcome and installing", "The window at a glance", "Comfort Skins", "Projects, opening and importing", "Tracks and instruments",
             "STRATUM Wave", "Writing notes and patterns", "Arranging your song", "Recording and comping", "Effects", "The sound library",
             "Mixing", "Stems: splitting a track apart", "Exporting and sharing", "Coming from another DAW", "Keyboard shortcuts",
-            "Plugins", "Limits in this alpha and troubleshooting", "Windows, phones and tablets"]
+            "Plugins", "Limits in this alpha and troubleshooting", "Windows, phones and tablets", "Visuals"]
 add('<section class="toc"><h2>Contents</h2><ol>' + "".join(f"<li>{esc(c)}</li>" for c in chapters) + "</ol></section>")
 
 # 1
@@ -305,6 +305,19 @@ add("""<section><h1><span>19</span>Windows, phones and tablets</h1><p>STRATUM al
         ["Importing projects from other software", "✓", "✓", "✓"], ["Recording from a microphone", "✓", "✓", "✓"], ["Branded share videos", "✓", "✓", "✓ through the share sheet"],
         ["Plugins, STRATUM Wave, STRATUM Tune, Airwindows", "✓", "—", "—"], ["Stems, Record from another app, Go live", "✓", "—", "—"]])
     + "<p>Share videos on Windows, phones and tablets are recorded as the track plays once, so a 60-second clip takes about a minute to make.</p></section>")
+
+# 20
+add("""<section><h1><span>20</span>Visuals</h1><p>Press <b>Visuals</b> in the toolbar for full-window visuals that move with your music: the whole mix, or one track you choose. Like a visualizer plugin, but built in, and on every version of STRATUM. While the song plays, the beat follows STRATUM's tempo exactly.</p>"""
+    + figure("visuals", [("#visBar .vtabs", "Tabs", "Mode, Look, Effects, Image &amp; text, Grid, Performance and Presets."), ("#visBar .vbody", "Controls", "the settings for the chosen tab.")], "Visuals with the Stained Glass preset: a liquid plasma through the Kaleido glass and Hex dither.")
+    + table(["Category", "Modes"], [["Scope", "Phosphor line, Ring, Mirror, X–Y figure, Shape — oscilloscope-style traces with glowing trails"], ["Lava", "Lamp, Bubbles, Melt — slow blobs that swell with the bass"],
+        ["Arcade", "Breaker, Invasion, Serpent, Rally, Rocks — little games played by your track"], ["Cosmos", "Warp, Nebula, Pulsar, Fireflies, Constellation"], ["Code", "Glyph rain, Binary, Hex dump, Terminal"],
+        ["Color Field", "Wash, Bands, Stripes, Quarters, Target — flat colour that moves with level and frequency"], ["TV", "Static, Test card, Rolling"], ["Pixel", "Equalizer, Tunnel, Landscape — chunky 8-bit pictures"],
+        ["Text", "Pulse, Glitch, Wave, Marquee, Stack — your lyrics or title"], ["Plasma", "Classic, Light beams, Liquid, Ripples"], ["Spectrum", "Bars, Radial"]])
+    + """<h3>Look and effects</h3><p><b>Look</b> sets intensity, speed, size, trails and how strongly the visuals respond (Input), and the colours: 24 palettes or three colours of your own. <b>Effects</b> has four groups, each with an amount: <b>Glass</b> (Ball, 2×2, Kaleido, Flower, Cross, Burst), <b>Dither</b> (Symbol, Star, Flower, Hex), <b>Texture</b> (Noise, Grain, CRT, Threshold) and <b>Track</b>, which draws tracking boxes on the brightest light (Basic, System, Bracket, Glow, Terminal).</p>
+<h3>Your image, words and font</h3><p>Drop an image onto the visuals (or use <b>Image &amp; text › Choose image</b>) and use it <b>Behind</b> the visuals, as a glowing <b>Outline</b>, or as a <b>Pulse</b> with the beat. Type lyrics one line per row for the Text modes, and choose when lines change: every beat, every bar, every 4 bars, or when you press <b>T</b>. <b>Load a font</b> takes any .ttf or .otf file.</p>
+<h3>Grids, presets and performing</h3><p><b>Grid</b> shows up to 6 × 6 tiles: linked (all one look, optionally stepping through the category's modes) or each tile with its own look. <b>Presets</b> has 50 factory looks and saves your own. <b>Performance</b> chooses what the visuals listen to, puts a preset on each of the keys 1–9, and can change the visual with each scene as the song plays.</p>"""
+    + table(["Key (while Visuals is open)", "Does"], [["Space", "Play / stop"], ["1–9", "Jump to the preset on that key"], ["← →", "Previous / next preset"], ["Enter", "Flash"], ["S", "Shake"], ["B", "Blackout"], ["I", "Invert colours"], ["T", "Next lyric line"], ["G", "Cycle grid size"], ["F", "Full screen"], ["H", "Hide or show the controls"], ["Esc", "Close Visuals"]])
+    + "<p>Visuals also make share videos: in <b>Share</b>, choose a <b>Look</b> other than the STRATUM waveform. When you <b>Go live</b> from the Mac, tick <b>Show Visuals instead of the window</b>. On the Mac, tracks that play through plugins (VST, Audio Units, STRATUM Wave, Tune, Airwindows) are not heard by Visuals yet, so the visuals follow the rest of the mix.</p></section>")
 
 page = f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><title>STRATUM Owner’s Manual</title><style>{css}</style></head><body>{''.join(body)}</body></html>"""
 open(os.path.join(HERE, "manual.html"), "w").write(page)

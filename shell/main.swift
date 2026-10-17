@@ -122,6 +122,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKNaviga
         if CommandLine.arguments.contains("--tune-test") { tuneTest() }
         if CommandLine.arguments.contains("--skin-test") { skinTest() }
         if CommandLine.arguments.contains("--sync-test") { syncTest() }
+        if let i = CommandLine.arguments.firstIndex(of: "--vis-test") { visTest(URL(fileURLWithPath: CommandLine.arguments[i + 1])) }
         if let i = CommandLine.arguments.firstIndex(of: "--live-test") { liveTest(CommandLine.arguments[i + 1], CommandLine.arguments[i + 2]) }
         if let i = CommandLine.arguments.firstIndex(of: "--manual-shots") { manualShots(URL(fileURLWithPath: CommandLine.arguments[i + 1])) }
         if let i = CommandLine.arguments.firstIndex(of: "--manual-pdf") { manualPDF(URL(fileURLWithPath: CommandLine.arguments[i + 1]), URL(fileURLWithPath: CommandLine.arguments[i + 2])) }
@@ -288,6 +289,36 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKNaviga
     }
 
     // Share check: renders the demo song's first 12 seconds to the branded video and audio file, then reports what was made.
+    /// STRATUM Visuals in the Mac app: every mode runs, a snapshot of the window (what Go live sends) shows the visuals,
+    /// and a share video made with a Visuals look reaches Movies › STRATUM.
+    private func visTest(_ png: URL) {
+        setvbuf(stdout, nil, _IONBF, 0)
+        let js = """
+        S.ui.act('visuals'); S.ui.act('play'); const bad = [];
+        for (const m of S.vis.MODES) { S.proj.visuals.tiles[0].mode = m.cat + '/' + m.name; await new Promise((r) => setTimeout(r, 120)); const t = document.querySelector('#toast'); if (t && /Visuals stopped/.test(t.textContent)) { bad.push(m.name + ': ' + t.textContent); break; } }
+        S.vis.applyPreset('Stained Glass', true); document.querySelector('#visBar').hidden = true;
+        await new Promise((r) => setTimeout(r, 1500));
+        return JSON.stringify({ modes: S.vis.MODES.length, failed: bad });
+        """
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            self.web.callAsyncJavaScript(js, arguments: [:], in: nil, in: .page) { r in
+                print("VISTEST modes", (try? r.get()) ?? "failed: \(r)")
+                let cfg = WKSnapshotConfiguration(); cfg.snapshotWidth = 640
+                self.web.takeSnapshot(with: cfg) { img, _ in
+                    if let img = img, let tiff = img.tiffRepresentation, let rep = NSBitmapImageRep(data: tiff), let data = rep.representation(using: .png, properties: [:]) { try? data.write(to: png); print("VISTEST snapshot", png.lastPathComponent) }
+                    let share = "S.vis.close(); S.engine.stop(); await new Promise((res) => { S.ui.shareDone = (ok, msg) => res([ok, msg]); S.ui.act('share'); document.querySelector('#shLook').value = 'Hyperdrive'; document.querySelector('#shClip').value = '15'; document.querySelector('[data-act=shareGo][data-target=save]').click(); setTimeout(() => res(['timeout']), 60000); }).then((r) => (window.__vs = r)); return JSON.stringify(window.__vs);"
+                    self.web.callAsyncJavaScript(share, arguments: [:], in: nil, in: .page) { r in
+                        print("VISTEST share", (try? r.get()) ?? "failed: \(r)")
+                        let dir = FileManager.default.urls(for: .moviesDirectory, in: .userDomainMask)[0].appendingPathComponent("STRATUM")
+                        let files = (try? FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil)) ?? []
+                        if let v = files.first(where: { $0.lastPathComponent.contains("visuals") }) { let a = AVURLAsset(url: v); print("VISTEST video", v.lastPathComponent, String(format: "%.1f s", a.duration.seconds), a.tracks(withMediaType: .video).first?.naturalSize ?? .zero, "audio tracks", a.tracks(withMediaType: .audio).count) }
+                        exit(0)
+                    }
+                }
+            }
+        }
+    }
+
     /// STRATUM Sync against a local test server: email-code sign-in and upload, then a Discord-style sign-in that leaves the
     /// page and comes back through the Mac app's return address, with the unsaved beat restored.
     private func syncTest() {
@@ -561,8 +592,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKNaviga
             ("wave", "S.ui.setSkin('pattern'); S.ui.manualWave(); setTimeout(() => S.ui.manualFocus('devices'), 1500)"), ("gate", "S.ui.setSkin('pattern'); S.ui.manualGate(); S.ui.manualFocus('devices')"),
             ("sounds", "S.ui.setSkin('pattern'); S.ui.act('sounds')"), ("share", "document.getElementById('pop').hidden = true; S.ui.act('share')"),
             ("tour", "document.getElementById('pop').hidden = true; S.tour.start(); document.querySelector('.tour-card [data-t=next]').click(); document.querySelector('.tour-card [data-t=next]').click(); document.querySelector('.tour-card [data-t=next]').click(); document.querySelector('.tour-card [data-t=next]').click()"),
+            ("visuals", "document.getElementById('pop').hidden = true; const sk = document.querySelector('.tour-card [data-t=skip]'); if (sk) sk.click(); S.ui.act('play'); S.vis.open(); S.vis.applyPreset('Stained Glass', true); setTimeout(() => { S.engine.stop(); }, 1800)"),
         ]
-        let selectors = ["#hdr .logo", "[data-act=new]", "[data-act=open]", "[data-act=save]", "#wantBtn", "[data-act=sounds]", "[data-act=share]", "#exportSel", "#playBtn", "[data-act=stop]", "#recBtn", "#monBtn", "#modeSel", "#bpm", "#rootSel", "#metroBtn", "#pos", "#keysBtn", "[data-act=dump]", "[data-act=undo]", "#addTrackSel", "[data-act=help]", "#skinSel", "#rack", "#session", "#timeline", "#mixer", "#editor", "#devices", "#inspector", "#pop .popbox", ".wavebox", "#wavePreset", ".pctl.grouped", ".gatepat", ".ikind", ".tour-card", ".tour-box"]
+        let selectors = ["#visBar .vtabs", "#visBar .vbody", "#visCanvas", "#hdr .logo", "[data-act=new]", "[data-act=open]", "[data-act=save]", "#wantBtn", "[data-act=sounds]", "[data-act=share]", "#exportSel", "#playBtn", "[data-act=stop]", "#recBtn", "#monBtn", "#modeSel", "#bpm", "#rootSel", "#metroBtn", "#pos", "#keysBtn", "[data-act=dump]", "[data-act=undo]", "#addTrackSel", "[data-act=help]", "#skinSel", "#rack", "#session", "#timeline", "#mixer", "#editor", "#devices", "#inspector", "#pop .popbox", ".wavebox", "#wavePreset", ".pctl.grouped", ".gatepat", ".ikind", ".tour-card", ".tour-box"]
         var rects: [String: Any] = [:]
         var queue = shots
         func next() {
@@ -911,6 +943,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKNaviga
         }
     }
 
+    /// A share video made in the page (STRATUM Visuals looks): saved in Movies › STRATUM, then sent on like any other.
+    private func shareFiles(_ body: [String: Any]) {
+        guard let video = Data(base64Encoded: body["video"] as? String ?? ""), let audio = Data(base64Encoded: body["audio"] as? String ?? "") else { return shareDone(false, "The video could not be read.") }
+        let title = body["title"] as? String ?? "Untitled", artist = body["artist"] as? String ?? "", target = body["target"] as? String ?? "save"
+        let ext = (body["ext"] as? String ?? "mp4").filter { $0.isLetter || $0.isNumber }
+        let dir = FileManager.default.urls(for: .moviesDirectory, in: .userDomainMask)[0].appendingPathComponent("STRATUM")
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let safe = title.replacingOccurrences(of: "/", with: "-").replacingOccurrences(of: ":", with: "-")
+        let v = dir.appendingPathComponent("\(safe) \(ShareBrand.shape(target).label) visuals.\(ext)"), a = dir.appendingPathComponent("\(safe).wav")
+        do { try video.write(to: v); try audio.write(to: a) } catch { return shareDone(false, "Could not save the video: \(error.localizedDescription)") }
+        deliver(ShareRenderer.Output(video: v, audio: a, seconds: body["seconds"] as? Double ?? 0), target: target, title: title, artist: artist)
+    }
+
     private func shareDone(_ ok: Bool, _ msg: String) {
         guard let d = try? JSONSerialization.data(withJSONObject: [msg]), let json = String(data: d, encoding: .utf8) else { return }
         web.evaluateJavaScript("S.ui.shareDone(\(ok), \(json)[0])", completionHandler: nil)
@@ -1140,6 +1185,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKNaviga
         if op == "open" { openFile(many: body["many"] as? Bool ?? false) }
         if op.hasPrefix("au") || op.hasPrefix("lib") { return pluginOp(op, body) }
         if op == "share" { share(body) }
+        if op == "shareFiles" { shareFiles(body) }
         if op.hasPrefix("cap") { return captureOp(op, body) }
         if op.hasPrefix("live") { return liveOp(op, body) }
         if op == "manual", let url = Bundle.main.url(forResource: "STRATUM Owner's Manual", withExtension: "pdf") { NSWorkspace.shared.open(url) }

@@ -133,10 +133,17 @@
   U.libSearch = (v) => { U.libQuery = v; clearTimeout(U.libT); U.libT = setTimeout(() => A.sounds(), 250); };
   U.shareProgress = (f) => U.toast(`Making your STRATUM video… ${Math.round(f * 100)}%`);
   U.shareDone = (ok, msg) => U.toast(msg, !ok);
-  async function webShare(target, label, title, artist, clip) {
+  async function webShare(target, label, title, artist, clip, look) {
     showPop(`<h3>Making your ${esc(label)} video…</h3><p class="hint">The video is recorded as the track plays through once (silently), so it takes as long as the track. Keep STRATUM open.</p><p class="caprec"><span id="wsPct">0%</span></p>`);
-    const mix = await IO.share(target, title, artist, clip);
-    const r = await IO.webShareRender(target, title, artist, mix.buf, mix.peaks, (p) => { const el = $('#wsPct'); if (el) el.textContent = Math.round(p * 100) + '%'; });
+    const mix = await IO.share(target, title, artist, clip, true);
+    const r = await IO.webShareRender(target, title, artist, mix.buf, mix.peaks, (p) => { const el = $('#wsPct'); if (el) el.textContent = Math.round(p * 100) + '%'; }, look);
+    if (IO.native() && r.video) {
+      // The Mac app takes it from here: Messages, Mail, AirDrop, Photos or the upload page, as with every share.
+      closePop();
+      const b64 = async (f) => { const u = new Uint8Array(await f.arrayBuffer()); let s = ''; for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000)); return btoa(s); };
+      IO.native().postMessage({ op: 'shareFiles', target, title, artist, ext: r.video.name.split('.').pop(), video: await b64(r.video), audio: await b64(r.audio), seconds: mix.buf.duration });
+      return;
+    }
     U.webShared = { ...r, title, target };
     const page = IO.webSharePage(target), mb = (f) => (f.size / 1048576).toFixed(1) + ' MB';
     showPop(`<h3>Your ${esc(label)} video is ready</h3>` +
@@ -637,7 +644,7 @@
   $('#pop').addEventListener('pointerdown', (e) => { if (e.target.id === 'pop') closePop(); });
   const KEYMAP = {
     common: [['Space', 'play', 'Play / stop'], ['Tab', 'flip', 'Flip the rack to its back panel'], ['Meta+z', 'undo', 'Undo'], ['Meta+s', 'save', 'Save project'], ['Meta+o', 'open', 'Open / import'],
-      ['Backspace', 'delRg', 'Delete the selected note or region'], ['Meta+e', 'splitRg', 'Split region at the playhead'], ['Meta+d', 'dup', 'Duplicate region or scene']],
+      ['Backspace', 'delRg', 'Delete the selected note or region'], ['Meta+e', 'splitRg', 'Split region at the playhead'], ['Meta+d', 'dup', 'Duplicate region or scene'], ['Meta+Shift+v', 'visuals', 'Visuals']],
     pattern: [['l', 'toggleMode', 'Pattern / Song mode'], ['F5', 'showTimeline', 'Playlist'], ['F7', 'showEditor', 'Piano roll'], ['=', 'nextScene', 'Next pattern'], ['-', 'prevScene', 'Previous pattern'], ['Meta+b', 'dupScene', 'Duplicate pattern'], ['r', 'rec', 'Record']],
     session: [['Shift+Tab', 'toggleBottom', 'Clip view / device view'], ['Meta+Shift+t', 'addSynth', 'Insert MIDI track'], ['Meta+t', 'addAudio', 'Insert audio track'], ['Meta+i', 'addScene', 'Insert scene'], ['Meta+d', 'dupScene', 'Duplicate scene'], ['F9', 'rec', 'Record'], ['F10', 'arrView', 'Session / Arrangement view']],
     arrange: [['Enter', 'stop', 'Go to beginning'], ['p', 'showEditor', 'Piano roll'], ['x', 'showMixer', 'Mixer'], ['b', 'showDevices', 'Devices'], ['k', 'metronome', 'Metronome'], ['r', 'rec', 'Record'], ['Meta+t', 'splitRg', 'Split region at the playhead'], ['m', 'muteSel', 'Mute track'], ['s', 'soloSel', 'Solo track'], ['Meta+Alt+s', 'addSynth', 'New software instrument track'], ['Meta+Alt+a', 'addAudio', 'New audio track']],
@@ -649,6 +656,7 @@
   U.showPop = (html) => showPop(html);
   const A = {
     install() { if (U.install) U.install(); },
+    visuals() { S.vis.open(); },
     // Sync: sign in once, then every beat is kept in your account and opens on your other devices.
     async sync() {
       const SY = S.sync;
@@ -824,6 +832,7 @@
       const p = P(), go = (t, label) => `<button data-act="shareGo" data-target="${t}">${label}</button>`, mac = IO.platform === 'mac';
       showPop(`<h3>Share your track</h3><p class="hint">STRATUM makes a branded video (vertical for TikTok, Reels and Shorts) and an audio file${mac ? ', and saves both in your Movies › STRATUM folder' : ''}.</p>` +
         `<label>Title <input id="shTitle" value="${esc(p.name || 'Untitled')}"></label><label>Artist <input id="shArtist" value="${esc(p.artist || '')}" placeholder="Your artist name"></label>` +
+        `<label>Look <select id="shLook">${opts([['classic', 'STRATUM waveform'], ...(P().visuals ? [['current', 'My Visuals (as set up now)']] : []), ...Object.keys(S.vis.FACTORY).map((n) => [n, 'Visuals: ' + n])], U.shareLook || 'classic')}</select></label>` +
         `<label>Length <select id="shClip">${opts([['', 'Whole track'], ['60', 'First 60 seconds'], ['30', 'First 30 seconds'], ['15', 'First 15 seconds']], '')}</select></label>` +
         (mac ? `<div class="stock"><b>Send</b> ${go('messages', 'Text (Messages)')}${go('mail', 'Email')}${go('airdrop', 'AirDrop')}${go('more', 'More…')}</div>` : `<div class="stock"><b>Send</b> ${go('more', 'Text, email or another app…')}</div>`) +
         `<div class="stock"><b>Post</b> ${go('ig_story', 'Instagram Story')}${go('ig_reel', 'Instagram Reel')}${go('ig_post', 'Instagram Post')}${go('facebook', 'Facebook')}${go('tiktok', 'TikTok')}${go('x', 'X (Twitter)')}${go('threads', 'Threads')}${go('youtube', 'YouTube Shorts')}</div>` +
@@ -840,7 +849,7 @@
       showPop(`<h3>Go live on ${L.name}</h3><p class="hint">Viewers see the STRATUM window as you work and hear what your Mac plays. ${L.how}</p>` +
         `<label>Server URL <input id="lvUrl" value="${esc(saved.url || L.url)}" placeholder="rtmp://… or rtmps://…"></label>` +
         `<label>Stream key <input id="lvKey" type="password" value="${esc(saved.key || '')}" placeholder="Paste your stream key" autocomplete="off"></label>` +
-        `<div class="livechecks"><label><input type="checkbox" id="lvCam" checked> Show my camera in a box</label><label><input type="checkbox" id="lvMic"> Add my microphone</label><label><input type="checkbox" id="lvRem" ${saved.key ? 'checked' : ''}> Remember for next time</label></div>` +
+        `<div class="livechecks"><label><input type="checkbox" id="lvCam" checked> Show my camera in a box</label><label><input type="checkbox" id="lvMic"> Add my microphone</label><label><input type="checkbox" id="lvVis" ${U.liveVis ? 'checked' : ''}> Show Visuals instead of the window</label><label><input type="checkbox" id="lvRem" ${saved.key ? 'checked' : ''}> Remember for next time</label></div>` +
         `<p class="hint">The first time, macOS asks to allow the camera, the microphone and Screen &amp; System Audio Recording (for the sound). Saved keys go in your Mac's Keychain. Keep your stream key private: anyone with it can stream to your channel.</p>` +
         `<p><button data-act="liveGo" data-p="${p}" class="primary">● Go live</button> <button data-act="closePop">Cancel</button></p>`);
     },
@@ -849,11 +858,13 @@
       if (!/^rtmps?:\/\//i.test(url)) return U.toast('Paste the server URL from your platform; it starts with rtmp:// or rtmps://.', true);
       if (!key) return U.toast('Paste your stream key first.', true);
       const body = { op: 'liveStart', platform: p, url, key, camera: $('#lvCam').checked, mic: $('#lvMic').checked, remember: $('#lvRem').checked };
+      U.liveVis = $('#lvVis').checked;
       closePop();
       U.liveOn = true; livePill('Connecting…', true);
       const r = await S.plug.ask(body);
       if (!r || r.error) { U.liveOn = false; livePill(); return U.toast((r && r.error) || 'Could not go live.', true); }
       U.toast(`You are live on ${LIVE[p].name}. Press the red LIVE button to end.`);
+      if (U.liveVis) S.vis.open({ hideBar: true });
       clearInterval(U.liveT);
       U.liveT = setInterval(async () => {
         const st = await S.plug.ask({ op: 'liveStatus' });
@@ -878,8 +889,9 @@
       const clip = limit && (!chosen || chosen > limit) ? limit : chosen;
       if (clip !== chosen) U.toast(`${el.textContent} allows ${limit} seconds, so the first ${limit} seconds will be used.`);
       P().artist = artist;
+      const look = U.shareLook = $('#shLook') ? $('#shLook').value : 'classic';
       closePop();
-      if (!IO.native()) return webShare(el.dataset.target, el.textContent, title, artist, clip).catch((e) => { closePop(); U.toast('Could not share: ' + (e.message || e), true); });
+      if (!IO.native() || look !== 'classic') return webShare(el.dataset.target, el.textContent, title, artist, clip, look).catch((e) => { closePop(); U.toast('Could not share: ' + (e.message || e), true); });
       IO.share(el.dataset.target, title, artist, clip).catch((e) => U.toast('Could not share: ' + (e.message || e), true));
     },
     // Web, Windows, phones and tablets: hand the finished files to the system share sheet, or save them.

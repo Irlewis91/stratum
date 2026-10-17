@@ -23,6 +23,7 @@
     <button data-act="save">Save</button>
     <button data-act="sounds" title="Browse STRATUM's built-in sounds">Sounds</button>
     <button data-act="share" title="Share your track as a STRATUM video or audio file">Share</button>
+    <button data-act="visuals" title="Audio-reactive visuals for your track">Visuals</button>
     <button id="wantBtn" data-act="wanted" hidden></button>
     <button id="syncBtn" data-act="sync" title="Sync your beats between devices" hidden>Sync</button>
     <button id="installBtn" data-act="install" title="Install STRATUM on this device" hidden>Install app</button>
@@ -75,6 +76,7 @@
   <section id="devices" class="panel"></section>
 </main>
 <nav id="phoneTabs" hidden></nav>
+<div id="visuals" hidden><canvas id="visCanvas"></canvas><canvas id="visOverlay"></canvas><div id="visBar"></div></div>
 <div id="pop" hidden></div>
 <div id="toast" hidden></div>
 <input id="file" type="file" hidden>
@@ -82,9 +84,12 @@
 <script src="js/dsp.js"></script>
 <script src="js/engine.js"></script>
 <script src="js/io.js"></script>
+<script src="js/brand.js"></script>
 <script src="js/webshare.js"></script>
 <script src="js/plug.js"></script>
 <script src="js/ui.js"></script>
+<script src="js/visuals.js"></script>
+<script src="js/visualsui.js"></script>
 <script src="js/tour.js"></script>
 <script src="js/pwa.js"></script>
 <script src="js/sync-config.js"></script>

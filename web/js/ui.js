@@ -86,6 +86,11 @@
   }
   U.setProject = setProject;
   U.refresh = () => render();
+  // Used when STRATUM photographs itself for the Owner's Manual.
+  U.setSkin = (k) => { const sel = $('#skinSel'); sel.value = k; C.skin(sel); };
+  U.manualFocus = (id) => { document.body.classList.add('manual'); const m = $('#main'); m.style.gridTemplateColumns = '1fr'; m.style.gridTemplateRows = '1fr'; for (const el of m.children) { el.hidden = el.id !== id; el.style.gridArea = el.id === id ? '1/1' : ''; } };
+  U.manualWave = () => { const t = P().tracks.find((x) => x.type === 'synth'); U.track = t.id; t.plugin = { id: 'stratum|wave', name: 'STRATUM Wave', maker: 'STRATUM', state: '', fx: [] }; changed(true); };
+  U.manualGate = () => { const t = P().tracks.find((x) => x.type === 'drums'); U.track = t.id; delete t.plugin; t.fx = [D.stock('gate'), D.stock('pump')]; t.fx[0].blocks[0].pattern = '0010200030004000'; changed(true); };
   // STRATUM Wave: fill the preset menu and draw what each oscillator is playing.
   U.wavePresetList = async () => {
     const sel = $('#wavePreset');
@@ -726,9 +731,11 @@
     wantedPick() { closePop(); U.pendingAudio = null; U.pendingSample = null; U.locating = true; U.located = 0; IO.open(true); },
     save() { IO.saveProject(); },
     undo() { const s = S.undo.pop(); if (!s) return U.toast('Nothing to undo'); S.proj = JSON.parse(s); U.note = null; if (!tr(U.track)) U.track = P().tracks[0].id; if (!P().scenes.some((x) => x.id === U.scene)) U.scene = P().scenes[0].id; if (!P().scenes.some((x) => x.id === E.sceneId)) E.sceneId = U.scene; E.rebuild(); syncHeader(); render(); },
+    tour() { closePop(); S.tour.start(); },
+    manual() { closePop(); if (IO.native()) IO.native().postMessage({ op: 'manual' }); else window.open('manual.pdf'); },
     help() {
       const row = ([k, , l]) => `<tr><td><kbd>${esc(k.replace('Meta', '⌘').replace('Alt', '⌥').replace('Shift', '⇧').replace(/\+/g, ' '))}</kbd></td><td>${esc(l)}</td></tr>`;
-      showPop(`<h3>Shortcuts — ${esc(SKIN_NAMES[U.skin])}</h3><table class="keys">${[...KEYMAP.common, ...KEYMAP[U.skin]].map(row).join('')}</table><p class="hint">Switching the Comfort Skin changes both the layout and this key map. With “Keys” on, letter keys play notes instead.</p><button data-act="closePop">Close</button>`);
+      showPop(`<h3>Shortcuts — ${esc(SKIN_NAMES[U.skin])}</h3><table class="keys">${[...KEYMAP.common, ...KEYMAP[U.skin]].map(row).join('')}</table><p><button data-act="tour">Take the tour</button> <button data-act="manual">Open the Owner’s Manual</button></p><p class="hint">Switching the Comfort Skin changes both the layout and this key map. With “Keys” on, letter keys play notes instead.</p><button data-act="closePop">Close</button>`);
     },
     closePop,
     selTrack(el) { U.track = el.dataset.t; U.note = null; if (U.skin === 'session') U.bottom.session = 'devices'; render(); },

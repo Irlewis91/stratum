@@ -1,0 +1,37 @@
+@page { size: A4; margin: 0; }
+:root { --ink:#16171c; --dim:#5d6270; --acc:#e39a12; --line:#d9d6cf; --bg:#ffffff; --panel:#f5f3ee; }
+* { box-sizing: border-box; }
+html, body { margin:0; background:var(--bg); color:var(--ink); font:10.5pt/1.5 -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-print-color-adjust: exact; }
+section { padding: 18mm 18mm 14mm; page-break-before: always; break-before: page; }
+section.cover { page-break-before: auto; height: 297mm; display:flex; flex-direction:column; justify-content:center; background:#0f1016; color:#ede9e0; padding: 0 22mm; }
+.cover .wm { width: 120mm; margin-bottom: 14mm; }
+.cover h1 { font-size: 34pt; margin: 0 0 4mm; font-weight: 700; letter-spacing: .01em; }
+.cover .ver { color: var(--acc); font-weight:600; margin:0 0 10mm; }
+.cover .lead { max-width: 120mm; color:#cfcbc2; font-size: 12pt; }
+.toc ol { columns: 2; column-gap: 14mm; font-size: 11pt; padding-left: 6mm; } .toc li { margin: 0 0 2.2mm; }
+h1 { font-size: 21pt; margin: 0 0 6mm; display:flex; align-items:center; gap:4mm; }
+h1 span { background: var(--acc); color:#111; border-radius: 6px; font-size: 13pt; min-width: 10mm; height:10mm; display:inline-flex; align-items:center; justify-content:center; }
+h2 { font-size: 18pt; margin: 0 0 6mm; }
+h3 { font-size: 12.5pt; margin: 6mm 0 2mm; }
+p, li { orphans: 3; widows: 3; }
+code, kbd { font: 9.5pt ui-monospace, Menlo, monospace; background: var(--panel); border:1px solid var(--line); border-radius: 4px; padding: 0 1.2mm; }
+.tip { background:#fff6e2; border-left: 3px solid var(--acc); padding: 2.5mm 4mm; border-radius: 4px; }
+.small { color: var(--dim); font-size: 9pt; }
+table { width:100%; border-collapse: collapse; margin: 3mm 0 5mm; font-size: 9.5pt; break-inside: auto; }
+th { text-align:left; background:#0f1016; color:#ede9e0; font-weight:600; padding: 1.6mm 2.5mm; }
+td { border-bottom: 1px solid var(--line); padding: 1.6mm 2.5mm; vertical-align: top; }
+tr { break-inside: avoid; }
+figure { margin: 4mm 0 6mm; break-inside: avoid; }
+.shot { position: relative; width: 100%; aspect-ratio: var(--ar); overflow: hidden; border-radius: 6px; border: 1px solid #0f1016; background:#0f1016; }
+.shot img { position:absolute; width: var(--zw); left: calc(var(--x) * -1 * var(--zw) / 100%); top: 0; transform: translateY(calc(var(--y) * -1)); }
+.mark { position:absolute; transform: translate(-50%, -50%); width: 6mm; height: 6mm; border-radius: 50%; background: var(--acc); color:#111; font: 700 8pt/6mm -apple-system, sans-serif; text-align:center; box-shadow: 0 0 0 1.4px #111; z-index: 2; }
+.ring { position:absolute; border: 1.4px solid var(--acc); border-radius: 4px; z-index: 1; }
+figcaption { color: var(--dim); font-size: 9pt; margin: 1.5mm 0 1mm; font-style: italic; }
+ol.key { margin: 1mm 0 0; padding-left: 0; list-style: none; columns: 2; column-gap: 8mm; font-size: 9pt; }
+ol.key li { break-inside: avoid; margin-bottom: 1.4mm; }
+.diagram { margin: 4mm 0 5mm; break-inside: avoid; }
+svg.flow { width: 100%; height: auto; }
+svg .node { fill: #0f1016; } svg .nt { fill: #ede9e0; font: 600 11px -apple-system, sans-serif; text-anchor: middle; } svg .ns { fill: var(--acc); font: 9.5px -apple-system, sans-serif; text-anchor: middle; }
+svg .arrow { stroke: var(--acc); stroke-width: 2; fill: none; } svg .ahead { fill: var(--acc); }
+.shot.tight .mark { width:4.6mm; height:4.6mm; font-size:7pt; line-height:4.6mm; }
+ol.key { counter-reset: none; }

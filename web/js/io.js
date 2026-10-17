@@ -119,7 +119,7 @@
     }
     const meta = files[key.replace(/ProjectData$/, 'MetaData.plist')], md = (meta && IO.bplist(meta)) || {};
     const text = (o, end) => { const n = v.getUint16(o, true); return o + 2 + n <= end ? new TextDecoder().decode(u8.subarray(o + 2, o + 2 + n)).replace(/\0+$/, '') : ''; };
-    const strips = {}, seqs = {}, events = {}, samples = [], plugins = [];
+    const strips = {}, seqs = {}, events = {}, samples = [], plugins = [], zoneRoot = {}, sampleCh = {};
     for (const c of chunks) {
       const end = c.b + c.n;
       if (c.tag === 'Envi') { const m = ascii(c.b, Math.min(c.n, 400)).match(/[\x20-\x7e]{3,}/); strips[c.id] = m ? m[0] : ''; }
@@ -131,7 +131,18 @@
       if (c.tag === 'AuCU' && c.n >= 8) {
         const kind = v.getUint32(c.b - 18, true);
         const s = ascii(c.b, Math.min(c.n, 260)).match(/[\x20-\x7e]{3,}/g) || [];
-        if (kind === 6 && s[0]) samples.push(s[0]);
+        const chan = v.getUint32(c.b - 22, true);
+        if (kind === 6 && s[0]) { samples.push(s[0]); sampleCh[s[0]] = chan; }
+        // Quick Sampler keeps its playback settings as EXS-style zones; the "Classic Zone" record holds the root key
+        // (byte 1 of its data) and fine tune in cents (byte 2).
+        if (kind === 2) {
+          const tag = 'TBOSClassic Zone';
+          for (let o = c.b; o + 72 < end; o++) {
+            if (u8[o] !== 0x54 || ascii(o, tag.length) !== tag) continue;
+            zoneRoot[chan] = { root: u8[o + 69], cents: v.getInt8(o + 70) };
+            break;
+          }
+        }
         if (kind === 2 && s[0] && s[0] !== '#default.pst') plugins.push(s[0]); else if (kind === 2 && s[1]) plugins.push(s[1]);
       }
     }
@@ -201,7 +212,9 @@
       delete t.wantSample;
       if (!f) { report.missing.push(t.name); continue; }
       const rec = await load(f);
-      t.inst.sample = { audio: rec.id, name: rec.name, root: 60, loop: false };
+      const z = zoneRoot[sampleCh[t.name]] || { root: 60, cents: 0 };
+      t.inst.sample = { audio: rec.id, name: rec.name, root: z.root > 0 && z.root < 128 ? z.root : 60, cents: z.cents || 0, loop: false };
+      if (z.root !== 60 || z.cents) report.retuned = (report.retuned || 0) + 1;
       report.samplers++;
     }
     // A track Logic bounced in place ("<name>_bip") already carries the real sound, so its MIDI original is muted.

@@ -121,7 +121,7 @@
   };
   E.synth = (ctx, dest, inst, n, when, dur, prev) => {
     const smp = inst.sample, rec = smp && S.buffers[smp.audio];
-    if (rec) return E.sample(ctx, dest, rec.buf, when, freq(n.p, n.c) / freq(smp.root == null ? 60 : smp.root), 0.6 * (n.v == null ? 0.8 : n.v), dur, 0.003 + inst.attack * 0.5, 0.02 + inst.release * 1.2, smp.loop);
+    if (rec) return E.sample(ctx, dest, rec.buf, when, freq(n.p, n.c) / freq(smp.root == null ? 60 : smp.root, smp.cents || 0), 0.6 * (n.v == null ? 0.8 : n.v), dur, 0.003 + inst.attack * 0.5, 0.02 + inst.release * 1.2, smp.loop);
     if (dest.plug) return S.plug.synthNote(dest.plug, inst, n, when, dur, prev, ctx);
     const f = freq(n.p, n.c), a = ctx.createGain(), o1 = ctx.createOscillator(), o2 = ctx.createOscillator(), g2 = ctx.createGain();
     o1.type = inst.wave; o2.type = inst.wave2; o2.detune.value = inst.detune * 50; g2.gain.value = 0.6;

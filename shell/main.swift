@@ -115,6 +115,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
         if CommandLine.arguments.contains("--wave-test") { waveTest() }
         if CommandLine.arguments.contains("--pump-test") { pumpTest() }
         if CommandLine.arguments.contains("--tune-test") { tuneTest() }
+        if let i = CommandLine.arguments.firstIndex(of: "--manual-shots") { manualShots(URL(fileURLWithPath: CommandLine.arguments[i + 1])) }
+        if let i = CommandLine.arguments.firstIndex(of: "--manual-pdf") { manualPDF(URL(fileURLWithPath: CommandLine.arguments[i + 1]), URL(fileURLWithPath: CommandLine.arguments[i + 2])) }
         if let i = CommandLine.arguments.firstIndex(of: "--import-test") { importTest(Array(CommandLine.arguments[(i + 1)...])) }
     }
 
@@ -476,6 +478,67 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
         }
     }
 
+    // Owner's Manual: screenshots of every part of the window, with the position of each control, for the manual's diagrams.
+    private func manualShots(_ dir: URL) {
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        window.setContentSize(NSSize(width: 1440, height: 900))
+        let shots: [(String, String)] = [
+            ("pattern", "S.ui.setSkin('pattern')"), ("session", "S.ui.setSkin('session')"), ("arrange", "S.ui.setSkin('arrange')"), ("mixedit", "S.ui.setSkin('mixedit')"),
+            ("wave", "S.ui.setSkin('pattern'); S.ui.manualWave(); setTimeout(() => S.ui.manualFocus('devices'), 1500)"), ("gate", "S.ui.setSkin('pattern'); S.ui.manualGate(); S.ui.manualFocus('devices')"),
+            ("sounds", "S.ui.setSkin('pattern'); S.ui.act('sounds')"), ("share", "document.getElementById('pop').hidden = true; S.ui.act('share')"),
+            ("tour", "document.getElementById('pop').hidden = true; S.tour.start(); document.querySelector('.tour-card [data-t=next]').click(); document.querySelector('.tour-card [data-t=next]').click(); document.querySelector('.tour-card [data-t=next]').click(); document.querySelector('.tour-card [data-t=next]').click()"),
+        ]
+        let selectors = ["#hdr .logo", "[data-act=new]", "[data-act=open]", "[data-act=save]", "#wantBtn", "[data-act=sounds]", "[data-act=share]", "#exportSel", "#playBtn", "[data-act=stop]", "#recBtn", "#monBtn", "#modeSel", "#bpm", "#rootSel", "#metroBtn", "#pos", "#keysBtn", "[data-act=dump]", "[data-act=undo]", "#addTrackSel", "[data-act=help]", "#skinSel", "#rack", "#session", "#timeline", "#mixer", "#editor", "#devices", "#inspector", "#pop .popbox", ".wavebox", "#wavePreset", ".pctl.grouped", ".gatepat", ".ikind", ".tour-card", ".tour-box"]
+        var rects: [String: Any] = [:]
+        var queue = shots
+        func next() {
+            guard !queue.isEmpty else {
+                if let d = try? JSONSerialization.data(withJSONObject: rects, options: .prettyPrinted) { try? d.write(to: dir.appendingPathComponent("rects.json")) }
+                print("MANUAL shots done"); NSApp.terminate(nil); return
+            }
+            let (name, js) = queue.removeFirst()
+            web.evaluateJavaScript(js) { _, _ in
+                DispatchQueue.main.asyncAfter(deadline: .now() + (name == "wave" ? 2.5 : 0.8)) {
+                    let probe = "document.getElementById('toast').hidden = true; JSON.stringify(Object.fromEntries(\(selectors.description).map((q) => { const e = document.querySelector(q); if (!e) return [q, null]; const r = e.getBoundingClientRect(); return [q, r.width > 2 && r.height > 2 ? [r.left, r.top, r.width, r.height] : null]; })))"
+                    self.web.evaluateJavaScript(probe) { v, _ in
+                        if let s = v as? String, let d = s.data(using: .utf8), let o = try? JSONSerialization.jsonObject(with: d) { rects[name] = o }
+                        let cfg = WKSnapshotConfiguration()
+                        self.web.takeSnapshot(with: cfg) { img, _ in
+                            if let img = img, let tiff = img.tiffRepresentation, let rep = NSBitmapImageRep(data: tiff), let png = rep.representation(using: .png, properties: [:]) {
+                                try? png.write(to: dir.appendingPathComponent(name + ".png"))
+                            }
+                            next()
+                        }
+                    }
+                }
+            }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { next() }
+    }
+
+    // Owner's Manual: prints an HTML file to a paginated PDF.
+    private var printer: WKWebView?
+    private func manualPDF(_ html: URL, _ out: URL) {
+        let pv = WKWebView(frame: NSRect(x: 0, y: 0, width: 794, height: 1123))
+        let holder = NSWindow(contentRect: pv.frame, styleMask: [.borderless], backing: .buffered, defer: false)
+        holder.contentView = pv
+        printer = pv
+        pv.loadFileURL(html, allowingReadAccessTo: html.deletingLastPathComponent())
+        DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
+            let info = NSPrintInfo()
+            info.paperSize = NSSize(width: 595, height: 842)   // A4 in points
+            info.topMargin = 0; info.bottomMargin = 0; info.leftMargin = 0; info.rightMargin = 0
+            info.horizontalPagination = .fit; info.verticalPagination = .automatic
+            info.jobDisposition = .save
+            info.dictionary()[NSPrintInfo.AttributeKey.jobSavingURL] = out
+            let op = pv.printOperation(with: info)
+            op.showsPrintPanel = false; op.showsProgressPanel = false
+            op.view?.frame = pv.bounds
+            op.runModal(for: holder, delegate: self, didRun: #selector(self.printed(_:success:contextInfo:)), contextInfo: nil)
+        }
+    }
+    @objc func printed(_ op: NSPrintOperation, success: Bool, contextInfo: UnsafeMutableRawPointer?) { print("MANUAL pdf", success); NSApp.terminate(nil) }
+
     // Importer check: opens each file through the same path as File > Open and prints what came in.
     private func importTest(_ paths: [String]) {
         var queue = paths
@@ -488,7 +551,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
             await S.io.nativeOpen(name, b64, path);
             const p = S.proj;
             return JSON.stringify({ file: name, msg, bpm: p.bpm, scenes: p.scenes.map((s) => s.name + ':' + s.bars), sections: p.sections.length, songBeats: S.songEnd(p), regions: p.tracks.reduce((a, t) => a + t.regions.length, 0),
-              tracks: p.tracks.map((t) => [t.name, t.type, +t.vol.toFixed(2), +t.pan.toFixed(2), Object.values(t.clips).reduce((a, c) => a + (c.notes ? c.notes.length : 0), 0), t.regions.length, t.mute, t.pads ? Object.values(t.pads).map((x) => x.name).join('+') : t.inst && t.inst.sample ? t.inst.sample.name : '']), wanted: (p.wanted || []).map((w) => w.file), auto: p.tracks.filter((t) => t.auto).map((t) => [t.name, Object.keys(t.auto).map((k) => k + ':' + t.auto[k].map((q) => +q.t.toFixed(2) + '=' + +q.v.toFixed(2)).join(' ')).join(' | ')]), masterAuto: p.master.auto ? p.master.auto.vol.map((q) => +q.t.toFixed(2) + '=' + +q.v.toFixed(2)).join(' ') : '', wantPlugins: (p.wantPlugins || []).map((w) => w.name), insts: p.tracks.filter((t) => t.inst).map((t) => t.name + ':' + t.inst.wave),
+              tracks: p.tracks.map((t) => [t.name, t.type, +t.vol.toFixed(2), +t.pan.toFixed(2), Object.values(t.clips).reduce((a, c) => a + (c.notes ? c.notes.length : 0), 0), t.regions.length, t.mute, t.pads ? Object.values(t.pads).map((x) => x.name).join('+') : t.inst && t.inst.sample ? t.inst.sample.name + '@' + t.inst.sample.root + (t.inst.sample.cents ? '+' + t.inst.sample.cents + 'c' : '') : '']), wanted: (p.wanted || []).map((w) => w.file), auto: p.tracks.filter((t) => t.auto).map((t) => [t.name, Object.keys(t.auto).map((k) => k + ':' + t.auto[k].map((q) => +q.t.toFixed(2) + '=' + +q.v.toFixed(2)).join(' ')).join(' | ')]), masterAuto: p.master.auto ? p.master.auto.vol.map((q) => +q.t.toFixed(2) + '=' + +q.v.toFixed(2)).join(' ') : '', wantPlugins: (p.wantPlugins || []).map((w) => w.name), insts: p.tracks.filter((t) => t.inst).map((t) => t.name + ':' + t.inst.wave),
               firstRegions: p.tracks.map((t) => t.regions.slice(0, 3).map((r) => [+r.start.toFixed(3), +r.len.toFixed(3), +r.off.toFixed(3), r.clip.notes ? r.clip.notes.length + 'n' : 'audio'])),
               buffers: Object.values(S.buffers).map((b) => [b.name, +b.buf.duration.toFixed(2), b.bpm, +b.buf.getChannelData(0).reduce((m, x) => Math.max(m, Math.abs(x)), 0).toFixed(3)]) });
             """
@@ -631,7 +694,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
             NSMenuItem(title: "Minimize", action: #selector(NSWindow.performMiniaturize(_:)), keyEquivalent: "m"),
             NSMenuItem(title: "Zoom", action: #selector(NSWindow.performZoom(_:)), keyEquivalent: ""),
         ])
-        add("Help", [item("Shortcuts for This Skin", "help", "/")])
+        add("Help", [item("STRATUM Owner\u{2019}s Manual", "manual", "?"), item("Take the Tour", "tour", ""), item("Shortcuts for This Skin", "help", "/")])
         NSApp.mainMenu = main
     }
 
@@ -917,6 +980,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
         if op == "open" { openFile(many: body["many"] as? Bool ?? false) }
         if op.hasPrefix("au") || op.hasPrefix("lib") { return pluginOp(op, body) }
         if op == "share" { share(body) }
+        if op == "manual", let url = Bundle.main.url(forResource: "STRATUM Owner's Manual", withExtension: "pdf") { NSWorkspace.shared.open(url) }
+        if op == "prefSet", let key = body["key"] as? String {
+            var p = UserDefaults.standard.dictionary(forKey: "stratumPrefs") ?? [:]
+            p[key] = body["value"]; UserDefaults.standard.set(p, forKey: "stratumPrefs")
+        }
+        if op == "prefsGet" {
+            var p = UserDefaults.standard.dictionary(forKey: "stratumPrefs") ?? [:]
+            if CommandLine.arguments.contains(where: { $0.hasPrefix("--") }) { p["testing"] = true }   // no welcome prompt during self-checks
+            reply(body, p)
+        }
         if op == "findFiles" { findFiles(body["paths"] as? [String] ?? [], near: body["near"] as? String ?? "") }
         if op == "recStart" { startRecording(monitor: body["monitor"] as? Bool ?? false) }
         if op == "recStop" { stopRecording() }

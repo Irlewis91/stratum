@@ -13,6 +13,9 @@ if [ -f "$ORT_DLL" ] && [ -f vendor/model/htdemucs.onnx ]; then
   cp "$ORT_DLL" dist-win/STRATUM/
   mkdir -p dist-win/STRATUM/models dist-win/STRATUM/licenses
   cp vendor/model/htdemucs.onnx dist-win/STRATUM/models/
+  for d in vendor/onnxruntime-win-x64-1.31.0 vendor/onnxruntime-osx-arm64-1.31.0; do   # same project, same licence files
+    [ -f "$d/LICENSE" ] && { cp "$d/LICENSE" dist-win/STRATUM/licenses/onnxruntime-LICENSE.txt; cp "$d/ThirdPartyNotices.txt" dist-win/STRATUM/licenses/onnxruntime-ThirdPartyNotices.txt; break; }
+  done
   printf 'HT-Demucs stem separation model (htdemucs.onnx)\nONNX export: https://huggingface.co/StemSplitio/htdemucs-onnx (MIT licence)\nOriginal model: Demucs, Meta Platforms, Inc. (MIT licence) https://github.com/facebookresearch/demucs\nONNX Runtime for Windows (MIT licence) https://github.com/microsoft/onnxruntime\n' > dist-win/STRATUM/licenses/stems-NOTICE.txt
 fi
 cp -R dist-web dist-win/STRATUM/app

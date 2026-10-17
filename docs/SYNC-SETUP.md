@@ -11,8 +11,8 @@ STRATUM Sync keeps every producer's beats in their account so they open on Mac, 
 
 ## 2. Email sign-in with a code
 1. **Authentication › Sign In / Providers › Email**: leave it enabled.
-2. **Authentication › Emails › Templates › Magic Link**: replace the message with something like
-   `Your STRATUM sign-in code is {{ .Token }}`. The code is what producers type into STRATUM.
+2. **Authentication › Emails › Templates**: in both **Magic Link** and **Confirm signup**, replace the message with
+   something like `Your STRATUM sign-in code is {{ .Token }}`. The code is what producers type into STRATUM.
 3. The free plan sends only a few emails an hour. Before launch, add your own email sender under
    **Authentication › Emails › SMTP Settings** (for example Resend or Postmark).
 
@@ -26,7 +26,7 @@ STRATUM Sync keeps every producer's beats in their account so they open on Mac, 
 ## 4. Where sign-in may return
 **Authentication › URL Configuration**:
 - **Site URL:** `https://irlewis91.github.io/stratum/`
-- **Redirect URLs:** add all three:
+- **Redirect URLs:** add both:
   - `https://irlewis91.github.io/stratum/**`  (phones, tablets and browsers, plus the Mac app)
   - `https://app.stratum/**`  (the Windows app)
 

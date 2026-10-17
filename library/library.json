@@ -1,0 +1,4748 @@
+[
+{
+"path": "Stargate (CC0)/Hats/karoryfer - hihats - hihat_BRD_closed.flac",
+"name": "hihat_BRD_closed",
+"category": "Hats",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Hats/karoryfer - hihats - hihat_BRD_open.flac",
+"name": "hihat_BRD_open",
+"category": "Hats",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Hats/karoryfer - hihats - hihat_BRD_tight.flac",
+"name": "hihat_BRD_tight",
+"category": "Hats",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/karoryfer - percussion - antlers_large_clash.flac",
+"name": "antlers_large_clash",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/karoryfer - percussion - big_metal_rods.flac",
+"name": "big_metal_rods",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/karoryfer - percussion - bones_down.flac",
+"name": "bones_down",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/karoryfer - percussion - bones_up.flac",
+"name": "bones_up",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/karoryfer - percussion - canvas_head_drum_with_jingles_14.flac",
+"name": "canvas_head_drum_with_jingles_14",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/karoryfer - percussion - chain_drop.flac",
+"name": "chain_drop",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/karoryfer - percussion - cow_teeth_drop.flac",
+"name": "cow_teeth_drop",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/karoryfer - percussion - frame_drum_16.flac",
+"name": "frame_drum_16",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/karoryfer - percussion - jewelers_anvil.flac",
+"name": "jewelers_anvil",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/karoryfer - percussion - medieval_drum_20.flac",
+"name": "medieval_drum_20",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/karoryfer - percussion - medieval_drum_24.flac",
+"name": "medieval_drum_24",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/karoryfer - percussion - pitchfork_socket.flac",
+"name": "pitchfork_socket",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/karoryfer - percussion - shoemakers_last.flac",
+"name": "shoemakers_last",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/karoryfer - percussion - sword.flac",
+"name": "sword",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Toms/karoryfer - toms - tom_RMIF_22.flac",
+"name": "tom_RMIF_22",
+"category": "Toms",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Toms/karoryfer - toms - tom_Szpaderski_14.flac",
+"name": "tom_Szpaderski_14",
+"category": "Toms",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Toms/karoryfer - toms - tom_Szpaderski_15.flac",
+"name": "tom_Szpaderski_15",
+"category": "Toms",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Toms/karoryfer - toms - tom_Szpaderski_18.flac",
+"name": "tom_Szpaderski_18",
+"category": "Toms",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Snares/karoryfer - snares - snare_10x6.flac",
+"name": "snare_10x6",
+"category": "Snares",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Snares/karoryfer - snares - snare_12x5.flac",
+"name": "snare_12x5",
+"category": "Snares",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Snares/karoryfer - snares - snare_16x7.flac",
+"name": "snare_16x7",
+"category": "Snares",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Snares/karoryfer - snares - snare_Pearl_alumunum_14x8.flac",
+"name": "snare_Pearl_alumunum_14x8",
+"category": "Snares",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Snares/karoryfer - snares - snare_ziggurat.flac",
+"name": "snare_ziggurat",
+"category": "Snares",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Kicks/karoryfer - kicks - kick_Polmuz_mod_20_buzz.flac",
+"name": "kick_Polmuz_mod_20_buzz",
+"category": "Kicks",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Kicks/karoryfer - kicks - kick_Polmuz_mod_20_clean.flac",
+"name": "kick_Polmuz_mod_20_clean",
+"category": "Kicks",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Kicks/karoryfer - kicks - kick_Szpaderski_24_dampened.flac",
+"name": "kick_Szpaderski_24_dampened",
+"category": "Kicks",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Kicks/karoryfer - kicks - kick_Szpaderski_24_open.flac",
+"name": "kick_Szpaderski_24_open",
+"category": "Kicks",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Kicks/karoryfer - kicks - kick_marching_20_old.flac",
+"name": "kick_marching_20_old",
+"category": "Kicks",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Found Sounds/fugue-state-audio - found-sounds - bowlhit.flac",
+"name": "bowlhit",
+"category": "Found Sounds",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Found Sounds/fugue-state-audio - found-sounds - coinshake1.flac",
+"name": "coinshake1",
+"category": "Found Sounds",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Found Sounds/fugue-state-audio - found-sounds - coinshake2.flac",
+"name": "coinshake2",
+"category": "Found Sounds",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Found Sounds/fugue-state-audio - found-sounds - glass-hit.flac",
+"name": "glass-hit",
+"category": "Found Sounds",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Found Sounds/fugue-state-audio - found-sounds - lid-swirl.flac",
+"name": "lid-swirl",
+"category": "Found Sounds",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Found Sounds/fugue-state-audio - found-sounds - thunder.flac",
+"name": "thunder",
+"category": "Found Sounds",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Cymbals/fugue-state-audio - drums - cymbals - distkit-crash.flac",
+"name": "distkit-crash",
+"category": "Cymbals",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Cymbals/fugue-state-audio - drums - cymbals - distkit-ride.flac",
+"name": "distkit-ride",
+"category": "Cymbals",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Cymbals/fugue-state-audio - drums - cymbals - synthkit-crash.flac",
+"name": "synthkit-crash",
+"category": "Cymbals",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Cymbals/fugue-state-audio - drums - cymbals - synthkit-ride.flac",
+"name": "synthkit-ride",
+"category": "Cymbals",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Cymbals/fugue-state-audio - drums - cymbals - x0xproc1-crash.flac",
+"name": "x0xproc1-crash",
+"category": "Cymbals",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Cymbals/fugue-state-audio - drums - cymbals - x0xproc1-ride.flac",
+"name": "x0xproc1-ride",
+"category": "Cymbals",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Cymbals/fugue-state-audio - drums - cymbals - x0xproc2-cymbal.flac",
+"name": "x0xproc2-cymbal",
+"category": "Cymbals",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Hats/fugue-state-audio - drums - hihats - distkit-hatclsd.flac",
+"name": "distkit-hatclsd",
+"category": "Hats",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Hats/fugue-state-audio - drums - hihats - distkit-hatopen.flac",
+"name": "distkit-hatopen",
+"category": "Hats",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Hats/fugue-state-audio - drums - hihats - sdbkit-hatclsd.flac",
+"name": "sdbkit-hatclsd",
+"category": "Hats",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Hats/fugue-state-audio - drums - hihats - sdbkit-hatopen.flac",
+"name": "sdbkit-hatopen",
+"category": "Hats",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Hats/fugue-state-audio - drums - hihats - synthkit-hatclsd.flac",
+"name": "synthkit-hatclsd",
+"category": "Hats",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Hats/fugue-state-audio - drums - hihats - synthkit-hatopen.flac",
+"name": "synthkit-hatopen",
+"category": "Hats",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Hats/fugue-state-audio - drums - hihats - x0xproc1-hatclsd.flac",
+"name": "x0xproc1-hatclsd",
+"category": "Hats",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Hats/fugue-state-audio - drums - hihats - x0xproc1-hatopen.flac",
+"name": "x0xproc1-hatopen",
+"category": "Hats",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Hats/fugue-state-audio - drums - hihats - x0xproc2-hatclsd.flac",
+"name": "x0xproc2-hatclsd",
+"category": "Hats",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Hats/fugue-state-audio - drums - hihats - x0xproc2-hatopen.flac",
+"name": "x0xproc2-hatopen",
+"category": "Hats",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/fugue-state-audio - drums - percussion - distkit-claves.flac",
+"name": "distkit-claves",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/fugue-state-audio - drums - percussion - distkit-cowbell.flac",
+"name": "distkit-cowbell",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/fugue-state-audio - drums - percussion - distkit-zap.flac",
+"name": "distkit-zap",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/fugue-state-audio - drums - percussion - sdbkit-fmperc.flac",
+"name": "sdbkit-fmperc",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/fugue-state-audio - drums - percussion - synthkit-8bit.flac",
+"name": "synthkit-8bit",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/fugue-state-audio - drums - percussion - x0xproc1-rimshot.flac",
+"name": "x0xproc1-rimshot",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/fugue-state-audio - drums - percussion - x0xproc2-claves.flac",
+"name": "x0xproc2-claves",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/fugue-state-audio - drums - percussion - x0xproc2-cowbell.flac",
+"name": "x0xproc2-cowbell",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/fugue-state-audio - drums - percussion - x0xproc2-maracas.flac",
+"name": "x0xproc2-maracas",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/fugue-state-audio - drums - percussion - x0xproc2-rimshot.flac",
+"name": "x0xproc2-rimshot",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Toms/fugue-state-audio - drums - toms - distkit-hitom.flac",
+"name": "distkit-hitom",
+"category": "Toms",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Toms/fugue-state-audio - drums - toms - distkit-lotom.flac",
+"name": "distkit-lotom",
+"category": "Toms",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Toms/fugue-state-audio - drums - toms - distkit-midtom.flac",
+"name": "distkit-midtom",
+"category": "Toms",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Toms/fugue-state-audio - drums - toms - sdbkit-hitom.flac",
+"name": "sdbkit-hitom",
+"category": "Toms",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Toms/fugue-state-audio - drums - toms - sdbkit-lotom.flac",
+"name": "sdbkit-lotom",
+"category": "Toms",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Toms/fugue-state-audio - drums - toms - sdbkit-midtom.flac",
+"name": "sdbkit-midtom",
+"category": "Toms",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Toms/fugue-state-audio - drums - toms - synthkit-hitom.flac",
+"name": "synthkit-hitom",
+"category": "Toms",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Toms/fugue-state-audio - drums - toms - synthkit-lotom.flac",
+"name": "synthkit-lotom",
+"category": "Toms",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Toms/fugue-state-audio - drums - toms - synthkit-midtom.flac",
+"name": "synthkit-midtom",
+"category": "Toms",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Toms/fugue-state-audio - drums - toms - x0xproc1-hitom.flac",
+"name": "x0xproc1-hitom",
+"category": "Toms",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Toms/fugue-state-audio - drums - toms - x0xproc1-lotom.flac",
+"name": "x0xproc1-lotom",
+"category": "Toms",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Toms/fugue-state-audio - drums - toms - x0xproc1-midtom.flac",
+"name": "x0xproc1-midtom",
+"category": "Toms",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Toms/fugue-state-audio - drums - toms - x0xproc2-hitom.flac",
+"name": "x0xproc2-hitom",
+"category": "Toms",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Toms/fugue-state-audio - drums - toms - x0xproc2-lotom.flac",
+"name": "x0xproc2-lotom",
+"category": "Toms",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Toms/fugue-state-audio - drums - toms - x0xproc2-midtom.flac",
+"name": "x0xproc2-midtom",
+"category": "Toms",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Claps/fugue-state-audio - drums - claps - distkit-clap.flac",
+"name": "distkit-clap",
+"category": "Claps",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Claps/fugue-state-audio - drums - claps - sdbkit-clap.flac",
+"name": "sdbkit-clap",
+"category": "Claps",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Claps/fugue-state-audio - drums - claps - synthkit-clap.flac",
+"name": "synthkit-clap",
+"category": "Claps",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Claps/fugue-state-audio - drums - claps - x0xproc1-clap.flac",
+"name": "x0xproc1-clap",
+"category": "Claps",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Claps/fugue-state-audio - drums - claps - x0xproc2-clap.flac",
+"name": "x0xproc2-clap",
+"category": "Claps",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Snares/fugue-state-audio - drums - snares - distkit-snare.flac",
+"name": "distkit-snare",
+"category": "Snares",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Snares/fugue-state-audio - drums - snares - sdbkit-snare.flac",
+"name": "sdbkit-snare",
+"category": "Snares",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Snares/fugue-state-audio - drums - snares - synthkit-snare.flac",
+"name": "synthkit-snare",
+"category": "Snares",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Snares/fugue-state-audio - drums - snares - x0xproc1-snare.flac",
+"name": "x0xproc1-snare",
+"category": "Snares",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Snares/fugue-state-audio - drums - snares - x0xproc2-snare.flac",
+"name": "x0xproc2-snare",
+"category": "Snares",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Kicks/fugue-state-audio - drums - kicks - distkit-kick.flac",
+"name": "distkit-kick",
+"category": "Kicks",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Kicks/fugue-state-audio - drums - kicks - sdbkit-kick.flac",
+"name": "sdbkit-kick",
+"category": "Kicks",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Kicks/fugue-state-audio - drums - kicks - sdbkit-sub-a.flac",
+"name": "sdbkit-sub-a",
+"category": "Kicks",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Kicks/fugue-state-audio - drums - kicks - synthkit-kick.flac",
+"name": "synthkit-kick",
+"category": "Kicks",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Kicks/fugue-state-audio - drums - kicks - x0xproc1-kick.flac",
+"name": "x0xproc1-kick",
+"category": "Kicks",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Kicks/fugue-state-audio - drums - kicks - x0xproc2-kick.flac",
+"name": "x0xproc2-kick",
+"category": "Kicks",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Hats/stargate - hats - hat-1.flac",
+"name": "hat-1",
+"category": "Hats",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Hats/stargate - hats - hat-2.flac",
+"name": "hat-2",
+"category": "Hats",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Kicks/stargate - kicks - kick-1-A.flac",
+"name": "kick-1-A",
+"category": "Kicks",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Kicks/stargate - kicks - kick-1-B.flac",
+"name": "kick-1-B",
+"category": "Kicks",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Kicks/stargate - kicks - kick-1-C.flac",
+"name": "kick-1-C",
+"category": "Kicks",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Kicks/stargate - kicks - kick-2-A.flac",
+"name": "kick-2-A",
+"category": "Kicks",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Kicks/stargate - kicks - kick-2-B.flac",
+"name": "kick-2-B",
+"category": "Kicks",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Kicks/freesound - drums - kick - 192512__nabz871__knife-party-like-kick.flac",
+"name": "192512__nabz871__knife-party-like-kick",
+"category": "Kicks",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Kicks/freesound - drums - kick - 266764__hard3eat__synth-kick-3.flac",
+"name": "266764__hard3eat__synth-kick-3",
+"category": "Kicks",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Kicks/freesound - drums - kick - 347166__dvbeats__kick-drum-1.flac",
+"name": "347166__dvbeats__kick-drum-1",
+"category": "Kicks",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Kicks/freesound - drums - kick - 348785__arctis__hardstyle-rawstyle-kick-8.flac",
+"name": "348785__arctis__hardstyle-rawstyle-kick-8",
+"category": "Kicks",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Kicks/freesound - drums - kick - 561593__panxozerok__safari-kick-2.flac",
+"name": "561593__panxozerok__safari-kick-2",
+"category": "Kicks",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/freesound - drums - bongo - 219157__jagadamba__bongo01.flac",
+"name": "219157__jagadamba__bongo01",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/freesound - drums - bongo - 579853__curesforbrokenhearts__lp-matador-bongo-drum-hembra.flac",
+"name": "579853__curesforbrokenhearts__lp-matador-bongo-drum-hembra",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/freesound - drums - bongo - 99752__menegass__bongo2.flac",
+"name": "99752__menegass__bongo2",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/freesound - drums - bongo - 99754__menegass__bongo4.flac",
+"name": "99754__menegass__bongo4",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/freesound - drums - bongo - 99755__menegass__bngoh.flac",
+"name": "99755__menegass__bngoh",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Snares/freesound - drums - snare - 173087__yellowtree__wood-snare-sample-3.flac",
+"name": "173087__yellowtree__wood-snare-sample-3",
+"category": "Snares",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Snares/freesound - drums - snare - 212211__alexthegr81__tapesnare-18.flac",
+"name": "212211__alexthegr81__tapesnare-18",
+"category": "Snares",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Snares/freesound - drums - snare - 212233__alexthegr81__tapesnare-5.flac",
+"name": "212233__alexthegr81__tapesnare-5",
+"category": "Snares",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Snares/freesound - drums - snare - 212234__alexthegr81__tapesnare-21.flac",
+"name": "212234__alexthegr81__tapesnare-21",
+"category": "Snares",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Snares/freesound - drums - snare - 387186__alexiero-1__ai-snare-20.flac",
+"name": "387186__alexiero-1__ai-snare-20",
+"category": "Snares",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Snares/freesound - drums - snare - 501249__veiler__brian-snare-loud.flac",
+"name": "501249__veiler__brian-snare-loud",
+"category": "Snares",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/freesound - drums - rimshot - 132418__sajmund__rimshot-sweet.flac",
+"name": "132418__sajmund__rimshot-sweet",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/freesound - drums - rimshot - 455640__uberproduktion__fd808a-rimshot.flac",
+"name": "455640__uberproduktion__fd808a-rimshot",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/freesound - drums - rimshot - 511382__pjhedman__se1-rim.flac",
+"name": "511382__pjhedman__se1-rim",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/freesound - drums - rimshot - 533089__sassaby__timbales-high-rimshot-macho.flac",
+"name": "533089__sassaby__timbales-high-rimshot-macho",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/freesound - drums - rimshot - 573256__sorinious-genious__timpani-rimshot-4.flac",
+"name": "573256__sorinious-genious__timpani-rimshot-4",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Claps/freesound - drums - clap - 388042__sami-kullstrom__clap.flac",
+"name": "388042__sami-kullstrom__clap",
+"category": "Claps",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Claps/freesound - drums - clap - 448221__toxicfilmzsrsounds__hip-hop-clap.flac",
+"name": "448221__toxicfilmzsrsounds__hip-hop-clap",
+"category": "Claps",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Claps/freesound - drums - clap - 493707__bastianpusch__handclap01.flac",
+"name": "493707__bastianpusch__handclap01",
+"category": "Claps",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Claps/freesound - drums - clap - 509526__synthnisse__claps.flac",
+"name": "509526__synthnisse__claps",
+"category": "Claps",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Cymbals/freesound - drums - cymbal - crash - 104210__minorr__crash-paiste-pst5-17-left-ff.flac",
+"name": "104210__minorr__crash-paiste-pst5-17-left-ff",
+"category": "Cymbals",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Cymbals/freesound - drums - cymbal - crash - 104217__minorr__crash-zildian-a-custom-16-centr-f.flac",
+"name": "104217__minorr__crash-zildian-a-custom-16-centr-f",
+"category": "Cymbals",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Cymbals/freesound - drums - cymbal - crash - 140153__stomachache__analog-cymbal.flac",
+"name": "140153__stomachache__analog-cymbal",
+"category": "Cymbals",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Cymbals/freesound - drums - cymbal - crash - 261413__veiler__crash.flac",
+"name": "261413__veiler__crash",
+"category": "Cymbals",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Hats/freesound - drums - cymbal - closed - 132415__sajmund__hi-hat-hit.flac",
+"name": "132415__sajmund__hi-hat-hit",
+"category": "Hats",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Hats/freesound - drums - cymbal - closed - 339278__cabled-mess__hihat-closed-raw-03-gate-eq.flac",
+"name": "339278__cabled-mess__hihat-closed-raw-03-gate-eq",
+"category": "Hats",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Hats/freesound - drums - cymbal - closed - 439766__twentytwentymusic__electronic-closed-hat-9.flac",
+"name": "439766__twentytwentymusic__electronic-closed-hat-9",
+"category": "Hats",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Hats/freesound - drums - cymbal - closed - 93909__pjcohen__skibacustomhihats1145top1215bottomclosededgeshank.flac",
+"name": "93909__pjcohen__skibacustomhihats1145top1215bottomclosededgeshank",
+"category": "Hats",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Hats/freesound - drums - cymbal - open - 165027__rodrigo-the-mad__mini-open-hihat.flac",
+"name": "165027__rodrigo-the-mad__mini-open-hihat",
+"category": "Hats",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Hats/freesound - drums - cymbal - open - 165028__rodrigo-the-mad__mini-909ish-open-hat.flac",
+"name": "165028__rodrigo-the-mad__mini-909ish-open-hat",
+"category": "Hats",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Hats/freesound - drums - cymbal - open - 317097__shpira__hat-open3.flac",
+"name": "317097__shpira__hat-open3",
+"category": "Hats",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Hats/freesound - drums - cymbal - open - 439820__twentytwentymusic__electronic-open-hat-7.flac",
+"name": "439820__twentytwentymusic__electronic-open-hat-7",
+"category": "Hats",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/FX/microlag - One-Shots - FX - Alien_Shotgun_G.flac",
+"name": "Alien_Shotgun_G",
+"category": "FX",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Claps/microlag - One-Shots - Drums - Clap1.flac",
+"name": "Clap1",
+"category": "Claps",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Hats/microlag - One-Shots - Drums - Hihat1.flac",
+"name": "Hihat1",
+"category": "Hats",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Hats/microlag - One-Shots - Drums - Hihat2.flac",
+"name": "Hihat2",
+"category": "Hats",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Kicks/microlag - One-Shots - Drums - Kick1.flac",
+"name": "Kick1",
+"category": "Kicks",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Kicks/microlag - One-Shots - Drums - Kick2.flac",
+"name": "Kick2",
+"category": "Kicks",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Snares/microlag - One-Shots - Drums - Snare1.flac",
+"name": "Snare1",
+"category": "Snares",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Vocals/microlag - One-Shots - Vocals - December.flac",
+"name": "December",
+"category": "Vocals",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Vocals/microlag - One-Shots - Vocals - Excuse_Me.flac",
+"name": "Excuse_Me",
+"category": "Vocals",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Vocals/microlag - One-Shots - Vocals - Fantastic.flac",
+"name": "Fantastic",
+"category": "Vocals",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Vocals/microlag - One-Shots - Vocals - I_Hope_It's_Not_Over.flac",
+"name": "I_Hope_It's_Not_Over",
+"category": "Vocals",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Vocals/microlag - One-Shots - Vocals - Life_Goes_On.flac",
+"name": "Life_Goes_On",
+"category": "Vocals",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Vocals/microlag - One-Shots - Vocals - One_Two_Three_Let's_Go.flac",
+"name": "One_Two_Three_Let's_Go",
+"category": "Vocals",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Vocals/microlag - One-Shots - Vocals - Praise_The_Lord.flac",
+"name": "Praise_The_Lord",
+"category": "Vocals",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Vocals/microlag - One-Shots - Vocals - Pretty_Cool.flac",
+"name": "Pretty_Cool",
+"category": "Vocals",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Vocals/microlag - One-Shots - Vocals - Shine_Muscat_Is_Bussin.flac",
+"name": "Shine_Muscat_Is_Bussin",
+"category": "Vocals",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Vocals/microlag - One-Shots - Vocals - That's_Insane.flac",
+"name": "That's_Insane",
+"category": "Vocals",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Vocals/microlag - One-Shots - Vocals - Vocal_Check_This_Out.flac",
+"name": "Vocal_Check_This_Out",
+"category": "Vocals",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Vocals/microlag - One-Shots - Vocals - Word_Up.flac",
+"name": "Word_Up",
+"category": "Vocals",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Kicks/sgossner - VCSL - Membranophones - Bass Drum 1 - BDrumNew_hit_v2_rr1_Sum.flac",
+"name": "BDrumNew_hit_v2_rr1_Sum",
+"category": "Kicks",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Kicks/sgossner - VCSL - Membranophones - Bass Drum 1 - BDrumNew_hit_v2_rr2_Sum.flac",
+"name": "BDrumNew_hit_v2_rr2_Sum",
+"category": "Kicks",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Kicks/sgossner - VCSL - Membranophones - Bass Drum 1 - BDrumNew_hit_v3_rr1_Sum.flac",
+"name": "BDrumNew_hit_v3_rr1_Sum",
+"category": "Kicks",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Kicks/sgossner - VCSL - Membranophones - Bass Drum 1 - BDrumNew_hit_v3_rr2_Sum.flac",
+"name": "BDrumNew_hit_v3_rr2_Sum",
+"category": "Kicks",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Kicks/sgossner - VCSL - Membranophones - Bass Drum 1 - BDrumNew_hit_v5_rr1_Sum.flac",
+"name": "BDrumNew_hit_v5_rr1_Sum",
+"category": "Kicks",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Kicks/sgossner - VCSL - Membranophones - Bass Drum 1 - BDrumNew_hit_v5_rr2_Sum.flac",
+"name": "BDrumNew_hit_v5_rr2_Sum",
+"category": "Kicks",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Kicks/sgossner - VCSL - Membranophones - Bass Drum 1 - BDrumNew_hit_v7_rr1_Sum.flac",
+"name": "BDrumNew_hit_v7_rr1_Sum",
+"category": "Kicks",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Kicks/sgossner - VCSL - Membranophones - Bass Drum 1 - BDrumNew_hit_v7_rr2_Sum.flac",
+"name": "BDrumNew_hit_v7_rr2_Sum",
+"category": "Kicks",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Conga - Conga_HitFM_v1_rr1_Sum.flac",
+"name": "Conga_HitFM_v1_rr1_Sum",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Conga - Conga_HitFM_v1_rr2_Sum.flac",
+"name": "Conga_HitFM_v1_rr2_Sum",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Conga - Conga_HitFM_v2_rr1_Sum.flac",
+"name": "Conga_HitFM_v2_rr1_Sum",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Conga - Conga_HitFM_v2_rr2_Sum.flac",
+"name": "Conga_HitFM_v2_rr2_Sum",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Conga - Conga_HitN_v1_rr1_Sum.flac",
+"name": "Conga_HitN_v1_rr1_Sum",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Conga - Conga_HitN_v1_rr2_Sum.flac",
+"name": "Conga_HitN_v1_rr2_Sum",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Conga - Conga_HitN_v2_rr1_Sum.flac",
+"name": "Conga_HitN_v2_rr1_Sum",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Conga - Conga_HitN_v2_rr2_Sum.flac",
+"name": "Conga_HitN_v2_rr2_Sum",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Conga - Conga_HitN_v3_rr1_Sum.flac",
+"name": "Conga_HitN_v3_rr1_Sum",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Conga - Conga_HitN_v3_rr2_Sum.flac",
+"name": "Conga_HitN_v3_rr2_Sum",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Conga - Quinto_HitFM1_v1_rr1_Sum.flac",
+"name": "Quinto_HitFM1_v1_rr1_Sum",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Conga - Quinto_HitFM1_v1_rr2_Sum.flac",
+"name": "Quinto_HitFM1_v1_rr2_Sum",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Conga - Quinto_HitFM1_v2_rr1_Sum.flac",
+"name": "Quinto_HitFM1_v2_rr1_Sum",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Conga - Quinto_HitFM1_v2_rr2_Sum.flac",
+"name": "Quinto_HitFM1_v2_rr2_Sum",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Conga - Quinto_HitN_v1_rr1_Sum.flac",
+"name": "Quinto_HitN_v1_rr1_Sum",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Conga - Quinto_HitN_v1_rr2_Sum.flac",
+"name": "Quinto_HitN_v1_rr2_Sum",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Conga - Quinto_HitN_v2_rr1_Sum.flac",
+"name": "Quinto_HitN_v2_rr1_Sum",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Conga - Quinto_HitN_v2_rr2_Sum.flac",
+"name": "Quinto_HitN_v2_rr2_Sum",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Conga - Quinto_HitN_v3_rr1_Sum.flac",
+"name": "Quinto_HitN_v3_rr1_Sum",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Conga - Quinto_HitN_v3_rr2_Sum.flac",
+"name": "Quinto_HitN_v3_rr2_Sum",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Conga - Tumba_HitFM_v2_rr1_Sum.flac",
+"name": "Tumba_HitFM_v2_rr1_Sum",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Conga - Tumba_HitFM_v2_rr2_Sum.flac",
+"name": "Tumba_HitFM_v2_rr2_Sum",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Conga - Tumba_HitFM_v3_rr1_Sum.flac",
+"name": "Tumba_HitFM_v3_rr1_Sum",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Conga - Tumba_HitFM_v3_rr2_Sum.flac",
+"name": "Tumba_HitFM_v3_rr2_Sum",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Conga - Tumba_HitFM_v4_rr1_Sum.flac",
+"name": "Tumba_HitFM_v4_rr1_Sum",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Conga - Tumba_HitFM_v4_rr2_Sum.flac",
+"name": "Tumba_HitFM_v4_rr2_Sum",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Conga - Tumba_HitN_v1_rr1_Sum.flac",
+"name": "Tumba_HitN_v1_rr1_Sum",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Conga - Tumba_HitN_v1_rr2_Sum.flac",
+"name": "Tumba_HitN_v1_rr2_Sum",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Conga - Tumba_HitN_v2_rr1_Sum.flac",
+"name": "Tumba_HitN_v2_rr1_Sum",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Conga - Tumba_HitN_v2_rr2_Sum.flac",
+"name": "Tumba_HitN_v2_rr2_Sum",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Conga - Tumba_HitN_v3_rr1_Sum.flac",
+"name": "Tumba_HitN_v3_rr1_Sum",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Conga - Tumba_HitN_v3_rr2_Sum.flac",
+"name": "Tumba_HitN_v3_rr2_Sum",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Conga - Tumba_HitN_v4_rr1_Sum.flac",
+"name": "Tumba_HitN_v4_rr1_Sum",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Conga - Tumba_HitN_v4_rr2_Sum.flac",
+"name": "Tumba_HitN_v4_rr2_Sum",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Bongos - BongoH_Hit1_v1_rr1_Mid.flac",
+"name": "BongoH_Hit1_v1_rr1_Mid",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Bongos - BongoH_Hit1_v1_rr2_Mid.flac",
+"name": "BongoH_Hit1_v1_rr2_Mid",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Bongos - BongoH_Hit1_v2_rr1_Mid.flac",
+"name": "BongoH_Hit1_v2_rr1_Mid",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Bongos - BongoH_Hit1_v2_rr2_Mid.flac",
+"name": "BongoH_Hit1_v2_rr2_Mid",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Bongos - BongoH_Hit1_v3_rr1_Mid.flac",
+"name": "BongoH_Hit1_v3_rr1_Mid",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Bongos - BongoH_Hit1_v3_rr2_Mid.flac",
+"name": "BongoH_Hit1_v3_rr2_Mid",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Bongos - BongoH_HitMuted1_v1_rr1_Mid.flac",
+"name": "BongoH_HitMuted1_v1_rr1_Mid",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Bongos - BongoH_HitMuted1_v1_rr2_Mid.flac",
+"name": "BongoH_HitMuted1_v1_rr2_Mid",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Bongos - BongoH_HitMuted1_v2_rr1_Mid.flac",
+"name": "BongoH_HitMuted1_v2_rr1_Mid",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Bongos - BongoH_HitMuted1_v2_rr2_Mid.flac",
+"name": "BongoH_HitMuted1_v2_rr2_Mid",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Bongos - BongoH_HitMuted1_v3_rr1_Mid.flac",
+"name": "BongoH_HitMuted1_v3_rr1_Mid",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Bongos - BongoH_HitMuted1_v3_rr2_Mid.flac",
+"name": "BongoH_HitMuted1_v3_rr2_Mid",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Bongos - BongoH_Roll_v2_rr1_Mid.flac",
+"name": "BongoH_Roll_v2_rr1_Mid",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Bongos - BongoH_Roll_v3_rr1_Mid.flac",
+"name": "BongoH_Roll_v3_rr1_Mid",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Bongos - BongoL_Hit1_v1_rr1_Mid.flac",
+"name": "BongoL_Hit1_v1_rr1_Mid",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Bongos - BongoL_Hit1_v1_rr2_Mid.flac",
+"name": "BongoL_Hit1_v1_rr2_Mid",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Bongos - BongoL_Hit1_v2_rr1_Mid.flac",
+"name": "BongoL_Hit1_v2_rr1_Mid",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Bongos - BongoL_Hit1_v2_rr2_Mid.flac",
+"name": "BongoL_Hit1_v2_rr2_Mid",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Bongos - BongoL_Hit1_v3_rr1_Mid.flac",
+"name": "BongoL_Hit1_v3_rr1_Mid",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Bongos - BongoL_Hit1_v3_rr2_Mid.flac",
+"name": "BongoL_Hit1_v3_rr2_Mid",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Bongos - BongoL_HitMuted2_v1_rr1_Mid.flac",
+"name": "BongoL_HitMuted2_v1_rr1_Mid",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Bongos - BongoL_HitMuted2_v1_rr2_Mid.flac",
+"name": "BongoL_HitMuted2_v1_rr2_Mid",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Bongos - BongoL_HitMuted2_v2_rr1_Mid.flac",
+"name": "BongoL_HitMuted2_v2_rr1_Mid",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Bongos - BongoL_HitMuted2_v2_rr2_Mid.flac",
+"name": "BongoL_HitMuted2_v2_rr2_Mid",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Bongos - BongoL_HitMuted2_v3_rr1_Mid.flac",
+"name": "BongoL_HitMuted2_v3_rr1_Mid",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Bongos - BongoL_HitMuted2_v3_rr2_Mid.flac",
+"name": "BongoL_HitMuted2_v3_rr2_Mid",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Bongos - BongoL_Roll_v2_rr1_Mid.flac",
+"name": "BongoL_Roll_v2_rr1_Mid",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Bongos - BongoL_Roll_v3_rr1_Mid.flac",
+"name": "BongoL_Roll_v3_rr1_Mid",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Darbuka - Darbuka_1_hit_vl1_rr1.flac",
+"name": "Darbuka_1_hit_vl1_rr1",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Darbuka - Darbuka_1_hit_vl1_rr2.flac",
+"name": "Darbuka_1_hit_vl1_rr2",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Darbuka - Darbuka_1_hit_vl2_rr1.flac",
+"name": "Darbuka_1_hit_vl2_rr1",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Darbuka - Darbuka_1_hit_vl2_rr2.flac",
+"name": "Darbuka_1_hit_vl2_rr2",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Darbuka - Darbuka_2_hit_vl1_rr1.flac",
+"name": "Darbuka_2_hit_vl1_rr1",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Darbuka - Darbuka_2_hit_vl1_rr2.flac",
+"name": "Darbuka_2_hit_vl1_rr2",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Darbuka - Darbuka_2_hit_vl2_rr1.flac",
+"name": "Darbuka_2_hit_vl2_rr1",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Darbuka - Darbuka_2_hit_vl2_rr2.flac",
+"name": "Darbuka_2_hit_vl2_rr2",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Darbuka - Darbuka_3_hit_vl1_rr1.flac",
+"name": "Darbuka_3_hit_vl1_rr1",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Darbuka - Darbuka_3_hit_vl1_rr2.flac",
+"name": "Darbuka_3_hit_vl1_rr2",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Darbuka - Darbuka_3_hit_vl2_rr1.flac",
+"name": "Darbuka_3_hit_vl2_rr1",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Darbuka - Darbuka_3_hit_vl2_rr2.flac",
+"name": "Darbuka_3_hit_vl2_rr2",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Darbuka - Darbuka_4_hit_vl1_rr1.flac",
+"name": "Darbuka_4_hit_vl1_rr1",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Darbuka - Darbuka_4_hit_vl1_rr2.flac",
+"name": "Darbuka_4_hit_vl1_rr2",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Darbuka - Darbuka_4_hit_vl2_rr1.flac",
+"name": "Darbuka_4_hit_vl2_rr1",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Darbuka - Darbuka_4_hit_vl2_rr2.flac",
+"name": "Darbuka_4_hit_vl2_rr2",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Darbuka - Darbuka_5_hit_vl1_rr1.flac",
+"name": "Darbuka_5_hit_vl1_rr1",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Darbuka - Darbuka_5_hit_vl1_rr2.flac",
+"name": "Darbuka_5_hit_vl1_rr2",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Darbuka - Darbuka_5_hit_vl2_rr1.flac",
+"name": "Darbuka_5_hit_vl2_rr1",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Percussion/sgossner - VCSL - Membranophones - Darbuka - Darbuka_5_hit_vl2_rr2.flac",
+"name": "Darbuka_5_hit_vl2_rr2",
+"category": "Percussion",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Snares/sgossner - VCSL - Membranophones - Snare Drum_ Modern 3 - Snare4_HitSN_v2_rr1_Mid.flac",
+"name": "Snare4_HitSN_v2_rr1_Mid",
+"category": "Snares",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Snares/sgossner - VCSL - Membranophones - Snare Drum_ Modern 3 - Snare4_HitSN_v2_rr2_Mid.flac",
+"name": "Snare4_HitSN_v2_rr2_Mid",
+"category": "Snares",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Snares/sgossner - VCSL - Membranophones - Snare Drum_ Modern 3 - Snare4_HitSN_v4_rr1_Mid.flac",
+"name": "Snare4_HitSN_v4_rr1_Mid",
+"category": "Snares",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Snares/sgossner - VCSL - Membranophones - Snare Drum_ Modern 3 - Snare4_HitSN_v4_rr2_Mid.flac",
+"name": "Snare4_HitSN_v4_rr2_Mid",
+"category": "Snares",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Snares/sgossner - VCSL - Membranophones - Snare Drum_ Modern 3 - Snare4_HitSN_v5_rr1_Mid.flac",
+"name": "Snare4_HitSN_v5_rr1_Mid",
+"category": "Snares",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Snares/sgossner - VCSL - Membranophones - Snare Drum_ Modern 3 - Snare4_HitSN_v5_rr2_Mid.flac",
+"name": "Snare4_HitSN_v5_rr2_Mid",
+"category": "Snares",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Snares/sgossner - VCSL - Membranophones - Snare Drum_ Modern 3 - Snare4_Xstick_v2_rr1_Mid.flac",
+"name": "Snare4_Xstick_v2_rr1_Mid",
+"category": "Snares",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Snares/sgossner - VCSL - Membranophones - Snare Drum_ Modern 3 - Snare4_Xstick_v2_rr2_Mid.flac",
+"name": "Snare4_Xstick_v2_rr2_Mid",
+"category": "Snares",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Snares/sgossner - VCSL - Membranophones - Snare Drum_ Modern 3 - Snare4_rimshot_v2_rr1_Mid.flac",
+"name": "Snare4_rimshot_v2_rr1_Mid",
+"category": "Snares",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Snares/sgossner - VCSL - Membranophones - Snare Drum_ Modern 3 - Snare4_rimshot_v2_rr2_Mid.flac",
+"name": "Snare4_rimshot_v2_rr2_Mid",
+"category": "Snares",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Snares/sgossner - VCSL - Membranophones - Snare Drum_ Modern 3 - Snare4_rimshot_v4_rr1_Mid.flac",
+"name": "Snare4_rimshot_v4_rr1_Mid",
+"category": "Snares",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Snares/sgossner - VCSL - Membranophones - Snare Drum_ Modern 3 - Snare4_rimshot_v4_rr2_Mid.flac",
+"name": "Snare4_rimshot_v4_rr2_Mid",
+"category": "Snares",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Snares/sgossner - VCSL - Membranophones - Snare Drum_ Modern 3 - Snare4_rollSN_v3_rr1_Mid.flac",
+"name": "Snare4_rollSN_v3_rr1_Mid",
+"category": "Snares",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Snares/sgossner - VCSL - Membranophones - Snare Drum_ Modern 3 - Snare4_rollSN_v4_rr1_Mid.flac",
+"name": "Snare4_rollSN_v4_rr1_Mid",
+"category": "Snares",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Snares/sgossner - VCSL - Membranophones - Snare Drum_ Modern 3 - Snare4_rollSN_v5_rr1_Mid.flac",
+"name": "Snare4_rollSN_v5_rr1_Mid",
+"category": "Snares",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Snares/sgossner - VCSL - Membranophones - Snare Drum_ Modern 3 - Snare4_stick_v3_rr1_Mid.flac",
+"name": "Snare4_stick_v3_rr1_Mid",
+"category": "Snares",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Snares/sgossner - VCSL - Membranophones - Snare Drum_ Modern 3 - Snare4_stick_v3_rr2_Mid.flac",
+"name": "Snare4_stick_v3_rr2_Mid",
+"category": "Snares",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Snares/sgossner - VCSL - Membranophones - Snare Drum_ Modern 3 - Snare4_taps_v4_rr1_Mid.flac",
+"name": "Snare4_taps_v4_rr1_Mid",
+"category": "Snares",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Stargate (CC0)/Snares/sgossner - VCSL - Membranophones - Snare Drum_ Modern 3 - Snare4_taps_v4_rr2_Mid.flac",
+"name": "Snare4_taps_v4_rr2_Mid",
+"category": "Snares",
+"collection": "Stargate (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/House Piano Riffs - MIDI Files - MIDI Files - Bass - HPR Bass Riff - 001 - 124 BPM - A minor.mid",
+"name": "HPR Bass Riff - 001 - 124 BPM - A minor",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/House Piano Riffs - MIDI Files - MIDI Files - Bass - HPR Bass Riff - 002 - 124 BPM - Bb minor.mid",
+"name": "HPR Bass Riff - 002 - 124 BPM - Bb minor",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/House Piano Riffs - MIDI Files - MIDI Files - Bass - HPR Bass Riff - 003 - 124 BPM - Bb minor.mid",
+"name": "HPR Bass Riff - 003 - 124 BPM - Bb minor",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/House Piano Riffs - MIDI Files - MIDI Files - Bass - HPR Bass Riff - 004 - 124 BPM - C Major.mid",
+"name": "HPR Bass Riff - 004 - 124 BPM - C Major",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/House Piano Riffs - MIDI Files - MIDI Files - Bass - HPR Bass Riff - 005 - 124 BPM - D minor.mid",
+"name": "HPR Bass Riff - 005 - 124 BPM - D minor",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/House Piano Riffs - MIDI Files - MIDI Files - Bass - HPR Bass Riff - 006 - 124 BPM - D minor.mid",
+"name": "HPR Bass Riff - 006 - 124 BPM - D minor",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/House Piano Riffs - MIDI Files - MIDI Files - Bass - HPR Bass Riff - 007 - 124 BPM - E minor.mid",
+"name": "HPR Bass Riff - 007 - 124 BPM - E minor",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/House Piano Riffs - MIDI Files - MIDI Files - Bass - HPR Bass Riff - 008 - 124 BPM - A minor.mid",
+"name": "HPR Bass Riff - 008 - 124 BPM - A minor",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/House Piano Riffs - MIDI Files - MIDI Files - Bass - HPR Bass Riff - 009 - 124 BPM - D minor.mid",
+"name": "HPR Bass Riff - 009 - 124 BPM - D minor",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/House Piano Riffs - MIDI Files - MIDI Files - Bass - HPR Bass Riff - 010 - 124 BPM - E minor.mid",
+"name": "HPR Bass Riff - 010 - 124 BPM - E minor",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/House Piano Riffs - MIDI Files - MIDI Files - Bass - HPR Bass Riff - 011 - 124 BPM - E minor.mid",
+"name": "HPR Bass Riff - 011 - 124 BPM - E minor",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/House Piano Riffs - MIDI Files - MIDI Files - Bass - HPR Bass Riff - 012 - 124 BPM - F minor.mid",
+"name": "HPR Bass Riff - 012 - 124 BPM - F minor",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/House Piano Riffs - MIDI Files - MIDI Files - Bass - HPR Bass Riff - 013 - 124 BPM - C minor.mid",
+"name": "HPR Bass Riff - 013 - 124 BPM - C minor",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/House Piano Riffs - MIDI Files - MIDI Files - Bass - HPR Bass Riff - 014 - 124 BPM - D minor.mid",
+"name": "HPR Bass Riff - 014 - 124 BPM - D minor",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/House Piano Riffs - MIDI Files - MIDI Files - Bass - HPR Bass Riff - 015 - 124 BPM - D minor.mid",
+"name": "HPR Bass Riff - 015 - 124 BPM - D minor",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/House Piano Riffs - MIDI Files - MIDI Files - Piano - HPR Piano Riff - 001 - 124 BPM - A minor.mid",
+"name": "HPR Piano Riff - 001 - 124 BPM - A minor",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/House Piano Riffs - MIDI Files - MIDI Files - Piano - HPR Piano Riff - 002 - 124 BPM - Bb minor.mid",
+"name": "HPR Piano Riff - 002 - 124 BPM - Bb minor",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/House Piano Riffs - MIDI Files - MIDI Files - Piano - HPR Piano Riff - 003 - 124 BPM - Bb minor.mid",
+"name": "HPR Piano Riff - 003 - 124 BPM - Bb minor",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/House Piano Riffs - MIDI Files - MIDI Files - Piano - HPR Piano Riff - 004 - 124 BPM - C Major.mid",
+"name": "HPR Piano Riff - 004 - 124 BPM - C Major",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/House Piano Riffs - MIDI Files - MIDI Files - Piano - HPR Piano Riff - 005 - 124 BPM - D minor.mid",
+"name": "HPR Piano Riff - 005 - 124 BPM - D minor",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/House Piano Riffs - MIDI Files - MIDI Files - Piano - HPR Piano Riff - 006 - 124 BPM - D minor.mid",
+"name": "HPR Piano Riff - 006 - 124 BPM - D minor",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/House Piano Riffs - MIDI Files - MIDI Files - Piano - HPR Piano Riff - 007 - 124 BPM - E minor.mid",
+"name": "HPR Piano Riff - 007 - 124 BPM - E minor",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/House Piano Riffs - MIDI Files - MIDI Files - Piano - HPR Piano Riff - 008 - 124 BPM - A minor.mid",
+"name": "HPR Piano Riff - 008 - 124 BPM - A minor",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/House Piano Riffs - MIDI Files - MIDI Files - Piano - HPR Piano Riff - 009 - 124 BPM - D minor.mid",
+"name": "HPR Piano Riff - 009 - 124 BPM - D minor",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/House Piano Riffs - MIDI Files - MIDI Files - Piano - HPR Piano Riff - 010 - 124 BPM - E minor.mid",
+"name": "HPR Piano Riff - 010 - 124 BPM - E minor",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/House Piano Riffs - MIDI Files - MIDI Files - Piano - HPR Piano Riff - 011 - 124 BPM - E minor.mid",
+"name": "HPR Piano Riff - 011 - 124 BPM - E minor",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/House Piano Riffs - MIDI Files - MIDI Files - Piano - HPR Piano Riff - 012 - 124 BPM - F minor.mid",
+"name": "HPR Piano Riff - 012 - 124 BPM - F minor",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/House Piano Riffs - MIDI Files - MIDI Files - Piano - HPR Piano Riff - 013 - 124 BPM - C minor.mid",
+"name": "HPR Piano Riff - 013 - 124 BPM - C minor",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/House Piano Riffs - MIDI Files - MIDI Files - Piano - HPR Piano Riff - 014 - 124 BPM - D minor.mid",
+"name": "HPR Piano Riff - 014 - 124 BPM - D minor",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/House Piano Riffs - MIDI Files - MIDI Files - Piano - HPR Piano Riff - 015 - 124 BPM - D minor.mid",
+"name": "HPR Piano Riff - 015 - 124 BPM - D minor",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/House Piano Riffs - MIDI Files - MIDI Files - Strings - HPR Strings - 001 - 124 BPM - A minor.mid",
+"name": "HPR Strings - 001 - 124 BPM - A minor",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/House Piano Riffs - MIDI Files - MIDI Files - Strings - HPR Strings - 002 - 124 BPM - Bb minor.mid",
+"name": "HPR Strings - 002 - 124 BPM - Bb minor",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/House Piano Riffs - MIDI Files - MIDI Files - Strings - HPR Strings - 003 - 124 BPM - Bb minor.mid",
+"name": "HPR Strings - 003 - 124 BPM - Bb minor",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/House Piano Riffs - MIDI Files - MIDI Files - Strings - HPR Strings - 004 - 124 BPM - C Major.mid",
+"name": "HPR Strings - 004 - 124 BPM - C Major",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/House Piano Riffs - MIDI Files - MIDI Files - Strings - HPR Strings - 005 - 124 BPM - D minor.mid",
+"name": "HPR Strings - 005 - 124 BPM - D minor",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/House Piano Riffs - MIDI Files - MIDI Files - Strings - HPR Strings - 006 - 124 BPM - D minor.mid",
+"name": "HPR Strings - 006 - 124 BPM - D minor",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/House Piano Riffs - MIDI Files - MIDI Files - Strings - HPR Strings - 007 - 124 BPM - E minor.mid",
+"name": "HPR Strings - 007 - 124 BPM - E minor",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/House Piano Riffs - MIDI Files - MIDI Files - Strings - HPR Strings - 008 - 124 BPM - A minor.mid",
+"name": "HPR Strings - 008 - 124 BPM - A minor",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/House Piano Riffs - MIDI Files - MIDI Files - Strings - HPR Strings - 009 - 124 BPM - D minor.mid",
+"name": "HPR Strings - 009 - 124 BPM - D minor",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/House Piano Riffs - MIDI Files - MIDI Files - Strings - HPR Strings - 010 - 124 BPM - E minor.mid",
+"name": "HPR Strings - 010 - 124 BPM - E minor",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/House Piano Riffs - MIDI Files - MIDI Files - Strings - HPR Strings - 011 - 124 BPM - E minor.mid",
+"name": "HPR Strings - 011 - 124 BPM - E minor",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/House Piano Riffs - MIDI Files - MIDI Files - Strings - HPR Strings - 012 - 124 BPM - F minor.mid",
+"name": "HPR Strings - 012 - 124 BPM - F minor",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/House Piano Riffs - MIDI Files - MIDI Files - Strings - HPR Strings - 013 - 124 BPM - C minor.mid",
+"name": "HPR Strings - 013 - 124 BPM - C minor",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/House Piano Riffs - MIDI Files - MIDI Files - Strings - HPR Strings - 014 - 124 BPM - D minor.mid",
+"name": "HPR Strings - 014 - 124 BPM - D minor",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/House Piano Riffs - MIDI Files - MIDI Files - Strings - HPR Strings - 015 - 124 BPM - D minor.mid",
+"name": "HPR Strings - 015 - 124 BPM - D minor",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/Pop Progressions - MIDI Files - PP - 011 - 100 BPM - C Major.mid",
+"name": "PP - 011 - 100 BPM - C Major",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/Pop Progressions - MIDI Files - PP - 012 - 100 BPM - C Major.mid",
+"name": "PP - 012 - 100 BPM - C Major",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/Pop Progressions - MIDI Files - PP - 013 - 110 BPM - C Major.mid",
+"name": "PP - 013 - 110 BPM - C Major",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/Pop Progressions - MIDI Files - PP - 014 - 110 BPM - C minor.mid",
+"name": "PP - 014 - 110 BPM - C minor",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/Pop Progressions - MIDI Files - PP - 015 - 110 BPM - C Major.mid",
+"name": "PP - 015 - 110 BPM - C Major",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/Pop Progressions - MIDI Files - PP - 016 - 110 BPM - C Major.mid",
+"name": "PP - 016 - 110 BPM - C Major",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/Pop Progressions - MIDI Files - PP - 017 - 90 BPM - C Major.mid",
+"name": "PP - 017 - 90 BPM - C Major",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/Pop Progressions - MIDI Files - PP - 018 - 90 BPM - C minor.mid",
+"name": "PP - 018 - 90 BPM - C minor",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/Pop Progressions - MIDI Files - PP - 019 - 100 BPM - C Major.mid",
+"name": "PP - 019 - 100 BPM - C Major",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/Pop Progressions - MIDI Files - PP - 020 - 100 BPM - C Major.mid",
+"name": "PP - 020 - 100 BPM - C Major",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/Pop Progressions - MIDI Files - PP - 021 - 96 BPM - C Major.mid",
+"name": "PP - 021 - 96 BPM - C Major",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/Pop Progressions - MIDI Files - PP - 022 - 110 BPM - C Major.mid",
+"name": "PP - 022 - 110 BPM - C Major",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/Pop Progressions - MIDI Files - PP - 023 - 100 BPM - C Major.mid",
+"name": "PP - 023 - 100 BPM - C Major",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/Pop Progressions - MIDI Files - PP - 024 - 90 BPM - C Major.mid",
+"name": "PP - 024 - 90 BPM - C Major",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/Pop Progressions - MIDI Files - PP - 025 - 90 BPM - C Major.mid",
+"name": "PP - 025 - 90 BPM - C Major",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/Pop Progressions - MIDI Files - PP - 026 - 90 BPM - C Major.mid",
+"name": "PP - 026 - 90 BPM - C Major",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/Pop Progressions - MIDI Files - PP - 027 - 110 BPM - C Major.mid",
+"name": "PP - 027 - 110 BPM - C Major",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/Pop Progressions - MIDI Files - PP - 028 - 110 BPM - C Major.mid",
+"name": "PP - 028 - 110 BPM - C Major",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/Pop Progressions - MIDI Files - PP - 029 - 110 BPM - C Major.mid",
+"name": "PP - 029 - 110 BPM - C Major",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/Pop Progressions - MIDI Files - PP - 030 - 100 BPM - C minor.mid",
+"name": "PP - 030 - 100 BPM - C minor",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/Pop Progressions - MIDI Files - PP - 031 - 110 BPM - C minor.mid",
+"name": "PP - 031 - 110 BPM - C minor",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/Pop Progressions - MIDI Files - PP - 032 - 120 BPM - C minor.mid",
+"name": "PP - 032 - 120 BPM - C minor",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/Pop Progressions - MIDI Files - Demo Construction Kits - PP - 006 - 80 BPM - C Major - PP - 006 - 80 BPM - Bass.mid",
+"name": "PP - 006 - 80 BPM - Bass",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/Pop Progressions - MIDI Files - Demo Construction Kits - PP - 006 - 80 BPM - C Major - PP - 006 - 80 BPM - Piano.mid",
+"name": "PP - 006 - 80 BPM - Piano",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/Pop Progressions - MIDI Files - Demo Construction Kits - PP - 006 - 80 BPM - C Major - PP - 006 - 80 BPM - Strings.mid",
+"name": "PP - 006 - 80 BPM - Strings",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/Pop Progressions - MIDI Files - Demo Construction Kits - PP - 008 - 80 BPM - C Major - PP - 008 - 80 BPM - Bass.mid",
+"name": "PP - 008 - 80 BPM - Bass",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/Pop Progressions - MIDI Files - Demo Construction Kits - PP - 008 - 80 BPM - C Major - PP - 008 - 80 BPM - Pad.mid",
+"name": "PP - 008 - 80 BPM - Pad",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/Pop Progressions - MIDI Files - Demo Construction Kits - PP - 008 - 80 BPM - C Major - PP - 008 - 80 BPM - Piano.mid",
+"name": "PP - 008 - 80 BPM - Piano",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/Pop Progressions - MIDI Files - Demo Construction Kits - PP - 008 - 80 BPM - C Major - PP - 008 - 80 BPM - Strings.mid",
+"name": "PP - 008 - 80 BPM - Strings",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/Pop Progressions - MIDI Files - Demo Construction Kits - PP - 005 - 140 BPM - C minor - PP - 005 - 140 BPM - Bass.mid",
+"name": "PP - 005 - 140 BPM - Bass",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/Pop Progressions - MIDI Files - Demo Construction Kits - PP - 005 - 140 BPM - C minor - PP - 005 - 140 BPM - Piano.mid",
+"name": "PP - 005 - 140 BPM - Piano",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/Pop Progressions - MIDI Files - Demo Construction Kits - PP - 005 - 140 BPM - C minor - PP - 005 - 140 BPM - Strings.mid",
+"name": "PP - 005 - 140 BPM - Strings",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/Pop Progressions - MIDI Files - Demo Construction Kits - PP - 004 - 140 BPM - C minor - PP - 004 - 140 BPM - Bass.mid",
+"name": "PP - 004 - 140 BPM - Bass",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/Pop Progressions - MIDI Files - Demo Construction Kits - PP - 004 - 140 BPM - C minor - PP - 004 - 140 BPM - Piano.mid",
+"name": "PP - 004 - 140 BPM - Piano",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/Pop Progressions - MIDI Files - Demo Construction Kits - PP - 004 - 140 BPM - C minor - PP - 004 - 140 BPM - Strings.mid",
+"name": "PP - 004 - 140 BPM - Strings",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/Pop Progressions - MIDI Files - Demo Construction Kits - PP - 003 - 140 BPM - C Major - PP - 003 - 140 BPM - Bass.mid",
+"name": "PP - 003 - 140 BPM - Bass",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/Pop Progressions - MIDI Files - Demo Construction Kits - PP - 003 - 140 BPM - C Major - PP - 003 - 140 BPM - Piano.mid",
+"name": "PP - 003 - 140 BPM - Piano",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/Pop Progressions - MIDI Files - Demo Construction Kits - PP - 003 - 140 BPM - C Major - PP - 003 - 140 BPM - Strings.mid",
+"name": "PP - 003 - 140 BPM - Strings",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/Pop Progressions - MIDI Files - Demo Construction Kits - PP - 009 - 80 BPM - C Major - PP - 009 - 80 BPM - Bass.mid",
+"name": "PP - 009 - 80 BPM - Bass",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/Pop Progressions - MIDI Files - Demo Construction Kits - PP - 009 - 80 BPM - C Major - PP - 009 - 80 BPM - Pad.mid",
+"name": "PP - 009 - 80 BPM - Pad",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/Pop Progressions - MIDI Files - Demo Construction Kits - PP - 009 - 80 BPM - C Major - PP - 009 - 80 BPM - Piano.mid",
+"name": "PP - 009 - 80 BPM - Piano",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/Pop Progressions - MIDI Files - Demo Construction Kits - PP - 009 - 80 BPM - C Major - PP - 009 - 80 BPM - Strings.mid",
+"name": "PP - 009 - 80 BPM - Strings",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/Pop Progressions - MIDI Files - Demo Construction Kits - PP - 010 - 100 BPM - C Major - PP - 010 - 100 BPM - Bass.mid",
+"name": "PP - 010 - 100 BPM - Bass",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/Pop Progressions - MIDI Files - Demo Construction Kits - PP - 010 - 100 BPM - C Major - PP - 010 - 100 BPM - Piano.mid",
+"name": "PP - 010 - 100 BPM - Piano",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/Pop Progressions - MIDI Files - Demo Construction Kits - PP - 010 - 100 BPM - C Major - PP - 010 - 100 BPM - Pluck.mid",
+"name": "PP - 010 - 100 BPM - Pluck",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/Pop Progressions - MIDI Files - Demo Construction Kits - PP - 002 - 120 BPM - C Major - PP - 002 - 120 BPM - Bass.mid",
+"name": "PP - 002 - 120 BPM - Bass",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/Pop Progressions - MIDI Files - Demo Construction Kits - PP - 002 - 120 BPM - C Major - PP - 002 - 120 BPM - Piano.mid",
+"name": "PP - 002 - 120 BPM - Piano",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/Pop Progressions - MIDI Files - Demo Construction Kits - PP - 002 - 120 BPM - C Major - PP - 002 - 120 BPM - Pluck.mid",
+"name": "PP - 002 - 120 BPM - Pluck",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/Pop Progressions - MIDI Files - Demo Construction Kits - PP - 007 - 80 BPM - C Major - PP - 007 - 80 BPM - Bass.mid",
+"name": "PP - 007 - 80 BPM - Bass",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/Pop Progressions - MIDI Files - Demo Construction Kits - PP - 007 - 80 BPM - C Major - PP - 007 - 80 BPM - Piano.mid",
+"name": "PP - 007 - 80 BPM - Piano",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/Pop Progressions - MIDI Files - Demo Construction Kits - PP - 007 - 80 BPM - C Major - PP - 007 - 80 BPM - Strings.mid",
+"name": "PP - 007 - 80 BPM - Strings",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/Pop Progressions - MIDI Files - Demo Construction Kits - PP - 001 - 120 BPM - C Major - PP - 001 - 120 BPM - Bass.mid",
+"name": "PP - 001 - 120 BPM - Bass",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/Pop Progressions - MIDI Files - Demo Construction Kits - PP - 001 - 120 BPM - C Major - PP - 001 - 120 BPM - Piano.mid",
+"name": "PP - 001 - 120 BPM - Piano",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/MIDI/Pop Progressions - MIDI Files - Demo Construction Kits - PP - 001 - 120 BPM - C Major - PP - 001 - 120 BPM - Synth.mid",
+"name": "PP - 001 - 120 BPM - Synth",
+"category": "MIDI",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Alright 1.flac",
+"name": "DVS - Alright 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Alright 2.flac",
+"name": "DVS - Alright 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Alright 3.flac",
+"name": "DVS - Alright 3",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Alright 4.flac",
+"name": "DVS - Alright 4",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Alright 5.flac",
+"name": "DVS - Alright 5",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Alright 6.flac",
+"name": "DVS - Alright 6",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Bass 1.flac",
+"name": "DVS - Bass 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Bass 2.flac",
+"name": "DVS - Bass 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Bass 3.flac",
+"name": "DVS - Bass 3",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Bass 4.flac",
+"name": "DVS - Bass 4",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Bass 5.flac",
+"name": "DVS - Bass 5",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Bass 6.flac",
+"name": "DVS - Bass 6",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Break 1.flac",
+"name": "DVS - Break 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Break 2.flac",
+"name": "DVS - Break 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Break 3.flac",
+"name": "DVS - Break 3",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Break it Down 1.flac",
+"name": "DVS - Break it Down 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Break it Down 2.flac",
+"name": "DVS - Break it Down 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Break it Down 3.flac",
+"name": "DVS - Break it Down 3",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Break it Down 4.flac",
+"name": "DVS - Break it Down 4",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Bring The Beat In.flac",
+"name": "DVS - Bring The Beat In",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Check It 1.flac",
+"name": "DVS - Check It 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Check It 2.flac",
+"name": "DVS - Check It 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Check It 3.flac",
+"name": "DVS - Check It 3",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Check It 4.flac",
+"name": "DVS - Check It 4",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Check It 5.flac",
+"name": "DVS - Check It 5",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Check It 6.flac",
+"name": "DVS - Check It 6",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Check It 7.flac",
+"name": "DVS - Check It 7",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Check It Out 1.flac",
+"name": "DVS - Check It Out 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Check It Out 2.flac",
+"name": "DVS - Check It Out 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Check It Out 3.flac",
+"name": "DVS - Check It Out 3",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Check It Out 4.flac",
+"name": "DVS - Check It Out 4",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Check It Out 5.flac",
+"name": "DVS - Check It Out 5",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Check It Out 6.flac",
+"name": "DVS - Check It Out 6",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Come On 1.flac",
+"name": "DVS - Come On 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Come On 2.flac",
+"name": "DVS - Come On 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Come On 3.flac",
+"name": "DVS - Come On 3",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Come On 4.flac",
+"name": "DVS - Come On 4",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Come On 5.flac",
+"name": "DVS - Come On 5",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Damn 1.flac",
+"name": "DVS - Damn 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Damn 2.flac",
+"name": "DVS - Damn 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Damn 3.flac",
+"name": "DVS - Damn 3",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Damn 4.flac",
+"name": "DVS - Damn 4",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Damn 5.flac",
+"name": "DVS - Damn 5",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Damn 6.flac",
+"name": "DVS - Damn 6",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Disco 1.flac",
+"name": "DVS - Disco 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Disco 2.flac",
+"name": "DVS - Disco 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Do it Again 1.flac",
+"name": "DVS - Do it Again 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Do it Again 2.flac",
+"name": "DVS - Do it Again 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Do it Again 3.flac",
+"name": "DVS - Do it Again 3",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Drop 1.flac",
+"name": "DVS - Drop 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Drop 2.flac",
+"name": "DVS - Drop 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Drop 3.flac",
+"name": "DVS - Drop 3",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Drop The Beat 1.flac",
+"name": "DVS - Drop The Beat 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Drop The Beat 2.flac",
+"name": "DVS - Drop The Beat 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Drums 1.flac",
+"name": "DVS - Drums 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Drums 2.flac",
+"name": "DVS - Drums 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Drums 3.flac",
+"name": "DVS - Drums 3",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Drums 4.flac",
+"name": "DVS - Drums 4",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Eight 1.flac",
+"name": "DVS - Eight 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Eight 2.flac",
+"name": "DVS - Eight 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Everybody 1.flac",
+"name": "DVS - Everybody 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Everybody 2.flac",
+"name": "DVS - Everybody 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Everybody 3.flac",
+"name": "DVS - Everybody 3",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Everybody 4.flac",
+"name": "DVS - Everybody 4",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Everybody 5.flac",
+"name": "DVS - Everybody 5",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Fire 1.flac",
+"name": "DVS - Fire 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Fire 2.flac",
+"name": "DVS - Fire 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Fire 3.flac",
+"name": "DVS - Fire 3",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Five 1.flac",
+"name": "DVS - Five 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Five 2.flac",
+"name": "DVS - Five 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Four 1.flac",
+"name": "DVS - Four 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Four 2.flac",
+"name": "DVS - Four 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Freak 1.flac",
+"name": "DVS - Freak 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Freak 2.flac",
+"name": "DVS - Freak 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Freak 3.flac",
+"name": "DVS - Freak 3",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Freak 4.flac",
+"name": "DVS - Freak 4",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Freaky 1.flac",
+"name": "DVS - Freaky 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Freaky 2.flac",
+"name": "DVS - Freaky 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Freaky 3.flac",
+"name": "DVS - Freaky 3",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Fresh 1.flac",
+"name": "DVS - Fresh 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Fresh 2.flac",
+"name": "DVS - Fresh 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Fresh 3.flac",
+"name": "DVS - Fresh 3",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Go 1.flac",
+"name": "DVS - Go 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Go 2.flac",
+"name": "DVS - Go 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Go 3.flac",
+"name": "DVS - Go 3",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Go 4.flac",
+"name": "DVS - Go 4",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Ha 1.flac",
+"name": "DVS - Ha 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Ha 2.flac",
+"name": "DVS - Ha 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Here We Go 1.flac",
+"name": "DVS - Here We Go 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Here We Go 2.flac",
+"name": "DVS - Here We Go 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Here We Go 3.flac",
+"name": "DVS - Here We Go 3",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Here We Go 4.flac",
+"name": "DVS - Here We Go 4",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Here We Go 5.flac",
+"name": "DVS - Here We Go 5",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Hey 1.flac",
+"name": "DVS - Hey 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Hey 2.flac",
+"name": "DVS - Hey 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Hey 3.flac",
+"name": "DVS - Hey 3",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Hit It 1.flac",
+"name": "DVS - Hit It 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Hit It 2.flac",
+"name": "DVS - Hit It 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Hit It 3.flac",
+"name": "DVS - Hit It 3",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Hit It 4.flac",
+"name": "DVS - Hit It 4",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Hit It And Quit 1.flac",
+"name": "DVS - Hit It And Quit 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Hit It And Quit 2.flac",
+"name": "DVS - Hit It And Quit 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Ho 1.flac",
+"name": "DVS - Ho 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Ho 2.flac",
+"name": "DVS - Ho 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Ho 3.flac",
+"name": "DVS - Ho 3",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Ho 4.flac",
+"name": "DVS - Ho 4",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Hot 1.flac",
+"name": "DVS - Hot 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Hot 2.flac",
+"name": "DVS - Hot 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Hot 3.flac",
+"name": "DVS - Hot 3",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Its Fire 1.flac",
+"name": "DVS - Its Fire 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Lets Go 1.flac",
+"name": "DVS - Lets Go 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Lets Go 2.flac",
+"name": "DVS - Lets Go 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Lets Go 3.flac",
+"name": "DVS - Lets Go 3",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Lets Go 4.flac",
+"name": "DVS - Lets Go 4",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Louder 1.flac",
+"name": "DVS - Louder 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Louder 2.flac",
+"name": "DVS - Louder 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Louder 3.flac",
+"name": "DVS - Louder 3",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Louder 4.flac",
+"name": "DVS - Louder 4",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Move 1.flac",
+"name": "DVS - Move 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Move 2.flac",
+"name": "DVS - Move 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Move 3.flac",
+"name": "DVS - Move 3",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Move 4.flac",
+"name": "DVS - Move 4",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Move 5.flac",
+"name": "DVS - Move 5",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Nine 1.flac",
+"name": "DVS - Nine 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Nine 2.flac",
+"name": "DVS - Nine 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - No 1.flac",
+"name": "DVS - No 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - No 2.flac",
+"name": "DVS - No 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - No 3.flac",
+"name": "DVS - No 3",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - No 4.flac",
+"name": "DVS - No 4",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Oh 1.flac",
+"name": "DVS - Oh 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Oh 2.flac",
+"name": "DVS - Oh 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Oh 3.flac",
+"name": "DVS - Oh 3",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Oh 4.flac",
+"name": "DVS - Oh 4",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Oh 5.flac",
+"name": "DVS - Oh 5",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Oh 6.flac",
+"name": "DVS - Oh 6",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Okay 1.flac",
+"name": "DVS - Okay 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Okay 2.flac",
+"name": "DVS - Okay 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Okay 3.flac",
+"name": "DVS - Okay 3",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Okay 4.flac",
+"name": "DVS - Okay 4",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - One 1.flac",
+"name": "DVS - One 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - One 2.flac",
+"name": "DVS - One 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Oww 1.flac",
+"name": "DVS - Oww 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Oww 2.flac",
+"name": "DVS - Oww 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Oww 3.flac",
+"name": "DVS - Oww 3",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Oww 4.flac",
+"name": "DVS - Oww 4",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Rhythm 1.flac",
+"name": "DVS - Rhythm 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Rhythm 2.flac",
+"name": "DVS - Rhythm 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Rhythm 3.flac",
+"name": "DVS - Rhythm 3",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Rhythm 4.flac",
+"name": "DVS - Rhythm 4",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Rock It 1.flac",
+"name": "DVS - Rock It 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Rock It 2.flac",
+"name": "DVS - Rock It 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Rock On 1.flac",
+"name": "DVS - Rock On 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Rock On 2.flac",
+"name": "DVS - Rock On 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Rock On 3.flac",
+"name": "DVS - Rock On 3",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Rock On 4.flac",
+"name": "DVS - Rock On 4",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Rock On 5.flac",
+"name": "DVS - Rock On 5",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Rock On 6.flac",
+"name": "DVS - Rock On 6",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Rockin 1.flac",
+"name": "DVS - Rockin 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Rockin 2.flac",
+"name": "DVS - Rockin 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Rockin 3.flac",
+"name": "DVS - Rockin 3",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Rockin 4.flac",
+"name": "DVS - Rockin 4",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Seven 1.flac",
+"name": "DVS - Seven 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Seven 2.flac",
+"name": "DVS - Seven 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Six 1.flac",
+"name": "DVS - Six 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Six 2.flac",
+"name": "DVS - Six 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Stop 1.flac",
+"name": "DVS - Stop 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Stop 2.flac",
+"name": "DVS - Stop 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Stop 3.flac",
+"name": "DVS - Stop 3",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Stop 4.flac",
+"name": "DVS - Stop 4",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Ten 1.flac",
+"name": "DVS - Ten 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Ten 2.flac",
+"name": "DVS - Ten 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - This.flac",
+"name": "DVS - This",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Three 1.flac",
+"name": "DVS - Three 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Three 2.flac",
+"name": "DVS - Three 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Turn it Up 1.flac",
+"name": "DVS - Turn it Up 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Turn it Up 2.flac",
+"name": "DVS - Turn it Up 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Turn it Up 3.flac",
+"name": "DVS - Turn it Up 3",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Turn it Up 4.flac",
+"name": "DVS - Turn it Up 4",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Turn it Up 5.flac",
+"name": "DVS - Turn it Up 5",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Turn it Up 6.flac",
+"name": "DVS - Turn it Up 6",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Turn it Up 7.flac",
+"name": "DVS - Turn it Up 7",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Two 1.flac",
+"name": "DVS - Two 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Two 2.flac",
+"name": "DVS - Two 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Uh 1.flac",
+"name": "DVS - Uh 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Uh 2.flac",
+"name": "DVS - Uh 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Uh 3.flac",
+"name": "DVS - Uh 3",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Uh 4.flac",
+"name": "DVS - Uh 4",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Uh 5.flac",
+"name": "DVS - Uh 5",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Uh 6.flac",
+"name": "DVS - Uh 6",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - What 1.flac",
+"name": "DVS - What 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - What 2.flac",
+"name": "DVS - What 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - What 3.flac",
+"name": "DVS - What 3",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - What 4.flac",
+"name": "DVS - What 4",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Yeah 1.flac",
+"name": "DVS - Yeah 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Yeah 2.flac",
+"name": "DVS - Yeah 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Yo 1.flac",
+"name": "DVS - Yo 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Yo 2.flac",
+"name": "DVS - Yo 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Yo 3.flac",
+"name": "DVS - Yo 3",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Yo 4.flac",
+"name": "DVS - Yo 4",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts - DVS - Yo 5.flac",
+"name": "DVS - Yo 5",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Ah 1.flac",
+"name": "VPFX - Ah 1",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Ah 2.flac",
+"name": "VPFX - Ah 2",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Ah 3.flac",
+"name": "VPFX - Ah 3",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Ah 4.flac",
+"name": "VPFX - Ah 4",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Ah 5.flac",
+"name": "VPFX - Ah 5",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Ah 6.flac",
+"name": "VPFX - Ah 6",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Ah 7.flac",
+"name": "VPFX - Ah 7",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Ah 8.flac",
+"name": "VPFX - Ah 8",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Air 1.flac",
+"name": "VPFX - Air 1",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Air 10.flac",
+"name": "VPFX - Air 10",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Air 11.flac",
+"name": "VPFX - Air 11",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Air 12.flac",
+"name": "VPFX - Air 12",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Air 13.flac",
+"name": "VPFX - Air 13",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Air 14.flac",
+"name": "VPFX - Air 14",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Air 17.flac",
+"name": "VPFX - Air 17",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Air 18.flac",
+"name": "VPFX - Air 18",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Air 19.flac",
+"name": "VPFX - Air 19",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Air 2.flac",
+"name": "VPFX - Air 2",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Air 20.flac",
+"name": "VPFX - Air 20",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Air 21.flac",
+"name": "VPFX - Air 21",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Air 3.flac",
+"name": "VPFX - Air 3",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Air 4.flac",
+"name": "VPFX - Air 4",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Air 5.flac",
+"name": "VPFX - Air 5",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Air 7.flac",
+"name": "VPFX - Air 7",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Air 8.flac",
+"name": "VPFX - Air 8",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Air 9.flac",
+"name": "VPFX - Air 9",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Breath 1.flac",
+"name": "VPFX - Breath 1",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Breath 2.flac",
+"name": "VPFX - Breath 2",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Breath 3.flac",
+"name": "VPFX - Breath 3",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Breath 4.flac",
+"name": "VPFX - Breath 4",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Breath 5.flac",
+"name": "VPFX - Breath 5",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Breath 6.flac",
+"name": "VPFX - Breath 6",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Breath 7.flac",
+"name": "VPFX - Breath 7",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Breath 8.flac",
+"name": "VPFX - Breath 8",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Cabasa 1.flac",
+"name": "VPFX - Cabasa 1",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Cabasa 2.flac",
+"name": "VPFX - Cabasa 2",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Cabasa 3.flac",
+"name": "VPFX - Cabasa 3",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Click 1.flac",
+"name": "VPFX - Click 1",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Click 2.flac",
+"name": "VPFX - Click 2",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Click 3.flac",
+"name": "VPFX - Click 3",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Click 4.flac",
+"name": "VPFX - Click 4",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Click 5.flac",
+"name": "VPFX - Click 5",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Click 8.flac",
+"name": "VPFX - Click 8",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Click 9.flac",
+"name": "VPFX - Click 9",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Crash 1.flac",
+"name": "VPFX - Crash 1",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Crash 2.flac",
+"name": "VPFX - Crash 2",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Cuica 1.flac",
+"name": "VPFX - Cuica 1",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Cuica 2.flac",
+"name": "VPFX - Cuica 2",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Cuica 3.flac",
+"name": "VPFX - Cuica 3",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Cuica 4.flac",
+"name": "VPFX - Cuica 4",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Cuica 5.flac",
+"name": "VPFX - Cuica 5",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Ha 1.flac",
+"name": "VPFX - Ha 1",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Ha 12.flac",
+"name": "VPFX - Ha 12",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Ha 2.flac",
+"name": "VPFX - Ha 2",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Ha 3.flac",
+"name": "VPFX - Ha 3",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Ha 6.flac",
+"name": "VPFX - Ha 6",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - High Hat 1.flac",
+"name": "VPFX - High Hat 1",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - High Hat 10.flac",
+"name": "VPFX - High Hat 10",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - High Hat 11.flac",
+"name": "VPFX - High Hat 11",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - High Hat 13.flac",
+"name": "VPFX - High Hat 13",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - High Hat 15.flac",
+"name": "VPFX - High Hat 15",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - High Hat 16.flac",
+"name": "VPFX - High Hat 16",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - High Hat 2.flac",
+"name": "VPFX - High Hat 2",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - High Hat 20.flac",
+"name": "VPFX - High Hat 20",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - High Hat 24.flac",
+"name": "VPFX - High Hat 24",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - High Hat 3.flac",
+"name": "VPFX - High Hat 3",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - High Hat 5.flac",
+"name": "VPFX - High Hat 5",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - High Hat 7.flac",
+"name": "VPFX - High Hat 7",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - High Hat 8.flac",
+"name": "VPFX - High Hat 8",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - High Hat 9.flac",
+"name": "VPFX - High Hat 9",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Hit 1.flac",
+"name": "VPFX - Hit 1",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Hit 3.flac",
+"name": "VPFX - Hit 3",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Hit 4.flac",
+"name": "VPFX - Hit 4",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Hit 5.flac",
+"name": "VPFX - Hit 5",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Hit 6.flac",
+"name": "VPFX - Hit 6",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Hit 7.flac",
+"name": "VPFX - Hit 7",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Huh 1.flac",
+"name": "VPFX - Huh 1",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Huh 12.flac",
+"name": "VPFX - Huh 12",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Huh 13.flac",
+"name": "VPFX - Huh 13",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Huh 2.flac",
+"name": "VPFX - Huh 2",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Huh 3.flac",
+"name": "VPFX - Huh 3",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Huh 4.flac",
+"name": "VPFX - Huh 4",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Huh 5.flac",
+"name": "VPFX - Huh 5",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Huh 6.flac",
+"name": "VPFX - Huh 6",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Huh 7.flac",
+"name": "VPFX - Huh 7",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Huh 8.flac",
+"name": "VPFX - Huh 8",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Kick 11.flac",
+"name": "VPFX - Kick 11",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Kick 12.flac",
+"name": "VPFX - Kick 12",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Kick 13.flac",
+"name": "VPFX - Kick 13",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Kick 14.flac",
+"name": "VPFX - Kick 14",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Kick 15.flac",
+"name": "VPFX - Kick 15",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Kick 2.flac",
+"name": "VPFX - Kick 2",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Kick 21.flac",
+"name": "VPFX - Kick 21",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Kick 26.flac",
+"name": "VPFX - Kick 26",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Kick 5.flac",
+"name": "VPFX - Kick 5",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Kick 9.flac",
+"name": "VPFX - Kick 9",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Pop 1.flac",
+"name": "VPFX - Pop 1",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Pop 2.flac",
+"name": "VPFX - Pop 2",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Pop 3.flac",
+"name": "VPFX - Pop 3",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Pop 4.flac",
+"name": "VPFX - Pop 4",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Pop 6.flac",
+"name": "VPFX - Pop 6",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Pop 7.flac",
+"name": "VPFX - Pop 7",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Pop 8.flac",
+"name": "VPFX - Pop 8",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Shaker 1.flac",
+"name": "VPFX - Shaker 1",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Shaker 10.flac",
+"name": "VPFX - Shaker 10",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Shaker 11.flac",
+"name": "VPFX - Shaker 11",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Shaker 12.flac",
+"name": "VPFX - Shaker 12",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Shaker 13.flac",
+"name": "VPFX - Shaker 13",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Shaker 14.flac",
+"name": "VPFX - Shaker 14",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Shaker 2.flac",
+"name": "VPFX - Shaker 2",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Shaker 20.flac",
+"name": "VPFX - Shaker 20",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Shaker 21.flac",
+"name": "VPFX - Shaker 21",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Shaker 22.flac",
+"name": "VPFX - Shaker 22",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Shaker 23.flac",
+"name": "VPFX - Shaker 23",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Shaker 24.flac",
+"name": "VPFX - Shaker 24",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Shaker 26.flac",
+"name": "VPFX - Shaker 26",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Shaker 3.flac",
+"name": "VPFX - Shaker 3",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Shaker 4.flac",
+"name": "VPFX - Shaker 4",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Shaker 5.flac",
+"name": "VPFX - Shaker 5",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Shaker 6.flac",
+"name": "VPFX - Shaker 6",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Shaker 9.flac",
+"name": "VPFX - Shaker 9",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Shh 1.flac",
+"name": "VPFX - Shh 1",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Shh 2.flac",
+"name": "VPFX - Shh 2",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Shh 3.flac",
+"name": "VPFX - Shh 3",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Shh 4.flac",
+"name": "VPFX - Shh 4",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Snare 1.flac",
+"name": "VPFX - Snare 1",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Snare 10.flac",
+"name": "VPFX - Snare 10",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Snare 11.flac",
+"name": "VPFX - Snare 11",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Snare 12.flac",
+"name": "VPFX - Snare 12",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Snare 13.flac",
+"name": "VPFX - Snare 13",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Snare 14.flac",
+"name": "VPFX - Snare 14",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Snare 15.flac",
+"name": "VPFX - Snare 15",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Snare 16.flac",
+"name": "VPFX - Snare 16",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Snare 2.flac",
+"name": "VPFX - Snare 2",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Snare 3.flac",
+"name": "VPFX - Snare 3",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Snare 4.flac",
+"name": "VPFX - Snare 4",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Snare 5.flac",
+"name": "VPFX - Snare 5",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Snare 6.flac",
+"name": "VPFX - Snare 6",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Snare 7.flac",
+"name": "VPFX - Snare 7",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Tom 1.flac",
+"name": "VPFX - Tom 1",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Tom 2.flac",
+"name": "VPFX - Tom 2",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Tom 3.flac",
+"name": "VPFX - Tom 3",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Tom 4.flac",
+"name": "VPFX - Tom 4",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Tom 5.flac",
+"name": "VPFX - Tom 5",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Tom 6.flac",
+"name": "VPFX - Tom 6",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Tom 7.flac",
+"name": "VPFX - Tom 7",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Tom 8.flac",
+"name": "VPFX - Tom 8",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Uh 1.flac",
+"name": "VPFX - Uh 1",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Uh 2.flac",
+"name": "VPFX - Uh 2",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Uh 3.flac",
+"name": "VPFX - Uh 3",
+"category": "Vocal Percussion",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Are You Ready for This 1.flac",
+"name": "DVSV2 - Are You Ready for This 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Are You Ready for This 2.flac",
+"name": "DVSV2 - Are You Ready for This 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Are You Ready for This 3.flac",
+"name": "DVSV2 - Are You Ready for This 3",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Are You Serious.flac",
+"name": "DVSV2 - Are You Serious",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Are You Talkin to Me.flac",
+"name": "DVSV2 - Are You Talkin to Me",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Badder.flac",
+"name": "DVSV2 - Badder",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Bigger and Badder.flac",
+"name": "DVSV2 - Bigger and Badder",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Bigger.flac",
+"name": "DVSV2 - Bigger",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Body Language.flac",
+"name": "DVSV2 - Body Language",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Bring it Back Now 1.flac",
+"name": "DVSV2 - Bring it Back Now 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Bring it Back Now 2.flac",
+"name": "DVSV2 - Bring it Back Now 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Can You Dig It 1.flac",
+"name": "DVSV2 - Can You Dig It 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Can You Dig It 2.flac",
+"name": "DVSV2 - Can You Dig It 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Can You Handle It 1.flac",
+"name": "DVSV2 - Can You Handle It 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Can You Handle It 2.flac",
+"name": "DVSV2 - Can You Handle It 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Can You Handle This.flac",
+"name": "DVSV2 - Can You Handle This",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Chop It and Screw It.flac",
+"name": "DVSV2 - Chop It and Screw It",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Chopped and Screwed.flac",
+"name": "DVSV2 - Chopped and Screwed",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Do You Know Who I Am.flac",
+"name": "DVSV2 - Do You Know Who I Am",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Droppin in Four 1.flac",
+"name": "DVSV2 - Droppin in Four 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Droppin in Four 2.flac",
+"name": "DVSV2 - Droppin in Four 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Dynamite 1.flac",
+"name": "DVSV2 - Dynamite 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Dynamite 2.flac",
+"name": "DVSV2 - Dynamite 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Get Fucked Up.flac",
+"name": "DVSV2 - Get Fucked Up",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Go On and Make My Day.flac",
+"name": "DVSV2 - Go On and Make My Day",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Here Comes the Drop 1.flac",
+"name": "DVSV2 - Here Comes the Drop 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Here Comes the Drop 2.flac",
+"name": "DVSV2 - Here Comes the Drop 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Here Comes the Drop 3.flac",
+"name": "DVSV2 - Here Comes the Drop 3",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Here it Comes.flac",
+"name": "DVSV2 - Here it Comes",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - I Dont Give a Damn.flac",
+"name": "DVSV2 - I Dont Give a Damn",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - I Like It.flac",
+"name": "DVSV2 - I Like It",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - I Think I Like It.flac",
+"name": "DVSV2 - I Think I Like It",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - I Want Your Money.flac",
+"name": "DVSV2 - I Want Your Money",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Im Back 1.flac",
+"name": "DVSV2 - Im Back 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Im Back 2.flac",
+"name": "DVSV2 - Im Back 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Im Bad.flac",
+"name": "DVSV2 - Im Bad",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Im Gonna Explode.flac",
+"name": "DVSV2 - Im Gonna Explode",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Its Gonna Get Real 1.flac",
+"name": "DVSV2 - Its Gonna Get Real 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Its Gonna Get Real 2.flac",
+"name": "DVSV2 - Its Gonna Get Real 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Ive Got the Need for Speed 1.flac",
+"name": "DVSV2 - Ive Got the Need for Speed 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Ive Got the Need for Speed 2.flac",
+"name": "DVSV2 - Ive Got the Need for Speed 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Just How I Like It 1.flac",
+"name": "DVSV2 - Just How I Like It 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Just How I Like It 2.flac",
+"name": "DVSV2 - Just How I Like It 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Lets Get Dirty.flac",
+"name": "DVSV2 - Lets Get Dirty",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Lets Hear It Again.flac",
+"name": "DVSV2 - Lets Hear It Again",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Make My Day.flac",
+"name": "DVSV2 - Make My Day",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Now I Have Your Attention.flac",
+"name": "DVSV2 - Now I Have Your Attention",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - One 1.flac",
+"name": "DVSV2 - One 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - One 2.flac",
+"name": "DVSV2 - One 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Pay Attention.flac",
+"name": "DVSV2 - Pay Attention",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Rewind.flac",
+"name": "DVSV2 - Rewind",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Risky Business.flac",
+"name": "DVSV2 - Risky Business",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Rock and Roll.flac",
+"name": "DVSV2 - Rock and Roll",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Show Me the Money.flac",
+"name": "DVSV2 - Show Me the Money",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Smokin 1.flac",
+"name": "DVSV2 - Smokin 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Smokin 2.flac",
+"name": "DVSV2 - Smokin 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - The Baddest Shit.flac",
+"name": "DVSV2 - The Baddest Shit",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - This Shit is Real 1.flac",
+"name": "DVSV2 - This Shit is Real 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - This Shit is Real 2.flac",
+"name": "DVSV2 - This Shit is Real 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Three 1.flac",
+"name": "DVSV2 - Three 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Three 2.flac",
+"name": "DVSV2 - Three 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Two 1.flac",
+"name": "DVSV2 - Two 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Two 2.flac",
+"name": "DVSV2 - Two 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Very Nice 1.flac",
+"name": "DVSV2 - Very Nice 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Very Nice 2.flac",
+"name": "DVSV2 - Very Nice 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Vibe This.flac",
+"name": "DVSV2 - Vibe This",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Vibe Wit Me.flac",
+"name": "DVSV2 - Vibe Wit Me",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - What Is This.flac",
+"name": "DVSV2 - What Is This",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Who Do You Think You Are.flac",
+"name": "DVSV2 - Who Do You Think You Are",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Yeah Baby 1.flac",
+"name": "DVSV2 - Yeah Baby 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Yeah Baby 2.flac",
+"name": "DVSV2 - Yeah Baby 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - You Cant Be Serious.flac",
+"name": "DVSV2 - You Cant Be Serious",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Youre Gonna Love This 1.flac",
+"name": "DVSV2 - Youre Gonna Love This 1",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Youre Gonna Love This 2.flac",
+"name": "DVSV2 - Youre Gonna Love This 2",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+},
+{
+"path": "Producer Space (CC0)/Vocal Shouts/Dance Vocal Shouts 2 - DVSV2 - Youre Gonna Love This 3.flac",
+"name": "DVSV2 - Youre Gonna Love This 3",
+"category": "Vocal Shouts",
+"collection": "Producer Space (CC0)"
+}
+]

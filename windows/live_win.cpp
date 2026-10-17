@@ -20,6 +20,8 @@
 #include <algorithm>
 #include <atomic>
 #include <cmath>
+#include <condition_variable>
+#include <chrono>
 #include <mutex>
 #include <thread>
 #include <vector>
@@ -49,6 +51,8 @@ std::vector<Nal> nals(const uint8_t *d, size_t n) {
 class Video {
 public:
     IMFTransform *enc = nullptr;
+    ICodecAPI *codec = nullptr;
+    long long lastKey = -100000000LL;
     bool providesSamples = false;
     DWORD outSize = 0;
     std::vector<uint8_t> sps, pps;
@@ -64,7 +68,8 @@ public:
             v.vt = VT_UI4; v.ulVal = 0; api->SetValue(&CODECAPI_AVEncMPVDefaultBPictureCount, &v);             // no frame reordering
             v.vt = VT_UI4; v.ulVal = eAVEncCommonRateControlMode_CBR; api->SetValue(&CODECAPI_AVEncCommonRateControlMode, &v);
             v.vt = VT_BOOL; v.boolVal = VARIANT_TRUE; api->SetValue(&CODECAPI_AVLowLatencyMode, &v);
-            api->Release();
+            v.vt = VT_UI4; v.ulVal = 0; api->SetValue(&CODECAPI_AVEncCommonQualityVsSpeed, &v);                 // fastest
+            codec = api;   // kept, to ask for keyframes
         }
         IMFMediaType *out = nullptr, *in = nullptr;
         MFCreateMediaType(&out);
@@ -83,7 +88,7 @@ public:
         enc->ProcessMessage(MFT_MESSAGE_NOTIFY_BEGIN_STREAMING, 0); enc->ProcessMessage(MFT_MESSAGE_NOTIFY_START_OF_STREAM, 0);
         return "";
     }
-    void close() { if (enc) { enc->ProcessMessage(MFT_MESSAGE_NOTIFY_END_STREAMING, 0); } release(enc); }
+    void close() { if (enc) { enc->ProcessMessage(MFT_MESSAGE_NOTIFY_END_STREAMING, 0); } release(codec); release(enc); }
 
     // `at`: the frame's time in 100 ns units since the stream started (real time, so slow machines stay in sync).
     void encode(const std::vector<uint8_t> &nv12, long long at, Rtmp &rtmp) {
@@ -91,6 +96,10 @@ public:
         if (FAILED(MFCreateMemoryBuffer((DWORD)nv12.size(), &buf))) return;
         BYTE *p = nullptr; buf->Lock(&p, nullptr, nullptr); memcpy(p, nv12.data(), nv12.size()); buf->Unlock(); buf->SetCurrentLength((DWORD)nv12.size());
         MFCreateSample(&s); s->AddBuffer(buf); s->SetSampleTime(at); s->SetSampleDuration(10000000LL / FPS);
+        if (codec && at - lastKey >= 20000000LL) {   // a keyframe every 2 seconds of real time, however many frames that is
+            VARIANT v; VariantInit(&v); v.vt = VT_UI4; v.ulVal = 1; codec->SetValue(&CODECAPI_AVEncVideoForceKeyFrame, &v);
+            lastKey = at;
+        }
         HRESULT hr = enc->ProcessInput(0, s, 0);
         release(s); release(buf);
         if (FAILED(hr) && hr != MF_E_NOTACCEPTING) return;
@@ -387,8 +396,31 @@ public:
 private:
     // The window (and camera) composed onto a 1280x720 frame 30 times a second. With the camera on, the window shrinks a
     // little to leave a column on the right, and the camera box sits at the bottom of it, so nothing is covered.
+    std::mutex handoff; std::condition_variable ready;
+    std::vector<uint8_t> pending; long long pendingAt = 0; bool havePending = false;
+    std::thread encodeThread;
+    void encodeLoop() {
+        CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+        std::vector<uint8_t> frameBgra, nv12;
+        while (running) {
+            long long at = 0;
+            {
+                std::unique_lock<std::mutex> g(handoff);
+                ready.wait_for(g, std::chrono::milliseconds(200), [this] { return havePending || !running; });
+                if (!havePending) continue;
+                frameBgra.swap(pending); at = pendingAt; havePending = false;
+            }
+            double e0 = now();
+            toNV12(frameBgra.data(), nv12);
+            video.encode(nv12, at, rtmp);
+            encodeMs = encodeMs * 0.9 + (now() - e0) * 1000 * 0.1;
+            frames++;
+        }
+        CoUninitialize();
+    }
     void videoLoop() {
         CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+        encodeThread = std::thread([this] { encodeLoop(); });
         HDC screen = GetDC(nullptr);
         BITMAPINFO bi{}; bi.bmiHeader.biSize = sizeof bi.bmiHeader; bi.bmiHeader.biWidth = W; bi.bmiHeader.biHeight = -H; bi.bmiHeader.biPlanes = 1; bi.bmiHeader.biBitCount = 32;
         void *bits = nullptr; HBITMAP canvas = CreateDIBSection(screen, &bi, DIB_RGB_COLORS, &bits, nullptr, 0);
@@ -436,13 +468,17 @@ private:
                 }
             }
             GdiFlush();
-            double e0 = now();
-            toNV12((const uint8_t *)bits, nv12);
-            video.encode(nv12, tick * 10000000LL / FPS, rtmp);
-            encodeMs = encodeMs * 0.9 + (now() - e0) * 1000 * 0.1;
-            frame++; frames = frame;
+            {   // hand the picture to the encoding thread (if it is still busy, the newest picture replaces the waiting one)
+                std::lock_guard<std::mutex> g(handoff);
+                pending.assign((const uint8_t *)bits, (const uint8_t *)bits + (size_t)W * H * 4);
+                pendingAt = tick * 10000000LL / FPS; havePending = true;
+            }
+            ready.notify_one();
+            frame++;
             if (frame % 30 == 0 && rtmp.problem().size()) break;
         }
+        running = false; ready.notify_one();
+        if (encodeThread.joinable()) encodeThread.join();
         SelectObject(dc, old); DeleteObject(canvas); DeleteDC(dc); if (wbmp) DeleteObject(wbmp); DeleteDC(wdc);
         DeleteObject(bg); DeleteObject(amber); ReleaseDC(nullptr, screen);
         CoUninitialize();

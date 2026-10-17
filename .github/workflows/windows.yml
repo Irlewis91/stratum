@@ -19,3 +19,28 @@ jobs:
         with:
           name: STRATUM-exe
           path: windows/out/STRATUM.exe
+      # Smoke test on the Windows machine: STRATUM must start, load the web app (the window title becomes
+      # "STRATUM — <song>") and still be running after 20 seconds. A screenshot is kept with the build.
+      - name: Smoke test
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory smoke | Out-Null
+          Copy-Item windows/out/STRATUM.exe smoke/
+          Copy-Item -Recurse web smoke/app
+          $p = Start-Process smoke/STRATUM.exe -PassThru
+          Start-Sleep 20
+          if ($p.HasExited) { throw "STRATUM exited with code $($p.ExitCode)" }
+          $p.Refresh()
+          Write-Host "Window title: $($p.MainWindowTitle)"
+          Add-Type -AssemblyName System.Windows.Forms, System.Drawing
+          $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
+          $bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height
+          [System.Drawing.Graphics]::FromImage($bmp).CopyFromScreen($b.Location, [System.Drawing.Point]::Empty, $b.Size)
+          $bmp.Save("$PWD/smoke.png")
+          Stop-Process $p
+          if (-not $p.MainWindowTitle.StartsWith("STRATUM ")) { throw "The web app did not load (title: '$($p.MainWindowTitle)')" }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: smoke-screenshot
+          path: smoke.png

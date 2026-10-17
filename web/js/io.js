@@ -276,6 +276,9 @@
     return out.filter((f) => f.data);
   };
   IO.native = native;
+  // The native engine: the Mac app, or the Windows app (which answers the same plugin messages).
+  const winBridge = window.STRATUM_PLATFORM === 'windows' && window.chrome && window.chrome.webview ? { postMessage: (m) => window.chrome.webview.postMessage(m) } : null;
+  IO.host = () => native() || winBridge;
   // Which version is running: the Mac app, the Windows app, or the web app (phones, tablets and browsers).
   IO.platform = native() ? 'mac' : window.STRATUM_PLATFORM === 'windows' ? 'windows' : 'web';
   IO.macOnly = (what) => `${what} is in the STRATUM Mac app. It isn't in the ${IO.platform === 'windows' ? 'Windows' : 'web and mobile'} version yet.`;

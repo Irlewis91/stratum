@@ -1,8 +1,9 @@
-// STRATUM plugin bridge: Audio Unit instruments and effects hosted by the Mac shell.
+// STRATUM plugin bridge: plugins (Audio Units on the Mac, VST3 and VST2 on both), STRATUM Wave, Tune and Airwindows,
+// hosted by the Mac app or the Windows app.
 // A track with `plugin: {id, name, maker, state, fx: [{id, name, state}]}` sends its notes to the shell instead of the built-in sounds.
 (function () {
   const S = window.S, E = S.engine, IO = S.io, PL = (S.plug = {});
-  const native = () => IO.native();
+  const native = () => IO.host();
   const waits = {};
   let seq = 0;
   const ask = (msg) => new Promise((res) => { if (!native()) return res(null); const id = ++seq; waits[id] = res; native().postMessage({ ...msg, req: id }); });

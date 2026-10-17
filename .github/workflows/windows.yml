@@ -9,12 +9,26 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Build STRATUM.exe
+      - name: Vendor code (VST3 SDK, Airwindows)
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: vendor-${{ hashFiles('fetch-code.sh') }}
+      - name: Compiled Airwindows (vendor code only, so it can be kept between builds)
+        uses: actions/cache@v4
+        with:
+          path: windows/out/obj/airwin
+          key: airwin-obj-${{ hashFiles('fetch-code.sh', 'windows/build.py') }}
+      - name: Fetch vendor code
+        shell: bash
+        run: ./fetch-code.sh
+      - name: Build STRATUM.exe and the test plugins
         shell: cmd
         run: |
           for /f "usebackq tokens=*" %%i in (`"%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath`) do set VS=%%i
           call "%VS%\VC\Auxiliary\Build\vcvars64.bat"
-          windows\build.bat
+          python windows\build.py || exit /b 1
+          python windows\build.py plugins || exit /b 1
       - uses: actions/upload-artifact@v4
         with:
           name: STRATUM-exe
@@ -52,6 +66,35 @@ jobs:
           Write-Host "Sync test: $title"
           Stop-Process $p; Stop-Process $srv
           if (-not ($title -match '"user":"discord-user@example.com"' -and $title -match '"beat":"Win unsaved"' -and $title -match 'Windows Beat')) { throw "Sync test failed: $title" }
+      # The native engine on Windows: plugin list, STRATUM Wave, VST3 and VST2 instruments and effects, Airwindows, Tune,
+      # plugin controls and saved settings, and live playback (on the machine's sound device or the silent stand-in).
+      - name: Engine test
+        shell: pwsh
+        run: |
+          $env:STRATUM_VST3_PATH = "$PWD\windows\out\test-plugins"
+          $env:STRATUM_TEST_OUT = "$PWD\engine-test.json"
+          $p = Start-Process smoke/STRATUM.exe -ArgumentList "--test-script", "$PWD/tests/windows-engine-test.js" -PassThru
+          for ($i = 0; $i -lt 180 -and -not (Test-Path engine-test.json); $i++) { Start-Sleep 1 }
+          Stop-Process $p -ErrorAction SilentlyContinue
+          if (-not (Test-Path engine-test.json)) { throw "The engine test did not finish" }
+          $r = Get-Content engine-test.json -Raw
+          Write-Host $r
+          $j = $r | ConvertFrom-Json
+          if ($j.error) { throw "Engine test error: $($j.error)" }
+          $checks = @{
+            "Airwindows effects listed" = ($j.catalogue.airwindows -gt 400)
+            "STRATUM Wave plays" = ($j.wave.held -gt 0.01)
+            "VST3 instrument plays" = ($j.vst3inst.held -gt 0.005)
+            "VST3 effect passes sound" = ($j.vst3fx.held -gt 0.005)
+            "VST2 instrument plays A440" = ([math]::Abs($j.vst2inst.hz - 440) -lt 15)
+            "VST2 effect control works" = ($j.vst2fxAtFull -gt $j.vst2fx.held * 1.5)
+            "Airwindows effect passes sound" = ($j.airwindows.held -gt 0.005)
+            "Tune passes sound" = ($j.tune.held -gt 0.005)
+            "Live playback" = ($j.live.livePeakSoFar -gt 0.001)
+          }
+          $failed = $checks.GetEnumerator() | Where-Object { -not $_.Value } | ForEach-Object { $_.Key }
+          $checks.GetEnumerator() | ForEach-Object { Write-Host ("{0,-34} {1}" -f $_.Key, $(if ($_.Value) { "ok" } else { "FAILED" })) }
+          if ($failed) { throw "Engine checks failed: $($failed -join ', ')" }
       - uses: actions/upload-artifact@v4
         if: always()
         with:

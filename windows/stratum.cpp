@@ -7,6 +7,7 @@
 #include <wrl.h>
 #include <string>
 #include "WebView2.h"
+#include "engine.h"
 
 using Microsoft::WRL::Callback;
 using Microsoft::WRL::ComPtr;
@@ -77,7 +78,8 @@ static bool signInPage(const std::wstring& uri) {
     return false;
 }
 
-// Self-check (--sync-test <server> <script.js>): point STRATUM Sync at a test server and run a test script on each page.
+// Self-checks: --test-script <file.js> runs a test script on each page; --sync-test <server> <file.js> also points
+// STRATUM Sync at a test server.
 static std::wstring g_testScript;
 static std::wstring readText(const std::wstring& path) {
     HANDLE f = CreateFileW(path.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, 0, nullptr);
@@ -91,6 +93,18 @@ static std::wstring readText(const std::wstring& path) {
     std::wstring w(len, L'\0');
     MultiByteToWideChar(CP_UTF8, 0, bytes.data(), (int)bytes.size(), &w[0], len);
     return w;
+}
+
+// Messages from the page ({op, ...} objects) go to the native engine; answers come back through S.plug.cb.
+static std::wstring wideOf(const std::string &s) {
+    int n = MultiByteToWideChar(CP_UTF8, 0, s.c_str(), (int)s.size(), nullptr, 0);
+    std::wstring w(n, L'\0');
+    if (n) MultiByteToWideChar(CP_UTF8, 0, s.c_str(), (int)s.size(), &w[0], n);
+    return w;
+}
+static void replyToPage(int req, const Json &value) {
+    if (!g_web) return;
+    g_web->ExecuteScript((L"S.plug.cb(" + std::to_wstring(req) + L", " + wideOf(value.dump()) + L")").c_str(), nullptr);
 }
 
 static void startWebView() {
@@ -164,6 +178,28 @@ static void startWebView() {
                             return S_OK;
                         }).Get(), nullptr);
 
+                    g_web->add_WebMessageReceived(Callback<ICoreWebView2WebMessageReceivedEventHandler>(
+                        [](ICoreWebView2 *, ICoreWebView2WebMessageReceivedEventArgs *args) -> HRESULT {
+                            LPWSTR json = nullptr;
+                            if (FAILED(args->get_WebMessageAsJson(&json)) || !json) return S_OK;
+                            int n = WideCharToMultiByte(CP_UTF8, 0, json, -1, nullptr, 0, nullptr, nullptr);
+                            std::string text(n > 0 ? n - 1 : 0, '\0');
+                            if (n > 1) WideCharToMultiByte(CP_UTF8, 0, json, -1, &text[0], n, nullptr, nullptr);
+                            CoTaskMemFree(json);
+                            Json body = Json::parse(text);
+                            std::string op = body["op"].str();
+                            if (op.rfind("au", 0) == 0) engine::op(op, body);
+                            if (op == "testResult" && !g_testScript.empty()) {   // self-checks write their results to a file
+                                wchar_t path[MAX_PATH];
+                                if (GetEnvironmentVariableW(L"STRATUM_TEST_OUT", path, MAX_PATH)) {
+                                    HANDLE f = CreateFileW(path, GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, 0, nullptr);
+                                    std::string t = body["text"].str(); DWORD n = 0;
+                                    if (f != INVALID_HANDLE_VALUE) { WriteFile(f, t.data(), (DWORD)t.size(), &n, nullptr); CloseHandle(f); }
+                                }
+                            }
+                            return S_OK;
+                        }).Get(), nullptr);
+
                     // The page title becomes the window title ("STRATUM — song name").
                     g_web->add_DocumentTitleChanged(Callback<ICoreWebView2DocumentTitleChangedEventHandler>(
                         [](ICoreWebView2* sender, IUnknown*) -> HRESULT {
@@ -195,9 +231,11 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
 int WINAPI wWinMain(HINSTANCE inst, HINSTANCE, PWSTR, int show) {
     int argc = 0;
     LPWSTR* argv = CommandLineToArgvW(GetCommandLineW(), &argc);
-    for (int i = 1; i + 2 < argc; i++)
-        if (std::wstring(argv[i]) == L"--sync-test")
-            g_testScript = L"window.STRATUM_SYNC = { url: '" + std::wstring(argv[i + 1]) + L"', key: 'test-anon-key' };\n" + readText(argv[i + 2]);
+    for (int i = 1; i < argc; i++) {
+        std::wstring a = argv[i];
+        if (a == L"--sync-test" && i + 2 < argc) g_testScript = L"window.STRATUM_SYNC = { url: '" + std::wstring(argv[i + 1]) + L"', key: 'test-anon-key' };\n" + readText(argv[i + 2]);
+        if (a == L"--test-script" && i + 1 < argc) g_testScript = readText(argv[i + 1]);
+    }
     LocalFree(argv);
     SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
     CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
@@ -213,9 +251,11 @@ int WINAPI wWinMain(HINSTANCE inst, HINSTANCE, PWSTR, int show) {
     g_hwnd = CreateWindowExW(0, L"STRATUM", L"STRATUM", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, 1440, 900, nullptr, nullptr, inst, nullptr);
     ShowWindow(g_hwnd, show == SW_SHOWDEFAULT || show == SW_SHOWNORMAL ? SW_MAXIMIZE : show);
     UpdateWindow(g_hwnd);
+    engine::init(g_hwnd, replyToPage);
     startWebView();
     MSG m;
     while (GetMessageW(&m, nullptr, 0, 0)) { TranslateMessage(&m); DispatchMessageW(&m); }
+    engine::shutdown();
     g_controller = nullptr;
     g_web = nullptr;
     CoUninitialize();

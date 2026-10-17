@@ -9,12 +9,21 @@
   IO.saveFile = (name, data) => {
     const bytes = typeof data === 'string' ? enc.encode(data) : data;
     if (native()) return native().postMessage({ op: 'save', name, b64: b64(bytes) });
+    // Phones and tablets: offer the share sheet (AirDrop, iCloud Drive / Files, Google Drive, email…) as well as a plain download.
+    const file = typeof File === 'function' ? new File([bytes], name) : null;
+    if (file && matchMedia('(pointer: coarse)').matches && navigator.canShare && navigator.canShare({ files: [file] }) && !IO._sharing) {
+      IO._pending = file;
+      return S.ui.showPop(`<h3>Save “${name.replace(/[<>&"]/g, '')}”</h3><p class="hint">Send it to your computer with AirDrop, or keep it in iCloud Drive, Files or Google Drive, then open it in STRATUM on any device.</p>` +
+        `<p><button data-act="saveShare" class="primary">Share or save to Files…</button> <button data-act="saveDownload">Download</button></p><button data-act="closePop">Cancel</button>`);
+    }
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([bytes]));
     a.download = name;
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 5000);
   };
+  IO.sharePending = async () => { const f = IO._pending; if (!f) return; try { await navigator.share({ files: [f], title: f.name }); S.ui.toast('Saved.'); } catch (e) { if (e.name !== 'AbortError') S.ui.toast('Could not share: ' + (e.message || e), true); } };
+  IO.downloadPending = async () => { const f = IO._pending; if (!f) return; IO._sharing = true; IO.saveFile(f.name, new Uint8Array(await f.arrayBuffer())); IO._sharing = false; };
   // `many` lets the picker return several files (used to load a set of drum sounds at once).
   IO.open = (many) => {
     const inp = document.getElementById('file');

@@ -858,6 +858,8 @@
     },
     wantedPick() { closePop(); U.pendingAudio = null; U.pendingSample = null; U.locating = true; U.located = 0; IO.open(true); },
     save() { IO.saveProject(); },
+    saveShare() { closePop(); IO.sharePending(); },
+    saveDownload() { closePop(); IO.downloadPending(); },
     undo() { const s = S.undo.pop(); if (!s) return U.toast('Nothing to undo'); S.proj = JSON.parse(s); U.note = null; if (!tr(U.track)) U.track = P().tracks[0].id; if (!P().scenes.some((x) => x.id === U.scene)) U.scene = P().scenes[0].id; if (!P().scenes.some((x) => x.id === E.sceneId)) E.sceneId = U.scene; E.rebuild(); syncHeader(); render(); },
     tour() { closePop(); S.tour.start(); },
     manual() { closePop(); if (IO.native()) IO.native().postMessage({ op: 'manual' }); else window.open('manual.pdf'); },

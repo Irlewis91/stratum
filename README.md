@@ -25,6 +25,15 @@ Open **https://irlewis91.github.io/stratum/** in Safari (iPhone/iPad) or Chrome 
 
 It then opens full screen from its icon and works offline. On phones, a tab bar along the bottom switches between the Rack, Piano roll, Mixer and Devices. On iPhone, turn the ringer on: iOS mutes web audio while the phone is on silent.
 
+### Moving a beat between devices
+
+A beat is one `.stratum` file (notes, mix and any recorded or imported audio), so it opens the same on Mac, Windows, phones and tablets:
+- **Mac:** Save into iCloud Drive (or AirDrop the file to your phone).
+- **Windows:** Save › **Save to a folder…** and choose your OneDrive, Google Drive or Dropbox folder, or use **Share…**.
+- **Phone or tablet:** Save opens the share sheet: AirDrop, Save to Files / iCloud Drive, Google Drive, email.
+
+Then press **Open / Import** on the other device and pick the file. There is no automatic syncing yet.
+
 ### What's in each version
 
 | | Mac | Windows | Phones, tablets, browsers |

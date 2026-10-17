@@ -114,7 +114,7 @@ add(f"""<section class="cover"><img class="wm" src="{mark}" alt="STRATUM"><h1>Ow
 chapters = ["Welcome and installing", "The window at a glance", "Comfort Skins", "Projects, opening and importing", "Tracks and instruments",
             "STRATUM Wave", "Writing notes and patterns", "Arranging your song", "Recording and comping", "Effects", "The sound library",
             "Mixing", "Stems: splitting a track apart", "Exporting and sharing", "Coming from another DAW", "Keyboard shortcuts",
-            "Plugins", "Limits in this alpha and troubleshooting"]
+            "Plugins", "Limits in this alpha and troubleshooting", "Windows, phones and tablets"]
 add('<section class="toc"><h2>Contents</h2><ol>' + "".join(f"<li>{esc(c)}</li>" for c in chapters) + "</ol></section>")
 
 # 1
@@ -294,6 +294,16 @@ add("""<section><h1><span>18</span>Limits in this alpha and troubleshooting</h1>
 <li>STRATUM can't post to social platforms by itself; it opens each upload page with your video ready to drag in.</li>
 <li>Automation can be played and cleared but not yet drawn.</li></ul>
 <h3>Licences</h3><p>Airwindows Consolidated (MIT) · Steinberg VST3 SDK (MIT) · ONNX Runtime (MIT) · HT-Demucs (MIT) · Stargate sample pack and Producer Space sounds (CC0). Licence files are inside the app.</p></section>""")
+
+# 19
+add("""<section><h1><span>19</span>Windows, phones and tablets</h1><p>STRATUM also runs on Windows and, as a web app, on iPhone, iPad, Android phones and tablets. Projects are the same <code>.stratum</code> files everywhere, so you can start a beat on your phone and finish it on the Mac.</p>
+<h3>Windows</h3><p>Unzip <b>STRATUM-Windows.zip</b>, keep <b>STRATUM.exe</b> next to the <b>app</b> folder, and double-click it. If Windows says it protected your PC, choose <b>More info › Run anyway</b>. Shortcuts use <b>Ctrl</b> and <b>Alt</b> where the Mac uses ⌘ and ⌥, and the tour is under the <b>?</b> button.</p>
+<h3>Phones and tablets</h3><p>Open <b>irlewis91.github.io/stratum</b> in Safari (iPhone, iPad) or Chrome (Android). Tap <b>Share › Add to Home Screen</b> on iPhone and iPad, or <b>Install app</b> on Android. STRATUM then opens full screen from its icon and works offline. On a phone, playback controls sit on the top row, the other tools scroll sideways underneath, and a tab bar along the bottom switches between the Rack, Piano roll, Mixer and Devices. Tap a note, then <b>Delete</b>, to remove it. On iPhone, turn the ringer on: iOS mutes web audio in silent mode.</p>"""
+    + table(["", "Mac", "Windows", "Phones, tablets, browsers"], [
+        ["Beat making, piano roll, mixer, skins, built-in sounds and effects", "✓", "✓", "✓"], ["Sound library", "✓", "✓", "✓ (sounds download as you use them)"],
+        ["Importing projects from other software", "✓", "✓", "✓"], ["Recording from a microphone", "✓", "✓", "✓"], ["Branded share videos", "✓", "✓", "✓ through the share sheet"],
+        ["Plugins, STRATUM Wave, STRATUM Tune, Airwindows", "✓", "—", "—"], ["Stems, Record from another app, Go live", "✓", "—", "—"]])
+    + "<p>Share videos on Windows, phones and tablets are recorded as the track plays once, so a 60-second clip takes about a minute to make.</p></section>")
 
 page = f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><title>STRATUM Owner’s Manual</title><style>{css}</style></head><body>{''.join(body)}</body></html>"""
 open(os.path.join(HERE, "manual.html"), "w").write(page)

@@ -16,6 +16,7 @@ OUT = os.path.join(HERE, 'out')
 SDK = os.path.join(ROOT, 'vendor', 'vst3sdk')
 AW = os.path.join(ROOT, 'vendor', 'airwin2rack', 'src')
 WV2 = '1.0.4129.50'
+ORT = os.path.join(ROOT, 'vendor', 'onnxruntime-win-x64-1.31.0')
 FLAGS = ['/nologo', '/c', '/MP', '/O2', '/EHsc', '/std:c++17', '/MT', '/utf-8', '/bigobj', '/DNDEBUG', '/DRELEASE=1',
          '/D_USE_MATH_DEFINES', '/D_CRT_SECURE_NO_WARNINGS', '/DUNICODE', '/D_UNICODE', '/DNOMINMAX']
 
@@ -76,13 +77,18 @@ def app():
     objs += compile_group('airwin', sorted(glob.glob(AW + '/autogen_airwin/*.cpp')) + [AW + '/airwin_consolidated_base.cpp'], [AW])
     objs += compile_group('stratum-dsp', [ROOT + '/shell/airwin.cpp', ROOT + '/shell/wavesynth.cpp', ROOT + '/shell/tune.cpp'], [AW, ROOT + '/shell'])
     objs += compile_group('vst3sdk', sdk_hosting(), [SDK])
-    objs += compile_group('app', [HERE + '/stratum.cpp', HERE + '/engine.cpp', HERE + '/vst3host_win.cpp'], [SDK, wv + '/include', HERE, ROOT + '/shell'], ['/W3'])
+    objs += compile_group('stems', [ROOT + '/shell/stems.c'], [ORT + '/include', ROOT + '/shell'])
+    objs += compile_group('app', [HERE + '/stratum.cpp', HERE + '/engine.cpp', HERE + '/vst3host_win.cpp', HERE + '/features.cpp', HERE + '/rtmp_win.cpp', HERE + '/live_win.cpp'], [SDK, wv + '/include', HERE, ROOT + '/shell'], ['/W3', '/permissive-'])
     exe = os.path.join(OUT, 'STRATUM.exe')
     rsp = os.path.join(OUT, 'link.rsp')
     with open(rsp, 'w') as fh:
         fh.write('\n'.join('"%s"' % o for o in objs))
     run(['link', '/nologo', '/OUT:' + exe, '/SUBSYSTEM:WINDOWS', '@' + rsp, os.path.join(OUT, 'stratum.res'), wv + '/x64/WebView2LoaderStatic.lib',
-         'user32.lib', 'gdi32.lib', 'ole32.lib', 'oleaut32.lib', 'shell32.lib', 'shlwapi.lib', 'advapi32.lib', 'version.lib', 'avrt.lib', 'uuid.lib'])
+         'user32.lib', 'gdi32.lib', 'ole32.lib', 'oleaut32.lib', 'shell32.lib', 'shlwapi.lib', 'advapi32.lib', 'version.lib', 'avrt.lib', 'uuid.lib', 'mmdevapi.lib', 'windowsapp.lib', 'ws2_32.lib', 'secur32.lib', 'crypt32.lib', 'mfplat.lib',
+         'mfuuid.lib', 'mfreadwrite.lib', 'mf.lib', 'wmcodecdspuuid.lib', 'strmiids.lib'])
+    if os.path.exists(ORT + '/lib/onnxruntime.dll'):
+        import shutil
+        shutil.copy(ORT + '/lib/onnxruntime.dll', os.path.join(OUT, 'onnxruntime.dll'))
     print('Built', exe)
 
 

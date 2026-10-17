@@ -22,6 +22,17 @@ jobs:
       - name: Fetch vendor code
         shell: bash
         run: ./fetch-code.sh
+      - name: Stem separation model (HT-Demucs, MIT licence)
+        uses: actions/cache@v4
+        with:
+          path: vendor/model
+          key: htdemucs-68d0bf16428ef66e692cdff8a9ccf28f1ef3f69440d57e58605a4cc55fcc5e74
+      - name: Fetch the stem model
+        shell: bash
+        run: |
+          mkdir -p vendor/model
+          [ -f vendor/model/htdemucs.onnx ] || curl -fsSL --retry 3 -o vendor/model/htdemucs.onnx https://huggingface.co/StemSplitio/htdemucs-onnx/resolve/d54ed9eb60e258ea82131c6ee14578628816456a/htdemucs.onnx
+          echo "68d0bf16428ef66e692cdff8a9ccf28f1ef3f69440d57e58605a4cc55fcc5e74  vendor/model/htdemucs.onnx" | sha256sum -c -
       - name: Build STRATUM.exe and the test plugins
         shell: cmd
         run: |
@@ -32,7 +43,9 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: STRATUM-exe
-          path: windows/out/STRATUM.exe
+          path: |
+            windows/out/STRATUM.exe
+            windows/out/onnxruntime.dll
       # Smoke test on the Windows machine: STRATUM must start, load the web app (the window title becomes
       # "STRATUM — <song>") and still be running after 20 seconds. A screenshot is kept with the build.
       - name: Smoke test
@@ -95,6 +108,45 @@ jobs:
           $failed = $checks.GetEnumerator() | Where-Object { -not $_.Value } | ForEach-Object { $_.Key }
           $checks.GetEnumerator() | ForEach-Object { Write-Host ("{0,-34} {1}" -f $_.Key, $(if ($_.Value) { "ok" } else { "FAILED" })) }
           if ($failed) { throw "Engine checks failed: $($failed -join ', ')" }
+      # Go live (to a local test server, with the Visuals on screen), Record from another app, stem separation and sharing.
+      - name: Features test
+        shell: pwsh
+        run: |
+          Copy-Item windows/out/onnxruntime.dll smoke/
+          New-Item -ItemType Directory smoke/models -Force | Out-Null
+          Copy-Item vendor/model/htdemucs.onnx smoke/models/
+          $srv = Start-Process python -ArgumentList "tests/rtmp-test-server.py", "19350", "$PWD/live.flv", "45" -RedirectStandardOutput live.json -PassThru
+          Start-Sleep 2
+          $env:STRATUM_TEST_OUT = "$PWD\features-test.json"
+          $p = Start-Process smoke/STRATUM.exe -ArgumentList "--test-script", "$PWD/tests/windows-features-test.js" -PassThru
+          for ($i = 0; $i -lt 400 -and -not (Test-Path features-test.json); $i++) { Start-Sleep 1 }
+          Stop-Process $p -ErrorAction SilentlyContinue
+          $srv.WaitForExit(60000) | Out-Null
+          if (-not (Test-Path features-test.json)) { throw "The features test did not finish" }
+          $r = Get-Content features-test.json -Raw; Write-Host $r
+          $l = Get-Content live.json -Raw; Write-Host "RTMP server received: $l"
+          $j = $r | ConvertFrom-Json; $s = $l | ConvertFrom-Json
+          $checks = [ordered]@{
+            "Go live connected" = ($j.live.status.state -eq "live")
+            "Video frames arrived (30 fps)" = ($s.video -gt 150)
+            "Keyframes every 2 s" = ($s.keyframes -ge 3)
+            "H.264 header" = ($s.avcc -like "*sps/pps ok*")
+            "AAC header (48 kHz stereo)" = ($s.aac -eq "1190")
+            "Audio frames arrived" = ($s.audio -gt 200)
+            "Timestamps in order" = ($s.video_monotonic -and $s.audio_monotonic)
+            "Stream key remembered" = ($j.live.savedKey.key -eq "stratum-test")
+            "Recorded the PC's sound" = ($j.capture.bytes -gt 1000)
+            "Stems separated (4)" = ($j.stems.stems.Count -eq 4)
+            "Share video saved" = ($j.share.msg[0] -eq $true)
+          }
+          $checks.GetEnumerator() | ForEach-Object { Write-Host ("{0,-32} {1}" -f $_.Key, $(if ($_.Value) { "ok" } else { "FAILED" })) }
+          $failed = $checks.GetEnumerator() | Where-Object { -not $_.Value } | ForEach-Object { $_.Key }
+          if ($failed) { throw "Feature checks failed: $($failed -join ', ')" }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: live-stream-recording
+          path: live.flv
       - uses: actions/upload-artifact@v4
         if: always()
         with:

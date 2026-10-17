@@ -2,7 +2,11 @@
 // ONNX Runtime is loaded at run time so the app still launches where the library is absent.
 #include "stems.h"
 #include "onnxruntime_c_api.h"
+#ifdef _WIN32
+#include <windows.h>
+#else
 #include <dlfcn.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -16,9 +20,19 @@ static void set_err(char *err, int n, const char *msg) {
 
 int stratum_separate(const char *runtime_lib, const char *model_path, const float *left, const float *right, long n,
                      float *out, stratum_progress progress, void *ctx, char *err, int err_len) {
+#ifdef _WIN32
+    /* Paths arrive as UTF-8; Windows wants them wide (ONNX Runtime's model path too). */
+    wchar_t wlib[1024], wmodel[1024];
+    MultiByteToWideChar(CP_UTF8, 0, runtime_lib, -1, wlib, 1024);
+    MultiByteToWideChar(CP_UTF8, 0, model_path, -1, wmodel, 1024);
+    HMODULE lib = LoadLibraryW(wlib);
+    if (!lib) { set_err(err, err_len, "ONNX Runtime (onnxruntime.dll) could not be loaded"); return 1; }
+    const OrtApiBase *(*get_base)(void) = (const OrtApiBase *(*)(void))GetProcAddress(lib, "OrtGetApiBase");
+#else
     void *lib = dlopen(runtime_lib, RTLD_NOW | RTLD_LOCAL);
     if (!lib) { set_err(err, err_len, dlerror()); return 1; }
     const OrtApiBase *(*get_base)(void) = (const OrtApiBase *(*)(void))dlsym(lib, "OrtGetApiBase");
+#endif
     if (!get_base) { set_err(err, err_len, "ONNX Runtime entry point not found"); return 1; }
     const OrtApi *g = get_base()->GetApi(ORT_API_VERSION);
     if (!g) { set_err(err, err_len, "ONNX Runtime version is too old"); return 1; }
@@ -37,7 +51,11 @@ int stratum_separate(const char *runtime_lib, const char *model_path, const floa
     CHECK(g->CreateEnv(ORT_LOGGING_LEVEL_ERROR, "stratum", &env));
     CHECK(g->CreateSessionOptions(&opts));
     CHECK(g->SetSessionGraphOptimizationLevel(opts, ORT_ENABLE_ALL));
+#ifdef _WIN32
+    CHECK(g->CreateSession(env, wmodel, opts, &sess));
+#else
     CHECK(g->CreateSession(env, model_path, opts, &sess));
+#endif
     CHECK(g->CreateCpuMemoryInfo(OrtArenaAllocator, OrtMemTypeDefault, &mem));
 
     long chunks = (n + stride - 1) / stride;

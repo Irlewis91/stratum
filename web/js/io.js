@@ -281,10 +281,10 @@
   IO.host = () => native() || winBridge;
   // Which version is running: the Mac app, the Windows app, or the web app (phones, tablets and browsers).
   IO.platform = native() ? 'mac' : window.STRATUM_PLATFORM === 'windows' ? 'windows' : 'web';
-  IO.macOnly = (what) => `${what} is in the STRATUM Mac app. It isn't in the ${IO.platform === 'windows' ? 'Windows' : 'web and mobile'} version yet.`;
+  IO.macOnly = (what) => `${what} is in the STRATUM Mac and Windows apps. It isn't in the web and mobile version yet.`;
   // AI stem separation runs in the Mac shell. Resolves with four AudioBuffers: drums, bass, other, vocals.
   IO.separate = async (buf, onProgress) => {
-    if (!native()) throw new Error('Stem separation needs the STRATUM Mac app');
+    if (!IO.host()) throw new Error(IO.macOnly('Stem separation'));
     if (buf.duration > 900) throw new Error('Audio longer than 15 minutes cannot be separated');
     const off = new OfflineAudioContext(2, Math.ceil(buf.duration * 44100), 44100), src = off.createBufferSource();
     src.buffer = buf; src.connect(off.destination); src.start();
@@ -297,7 +297,7 @@
         fail: (m) => reject(new Error(m)),
         progress: onProgress || (() => {}),
       };
-      native().postMessage({ op: 'stems', b64: b64(IO.wav(mix)) });
+      IO.host().postMessage({ op: 'stems', b64: b64(IO.wav(mix)) });
     });
   };
   IO.stemResult = (i, data) => IO._stem && IO._stem.result(i, data);

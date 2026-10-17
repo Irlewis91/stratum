@@ -16,4 +16,10 @@ if [ ! -d vendor/airwin2rack ]; then
   git clone -q https://github.com/baconpaul/airwin2rack.git vendor/airwin2rack
   git -C vendor/airwin2rack checkout -q 8a67b80e04230a5cf40e84d6e8b9a2fd70b13a75
 fi
+# ONNX Runtime for Windows (MIT licence), for stem separation in the Windows app. Only fetched on Windows.
+if [ "${OS:-}" = "Windows_NT" ] && [ ! -d vendor/onnxruntime-win-x64-1.31.0 ]; then
+  curl -fsSL --retry 3 -o vendor/ort-win.zip https://github.com/microsoft/onnxruntime/releases/download/v1.31.0/onnxruntime-win-x64-1.31.0.zip
+  echo "3958d8a44984160692c1b4ffd0de3cb48f8c39f9d34bb31e433db06e30b82195  vendor/ort-win.zip" | sha256sum -c -
+  unzip -q vendor/ort-win.zip -d vendor && rm vendor/ort-win.zip
+fi
 echo "Vendor code ready."

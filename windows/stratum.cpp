@@ -5,9 +5,11 @@
 #include <shellapi.h>
 #include <shlobj.h>
 #include <wrl.h>
+#include <memory>
 #include <string>
 #include "WebView2.h"
 #include "engine.h"
+#include "features.h"
 
 using Microsoft::WRL::Callback;
 using Microsoft::WRL::ComPtr;
@@ -102,6 +104,10 @@ static std::wstring wideOf(const std::string &s) {
     if (n) MultiByteToWideChar(CP_UTF8, 0, s.c_str(), (int)s.size(), &w[0], n);
     return w;
 }
+// Scripts for the page from any thread are handed to the window's thread.
+static const UINT WM_RUNJS = WM_APP + 1;
+static void runOnPage(const std::wstring &js) { PostMessageW(g_hwnd, WM_RUNJS, 0, (LPARAM) new std::wstring(js)); }
+
 static void replyToPage(int req, const Json &value) {
     if (!g_web) return;
     g_web->ExecuteScript((L"S.plug.cb(" + std::to_wstring(req) + L", " + wideOf(value.dump()) + L")").c_str(), nullptr);
@@ -189,6 +195,7 @@ static void startWebView() {
                             Json body = Json::parse(text);
                             std::string op = body["op"].str();
                             if (op.rfind("au", 0) == 0) engine::op(op, body);
+                            else features::op(op, body);
                             if (op == "testResult" && !g_testScript.empty()) {   // self-checks write their results to a file
                                 wchar_t path[MAX_PATH];
                                 if (GetEnvironmentVariableW(L"STRATUM_TEST_OUT", path, MAX_PATH)) {
@@ -223,6 +230,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
     switch (msg) {
     case WM_SIZE: resize(); return 0;
     case WM_GETMINMAXINFO: { auto* mm = (MINMAXINFO*)lp; mm->ptMinTrackSize = { 720, 480 }; return 0; }
+    case WM_RUNJS: { std::unique_ptr<std::wstring> js((std::wstring *)lp); if (g_web) g_web->ExecuteScript(js->c_str(), nullptr); return 0; }
     case WM_DESTROY: PostQuitMessage(0); return 0;
     }
     return DefWindowProcW(hwnd, msg, wp, lp);
@@ -252,9 +260,11 @@ int WINAPI wWinMain(HINSTANCE inst, HINSTANCE, PWSTR, int show) {
     ShowWindow(g_hwnd, show == SW_SHOWDEFAULT || show == SW_SHOWNORMAL ? SW_MAXIMIZE : show);
     UpdateWindow(g_hwnd);
     engine::init(g_hwnd, replyToPage);
+    features::init(g_hwnd, runOnPage, replyToPage);
     startWebView();
     MSG m;
     while (GetMessageW(&m, nullptr, 0, 0)) { TranslateMessage(&m); DispatchMessageW(&m); }
+    features::shutdown();
     engine::shutdown();
     g_controller = nullptr;
     g_web = nullptr;

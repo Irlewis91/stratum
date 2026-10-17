@@ -7,7 +7,7 @@ if (location.host === 'app.stratum') addEventListener('load', () => setTimeout(a
   try {
     S.ui.toast = () => {};
     const ctx = S.engine.ensure(), list = await S.plug.list();
-    const find = (kind, re) => list.find((p) => p.kind === kind && re.test(p.name));
+    const find = (kind, re) => list.find((p) => p.kind === kind && p.id.startsWith('vst3') && re.test(p.name));
     out.catalogue = { total: list.length, airwindows: list.filter((p) => p.id.startsWith('aw|')).length, vst: list.filter((p) => p.id.startsWith('vst3')).map((p) => p.name) };
     const rms = (d, a, b) => { let s = 0; for (let i = Math.floor(a * 44100); i < b * 44100 && i < d.length; i++) s += d[i] * d[i]; return +Math.sqrt(s / ((b - a) * 44100)).toFixed(4); };
     const zc = (d, a, b) => { let z = 0; for (let i = Math.floor(a * 44100) + 1; i < b * 44100 && i < d.length; i++) if (d[i - 1] <= 0 && d[i] > 0) z++; return Math.round(z / (b - a)); };

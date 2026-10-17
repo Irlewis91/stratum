@@ -226,10 +226,41 @@ static void startWebView() {
     if (FAILED(hr)) fail(L"WebView2 is not available", hr);
 }
 
+// The menu bar, with the same items as the Mac app's menus. Each runs the matching STRATUM action in the page.
+static const char *g_menuActions[] = {"new", "open", "save", "export:wav", "export:mid", "export:dawproject", "quit", "undo", "cut", "copy", "paste", "selectAll",
+                                      "play", "stop", "rec", "capture", "metronome", "dump", "manual", "tour", "help"};
+static HMENU buildMenu() {
+    auto item = [](HMENU m, const char *action, const wchar_t *label) {
+        for (UINT i = 0; i < sizeof g_menuActions / sizeof *g_menuActions; i++) if (!strcmp(g_menuActions[i], action)) AppendMenuW(m, MF_STRING, 100 + i, label);
+    };
+    HMENU bar = CreateMenu(), file = CreatePopupMenu(), edit = CreatePopupMenu(), transport = CreatePopupMenu(), help = CreatePopupMenu();
+    item(file, "new", L"&New Project"); item(file, "open", L"&Open or Import…\tCtrl+O"); item(file, "save", L"&Save Project…\tCtrl+S");
+    AppendMenuW(file, MF_SEPARATOR, 0, nullptr);
+    item(file, "export:wav", L"Export Audio &Mixdown (.wav)…"); item(file, "export:mid", L"Export MIDI File (.mid)…"); item(file, "export:dawproject", L"Export DAWproject (experimental)…");
+    AppendMenuW(file, MF_SEPARATOR, 0, nullptr); item(file, "quit", L"E&xit");
+    item(edit, "undo", L"&Undo\tCtrl+Z"); AppendMenuW(edit, MF_SEPARATOR, 0, nullptr);
+    item(edit, "cut", L"Cu&t\tCtrl+X"); item(edit, "copy", L"&Copy\tCtrl+C"); item(edit, "paste", L"&Paste\tCtrl+V"); item(edit, "selectAll", L"Select &All\tCtrl+A");
+    item(transport, "play", L"&Play / Stop\tSpace"); item(transport, "stop", L"&Return to Start"); item(transport, "rec", L"Re&cord");
+    item(transport, "capture", L"Record from &Another App…"); item(transport, "metronome", L"&Metronome"); item(transport, "dump", L"&Dump Score Log");
+    item(help, "manual", L"STRATUM &Owner’s Manual"); item(help, "tour", L"Take the &Tour"); item(help, "help", L"&Shortcuts for This Skin");
+    AppendMenuW(bar, MF_POPUP, (UINT_PTR)file, L"&File"); AppendMenuW(bar, MF_POPUP, (UINT_PTR)edit, L"&Edit");
+    AppendMenuW(bar, MF_POPUP, (UINT_PTR)transport, L"&Transport"); AppendMenuW(bar, MF_POPUP, (UINT_PTR)help, L"&Help");
+    return bar;
+}
+static void menuCommand(UINT id) {
+    if (id < 100 || id >= 100 + sizeof g_menuActions / sizeof *g_menuActions) return;
+    std::string a = g_menuActions[id - 100];
+    if (a == "quit") { PostMessageW(g_hwnd, WM_CLOSE, 0, 0); return; }
+    if (a == "open") { Json b; b["many"] = false; features::op("open", b); return; }
+    if (a == "cut" || a == "copy" || a == "paste" || a == "selectAll") { if (g_web) g_web->ExecuteScript(wideOf("document.execCommand('" + a + "')").c_str(), nullptr); return; }
+    if (g_web) g_web->ExecuteScript(wideOf("window.S && S.menu('" + a + "')").c_str(), nullptr);
+}
+
 static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
     switch (msg) {
     case WM_SIZE: resize(); return 0;
     case WM_GETMINMAXINFO: { auto* mm = (MINMAXINFO*)lp; mm->ptMinTrackSize = { 720, 480 }; return 0; }
+    case WM_COMMAND: menuCommand(LOWORD(wp)); return 0;
     case WM_RUNJS: { std::unique_ptr<std::wstring> js((std::wstring *)lp); if (g_web) g_web->ExecuteScript(js->c_str(), nullptr); return 0; }
     case WM_DESTROY: PostQuitMessage(0); return 0;
     }
@@ -256,7 +287,7 @@ int WINAPI wWinMain(HINSTANCE inst, HINSTANCE, PWSTR, int show) {
     wc.hIcon = LoadIconW(inst, MAKEINTRESOURCEW(1));
     wc.hIconSm = wc.hIcon;
     RegisterClassExW(&wc);
-    g_hwnd = CreateWindowExW(0, L"STRATUM", L"STRATUM", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, 1440, 900, nullptr, nullptr, inst, nullptr);
+    g_hwnd = CreateWindowExW(0, L"STRATUM", L"STRATUM", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, 1440, 900, nullptr, buildMenu(), inst, nullptr);
     ShowWindow(g_hwnd, show == SW_SHOWDEFAULT || show == SW_SHOWNORMAL ? SW_MAXIMIZE : show);
     UpdateWindow(g_hwnd);
     engine::init(g_hwnd, replyToPage);

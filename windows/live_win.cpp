@@ -340,6 +340,18 @@ private:
     }
 };
 
+// Waits for a thread to finish while still answering the window's messages: the capture thread asks the window for its
+// picture, so a window thread that simply waited would never let it finish.
+void joinPumping(std::thread &t) {
+    if (!t.joinable()) return;
+    HANDLE h = (HANDLE)t.native_handle();
+    while (MsgWaitForMultipleObjects(1, &h, FALSE, 100, QS_ALLINPUT) != WAIT_OBJECT_0) {
+        MSG m;
+        while (PeekMessageW(&m, nullptr, 0, 0, PM_REMOVE)) { TranslateMessage(&m); DispatchMessageW(&m); }
+    }
+    t.join();
+}
+
 // ---------------------------------------------------------------- the session
 class Session {
 public:
@@ -368,7 +380,7 @@ public:
     }
     void stop() {
         running = false;
-        if (videoThread.joinable()) videoThread.join();
+        joinPumping(videoThread);
         audio.stop(); camera.stop(); video.close(); rtmp.close();
         MFShutdown();
     }

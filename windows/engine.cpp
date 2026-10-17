@@ -125,6 +125,41 @@ void resizeEditor(void *hwnd, int w, int h) {
     SetWindowPos(win, nullptr, 0, 0, r.right - r.left, r.bottom - r.top, SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
 }
 
+// Plugin settings saved by the Mac app: base64 of a binary property list such as {"stratum.airwindows": [0.5, …]} or
+// {"stratum.vst3.state": <data>}. This reads just the parts STRATUM writes, so projects move between Mac and Windows.
+struct Plist {
+    enum Kind { None, Real, Data, Str, Array, Dict } kind = None;
+    double real = 0; std::vector<uint8_t> data; std::string str; std::vector<Plist> items; std::map<std::string, Plist> dict;
+    const Plist *get(const std::string &k) const { auto it = dict.find(k); return it == dict.end() ? nullptr : &it->second; }
+};
+bool readPlist(const std::vector<uint8_t> &d, Plist &out) {
+    if (d.size() < 40 || memcmp(d.data(), "bplist00", 8) != 0) return false;
+    const uint8_t *t = d.data() + d.size() - 32;
+    int offSize = t[6], refSize = t[7];
+    auto be = [&](size_t at, int n) { uint64_t v = 0; for (int i = 0; i < n; i++) v = v << 8 | d[at + i]; return v; };
+    uint64_t count = be(d.size() - 24, 8), top = be(d.size() - 16, 8), table = be(d.size() - 8, 8);
+    std::function<bool(uint64_t, Plist &, int)> obj = [&](uint64_t ref, Plist &p, int depth) -> bool {
+        if (ref >= count || depth > 16) return false;
+        size_t at = (size_t)be((size_t)(table + ref * offSize), offSize);
+        if (at >= d.size()) return false;
+        uint8_t m = d[at] >> 4, n = d[at] & 15; size_t pos = at + 1;
+        auto len = [&]() -> uint64_t { if (n != 15) return n; int k = 1 << (d[pos] & 15); uint64_t v = be(pos + 1, k); pos += 1 + k; return v; };
+        switch (m) {
+        case 0x1: { int k = 1 << n; p.kind = Plist::Real; p.real = (double)be(pos, k); return true; }   // integers read as numbers
+        case 0x2: { p.kind = Plist::Real; if (n == 3) { uint64_t b = be(pos, 8); memcpy(&p.real, &b, 8); } else { uint32_t b = (uint32_t)be(pos, 4); float f; memcpy(&f, &b, 4); p.real = f; } return true; }
+        case 0x4: { uint64_t l = len(); if (pos + l > d.size()) return false; p.kind = Plist::Data; p.data.assign(d.begin() + pos, d.begin() + pos + l); return true; }
+        case 0x5: { uint64_t l = len(); if (pos + l > d.size()) return false; p.kind = Plist::Str; p.str.assign((const char *)&d[pos], (size_t)l); return true; }
+        case 0x6: { uint64_t l = len(); p.kind = Plist::Str; std::wstring w; for (uint64_t i = 0; i < l; i++) w += (wchar_t)be(pos + i * 2, 2); p.str = utf8(w); return true; }
+        case 0xA: { uint64_t l = len(); p.kind = Plist::Array; for (uint64_t i = 0; i < l; i++) { Plist x; if (obj(be(pos + i * refSize, refSize), x, depth + 1)) p.items.push_back(x); } return true; }
+        case 0xD: { uint64_t l = len(); p.kind = Plist::Dict; for (uint64_t i = 0; i < l; i++) { Plist k, v; if (obj(be(pos + i * refSize, refSize), k, depth + 1) && obj(be(pos + (l + i) * refSize, refSize), v, depth + 1)) p.dict[k.str] = v; } return true; }
+        default: return false;
+        }
+    };
+    return obj(top, out, 0);
+}
+bool macState(const std::string &st, Plist &out) { return !st.empty() && st.rfind("W", 0) != 0 && readPlist(b64decode(st), out) && out.kind == Plist::Dict; }
+std::vector<double> numbers(const Plist *p) { std::vector<double> v; if (p) for (auto &x : p->items) v.push_back(x.real); return v; }
+
 struct PlugUnit : Unit {
     V3 *p;
     bool inst;
@@ -164,41 +199,6 @@ struct PlugUnit : Unit {
     void closeEditor() override { v3_close_view(p); }
     void idle() override { v3_idle(p); }
 };
-
-// Plugin settings saved by the Mac app: base64 of a binary property list such as {"stratum.airwindows": [0.5, …]} or
-// {"stratum.vst3.state": <data>}. This reads just the parts STRATUM writes, so projects move between Mac and Windows.
-struct Plist {
-    enum Kind { None, Real, Data, Str, Array, Dict } kind = None;
-    double real = 0; std::vector<uint8_t> data; std::string str; std::vector<Plist> items; std::map<std::string, Plist> dict;
-    const Plist *get(const std::string &k) const { auto it = dict.find(k); return it == dict.end() ? nullptr : &it->second; }
-};
-bool readPlist(const std::vector<uint8_t> &d, Plist &out) {
-    if (d.size() < 40 || memcmp(d.data(), "bplist00", 8) != 0) return false;
-    const uint8_t *t = d.data() + d.size() - 32;
-    int offSize = t[6], refSize = t[7];
-    auto be = [&](size_t at, int n) { uint64_t v = 0; for (int i = 0; i < n; i++) v = v << 8 | d[at + i]; return v; };
-    uint64_t count = be(d.size() - 24, 8), top = be(d.size() - 16, 8), table = be(d.size() - 8, 8);
-    std::function<bool(uint64_t, Plist &, int)> obj = [&](uint64_t ref, Plist &p, int depth) -> bool {
-        if (ref >= count || depth > 16) return false;
-        size_t at = (size_t)be((size_t)(table + ref * offSize), offSize);
-        if (at >= d.size()) return false;
-        uint8_t m = d[at] >> 4, n = d[at] & 15; size_t pos = at + 1;
-        auto len = [&]() -> uint64_t { if (n != 15) return n; int k = 1 << (d[pos] & 15); uint64_t v = be(pos + 1, k); pos += 1 + k; return v; };
-        switch (m) {
-        case 0x1: { int k = 1 << n; p.kind = Plist::Real; p.real = (double)be(pos, k); return true; }   // integers read as numbers
-        case 0x2: { p.kind = Plist::Real; if (n == 3) { uint64_t b = be(pos, 8); memcpy(&p.real, &b, 8); } else { uint32_t b = (uint32_t)be(pos, 4); float f; memcpy(&f, &b, 4); p.real = f; } return true; }
-        case 0x4: { uint64_t l = len(); if (pos + l > d.size()) return false; p.kind = Plist::Data; p.data.assign(d.begin() + pos, d.begin() + pos + l); return true; }
-        case 0x5: { uint64_t l = len(); if (pos + l > d.size()) return false; p.kind = Plist::Str; p.str.assign((const char *)&d[pos], (size_t)l); return true; }
-        case 0x6: { uint64_t l = len(); p.kind = Plist::Str; std::wstring w; for (uint64_t i = 0; i < l; i++) w += (wchar_t)be(pos + i * 2, 2); p.str = utf8(w); return true; }
-        case 0xA: { uint64_t l = len(); p.kind = Plist::Array; for (uint64_t i = 0; i < l; i++) { Plist x; if (obj(be(pos + i * refSize, refSize), x, depth + 1)) p.items.push_back(x); } return true; }
-        case 0xD: { uint64_t l = len(); p.kind = Plist::Dict; for (uint64_t i = 0; i < l; i++) { Plist k, v; if (obj(be(pos + i * refSize, refSize), k, depth + 1) && obj(be(pos + (l + i) * refSize, refSize), v, depth + 1)) p.dict[k.str] = v; } return true; }
-        default: return false;
-        }
-    };
-    return obj(top, out, 0);
-}
-bool macState(const std::string &st, Plist &out) { return !st.empty() && st.rfind("W", 0) != 0 && readPlist(b64decode(st), out) && out.kind == Plist::Dict; }
-std::vector<double> numbers(const Plist *p) { std::vector<double> v; if (p) for (auto &x : p->items) v.push_back(x.real); return v; }
 
 // Built-in units share one shape: numbered controls, each 0..1 or a list of options.
 struct Control { std::string name; int options = 0; };

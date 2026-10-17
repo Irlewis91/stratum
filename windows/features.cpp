@@ -181,7 +181,7 @@ private:
         if (SUCCEEDED(hr)) hr = client->Start();
         if (FAILED(hr)) {
             char t[200]; snprintf(t, sizeof t, "Windows did not let STRATUM record %s (error 0x%08X).", perApp ? "that app" : "the PC's sound", (unsigned)hr);
-            error = t; SetEvent(ready);
+            error = hr == HRESULT_FROM_WIN32(ERROR_NOT_FOUND) ? std::string("No sound output device was found on this PC, so there is nothing to record.") : std::string(t); SetEvent(ready);
             if (cap) cap->Release(); if (client) client->Release(); if (!perApp && fmt) CoTaskMemFree(fmt);
             CoUninitialize(); return;
         }

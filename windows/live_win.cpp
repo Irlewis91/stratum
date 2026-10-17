@@ -56,6 +56,16 @@ public:
 
     std::string open() {
         if (FAILED(CoCreateInstance(CLSID_CMSH264EncoderMFT, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&enc)))) return "Windows' H.264 video encoder is not available.";
+        // Encoder settings go in before the stream format, or the encoder may ignore them.
+        ICodecAPI *api = nullptr;
+        if (SUCCEEDED(enc->QueryInterface(IID_PPV_ARGS(&api)))) {
+            VARIANT v; VariantInit(&v);
+            v.vt = VT_UI4; v.ulVal = FPS * 2; api->SetValue(&CODECAPI_AVEncMPVGOPSize, &v);                   // a keyframe every 2 seconds
+            v.vt = VT_UI4; v.ulVal = 0; api->SetValue(&CODECAPI_AVEncMPVDefaultBPictureCount, &v);             // no frame reordering
+            v.vt = VT_UI4; v.ulVal = eAVEncCommonRateControlMode_CBR; api->SetValue(&CODECAPI_AVEncCommonRateControlMode, &v);
+            v.vt = VT_BOOL; v.boolVal = VARIANT_TRUE; api->SetValue(&CODECAPI_AVLowLatencyMode, &v);
+            api->Release();
+        }
         IMFMediaType *out = nullptr, *in = nullptr;
         MFCreateMediaType(&out);
         out->SetGUID(MF_MT_MAJOR_TYPE, MFMediaType_Video); out->SetGUID(MF_MT_SUBTYPE, MFVideoFormat_H264);
@@ -68,15 +78,6 @@ public:
         if (SUCCEEDED(hr)) hr = enc->SetInputType(0, in, 0);
         release(out); release(in);
         if (FAILED(hr)) return "The video encoder refused the stream settings.";
-        ICodecAPI *api = nullptr;
-        if (SUCCEEDED(enc->QueryInterface(IID_PPV_ARGS(&api)))) {
-            VARIANT v; VariantInit(&v);
-            v.vt = VT_UI4; v.ulVal = FPS * 2; api->SetValue(&CODECAPI_AVEncMPVGOPSize, &v);                   // a keyframe every 2 seconds
-            v.vt = VT_UI4; v.ulVal = 0; api->SetValue(&CODECAPI_AVEncMPVDefaultBPictureCount, &v);             // no frame reordering
-            v.vt = VT_UI4; v.ulVal = eAVEncCommonRateControlMode_CBR; api->SetValue(&CODECAPI_AVEncCommonRateControlMode, &v);
-            v.vt = VT_BOOL; v.boolVal = VARIANT_TRUE; api->SetValue(&CODECAPI_AVLowLatencyMode, &v);
-            api->Release();
-        }
         MFT_OUTPUT_STREAM_INFO info{}; enc->GetOutputStreamInfo(0, &info);
         providesSamples = (info.dwFlags & (MFT_OUTPUT_STREAM_PROVIDES_SAMPLES | MFT_OUTPUT_STREAM_CAN_PROVIDE_SAMPLES)) != 0; outSize = std::max<DWORD>(info.cbSize, W * H);
         enc->ProcessMessage(MFT_MESSAGE_NOTIFY_BEGIN_STREAMING, 0); enc->ProcessMessage(MFT_MESSAGE_NOTIFY_START_OF_STREAM, 0);
@@ -84,11 +85,12 @@ public:
     }
     void close() { if (enc) { enc->ProcessMessage(MFT_MESSAGE_NOTIFY_END_STREAMING, 0); } release(enc); }
 
-    void encode(const std::vector<uint8_t> &nv12, long long frame, Rtmp &rtmp) {
+    // `at`: the frame's time in 100 ns units since the stream started (real time, so slow machines stay in sync).
+    void encode(const std::vector<uint8_t> &nv12, long long at, Rtmp &rtmp) {
         IMFMediaBuffer *buf = nullptr; IMFSample *s = nullptr;
         if (FAILED(MFCreateMemoryBuffer((DWORD)nv12.size(), &buf))) return;
         BYTE *p = nullptr; buf->Lock(&p, nullptr, nullptr); memcpy(p, nv12.data(), nv12.size()); buf->Unlock(); buf->SetCurrentLength((DWORD)nv12.size());
-        MFCreateSample(&s); s->AddBuffer(buf); s->SetSampleTime(frame * 10000000LL / FPS); s->SetSampleDuration(10000000LL / FPS);
+        MFCreateSample(&s); s->AddBuffer(buf); s->SetSampleTime(at); s->SetSampleDuration(10000000LL / FPS);
         HRESULT hr = enc->ProcessInput(0, s, 0);
         release(s); release(buf);
         if (FAILED(hr) && hr != MF_E_NOTACCEPTING) return;
@@ -345,6 +347,8 @@ public:
     HWND window = nullptr;
     std::atomic<bool> running{false};
     double t0 = 0;
+    std::atomic<long long> frames{0};
+    std::atomic<double> captureMs{0}, encodeMs{0};   // how long each frame takes (for the status and self-checks)
     std::thread videoThread;
     std::string message;
 
@@ -380,15 +384,21 @@ private:
         HDC wdc = CreateCompatibleDC(screen); HBITMAP wbmp = nullptr; int ww = 0, wh = 0;
         HBRUSH bg = CreateSolidBrush(RGB(0x0f, 0x10, 0x16)), amber = CreateSolidBrush(RGB(0xe3, 0x9a, 0x12));
         std::vector<uint8_t> nv12;
-        long long frame = 0;
+        long long frame = 0, last = -1;
         while (running && !rtmp.problem().size()) {
-            double due = t0 + (double)frame / FPS, wait = due - now();
+            // The next 1/30 s tick; ticks this machine was too busy for are skipped rather than queued up.
+            long long tick = (long long)((now() - t0) * FPS) + 1;
+            if (tick <= last) tick = last + 1;
+            double wait = t0 + (double)tick / FPS - now();
             if (wait > 0) Sleep((DWORD)(wait * 1000));
+            last = tick;
             RECT rc; GetClientRect(window, &rc);
             int cw = rc.right - rc.left, ch = rc.bottom - rc.top;
             if (cw > 0 && ch > 0) {
                 if (cw != ww || ch != wh) { if (wbmp) DeleteObject(wbmp); wbmp = CreateCompatibleBitmap(screen, cw, ch); ww = cw; wh = ch; SelectObject(wdc, wbmp); }
+                double c0 = now();
                 PrintWindow(window, wdc, PW_CLIENTONLY | 2 /* PW_RENDERFULLCONTENT */);
+                captureMs = captureMs * 0.9 + (now() - c0) * 1000 * 0.1;
             }
             RECT all{0, 0, W, H}; FillRect(dc, &all, bg);
             bool cam = camera.on;
@@ -414,9 +424,11 @@ private:
                 }
             }
             GdiFlush();
+            double e0 = now();
             toNV12((const uint8_t *)bits, nv12);
-            video.encode(nv12, frame, rtmp);
-            frame++;
+            video.encode(nv12, tick * 10000000LL / FPS, rtmp);
+            encodeMs = encodeMs * 0.9 + (now() - e0) * 1000 * 0.1;
+            frame++; frames = frame;
             if (frame % 30 == 0 && rtmp.problem().size()) break;
         }
         SelectObject(dc, old); DeleteObject(canvas); DeleteDC(dc); if (wbmp) DeleteObject(wbmp); DeleteDC(wdc);
@@ -455,6 +467,8 @@ Json status() {
     o["state"] = session->rtmp.live() && p.empty() ? "live" : "failed";
     o["seconds"] = secs; o["kbps"] = secs > 1 ? session->rtmp.bytesSent() * 8.0 / 1000 / secs : 0.0;
     o["audio"] = session->audio.source; o["camera"] = (bool)session->camera.on; o["message"] = p;
+    o["fps"] = secs > 1 ? session->frames / secs : 0.0;
+    o["captureMs"] = (double)session->captureMs; o["encodeMs"] = (double)session->encodeMs;
     return o;
 }
 

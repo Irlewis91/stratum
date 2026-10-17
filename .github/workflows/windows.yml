@@ -40,6 +40,18 @@ jobs:
           $bmp.Save("$PWD/smoke.png")
           Stop-Process $p
           if (-not $title.StartsWith("STRATUM ")) { throw "The web app did not load (title: '$title')" }
+      # STRATUM Sync on Windows against a stand-in sign-in server: email code, upload, and a Discord-style round trip.
+      - name: Sync test
+        shell: pwsh
+        run: |
+          $srv = Start-Process python -ArgumentList "tests/mock-sync-server.py", "8799" -PassThru
+          Start-Sleep 2
+          $p = Start-Process smoke/STRATUM.exe -ArgumentList "--sync-test", "http://127.0.0.1:8799", "$PWD/tests/windows-sync-test.js" -PassThru
+          $title = ""
+          for ($i = 0; $i -lt 40 -and -not $title.StartsWith("SYNCTEST {`"email"); $i++) { Start-Sleep 1; $p.Refresh(); $title = $p.MainWindowTitle }
+          Write-Host "Sync test: $title"
+          Stop-Process $p; Stop-Process $srv
+          if (-not ($title -match '"user":"discord-user@example.com"' -and $title -match '"beat":"Win unsaved"' -and $title -match 'Windows Beat')) { throw "Sync test failed: $title" }
       - uses: actions/upload-artifact@v4
         if: always()
         with:

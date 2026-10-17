@@ -359,7 +359,8 @@
     return new Uint8Array(out.buffer);
   };
 
-  IO.saveProject = async () => {
+  // The whole project as one .stratum file: notes, mix and every piece of audio it uses.
+  IO.projectJSON = async () => {
     if (S.plug) await S.plug.capture();
     const used = new Set();
     for (const t of S.proj.tracks) {
@@ -370,8 +371,9 @@
     }
     const buffers = {};
     used.forEach((id) => { const r = S.buffers[id]; if (r) buffers[id] = { name: r.name, bpm: r.bpm, wav: b64(IO.wav(r.buf)) }; });
-    IO.saveFile((S.proj.name || 'Untitled') + '.stratum', JSON.stringify({ stratum: 1, proj: S.proj, buffers }));
+    return JSON.stringify({ stratum: 1, proj: S.proj, buffers });
   };
+  IO.saveProject = async () => IO.saveFile((S.proj.name || 'Untitled') + '.stratum', await IO.projectJSON());
   IO.loadProject = async (text) => {
     const j = JSON.parse(text);
     if (!j.stratum || !j.proj) throw new Error('Not a STRATUM project file');

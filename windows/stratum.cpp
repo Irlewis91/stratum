@@ -62,6 +62,37 @@ static void openOutside(const std::wstring& uri) {
     }
 }
 
+// STRATUM Sync sign-in pages (the sign-in service, Discord and its captcha) open inside the STRATUM window, then return
+// to https://app.stratum/index.html with the sign-in attached.
+static bool signInPage(const std::wstring& uri) {
+    size_t s = uri.find(L"://");
+    if (s == std::wstring::npos) return false;
+    std::wstring host = uri.substr(s + 3);
+    host = host.substr(0, host.find_first_of(L"/:?#"));
+    for (auto& c : host) c = towlower(c);
+    for (const wchar_t* d : { L"supabase.co", L"supabase.in", L"discord.com", L"discordapp.com", L"hcaptcha.com", L"127.0.0.1", L"localhost" }) {
+        std::wstring dom(d);
+        if (host == dom || (host.size() > dom.size() && host.compare(host.size() - dom.size(), dom.size(), dom) == 0 && host[host.size() - dom.size() - 1] == L'.')) return true;
+    }
+    return false;
+}
+
+// Self-check (--sync-test <server> <script.js>): point STRATUM Sync at a test server and run a test script on each page.
+static std::wstring g_testScript;
+static std::wstring readText(const std::wstring& path) {
+    HANDLE f = CreateFileW(path.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, 0, nullptr);
+    if (f == INVALID_HANDLE_VALUE) return L"";
+    std::string bytes;
+    char buf[4096];
+    DWORD n = 0;
+    while (ReadFile(f, buf, sizeof buf, &n, nullptr) && n) bytes.append(buf, n);
+    CloseHandle(f);
+    int len = MultiByteToWideChar(CP_UTF8, 0, bytes.data(), (int)bytes.size(), nullptr, 0);
+    std::wstring w(len, L'\0');
+    MultiByteToWideChar(CP_UTF8, 0, bytes.data(), (int)bytes.size(), &w[0], len);
+    return w;
+}
+
 static void startWebView() {
     std::wstring app = exeDir() + L"\\app";
     if (GetFileAttributesW((app + L"\\index.html").c_str()) == INVALID_FILE_ATTRIBUTES) {
@@ -88,6 +119,7 @@ static void startWebView() {
 
                     // Tell the web app it is the Windows version.
                     g_web->AddScriptToExecuteOnDocumentCreated(L"window.STRATUM_PLATFORM = 'windows';", nullptr);
+                    if (!g_testScript.empty()) g_web->AddScriptToExecuteOnDocumentCreated(g_testScript.c_str(), nullptr);
 
                     // Serve the app folder at https://app.stratum/ (a secure origin, so the microphone works).
                     ComPtr<ICoreWebView2_3> web3;
@@ -125,7 +157,7 @@ static void startWebView() {
                             args->get_Uri(&uri);
                             std::wstring u = uri ? uri : L"";
                             CoTaskMemFree(uri);
-                            if (u.rfind(std::wstring(L"https://") + HOST + L"/", 0) != 0 && u.rfind(L"about:", 0) != 0 && u.rfind(L"blob:", 0) != 0 && u.rfind(L"data:", 0) != 0) {
+                            if (u.rfind(std::wstring(L"https://") + HOST + L"/", 0) != 0 && u.rfind(L"about:", 0) != 0 && u.rfind(L"blob:", 0) != 0 && u.rfind(L"data:", 0) != 0 && !signInPage(u)) {
                                 args->put_Cancel(TRUE);
                                 openOutside(u);
                             }
@@ -161,6 +193,12 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
 }
 
 int WINAPI wWinMain(HINSTANCE inst, HINSTANCE, PWSTR, int show) {
+    int argc = 0;
+    LPWSTR* argv = CommandLineToArgvW(GetCommandLineW(), &argc);
+    for (int i = 1; i + 2 < argc; i++)
+        if (std::wstring(argv[i]) == L"--sync-test")
+            g_testScript = L"window.STRATUM_SYNC = { url: '" + std::wstring(argv[i + 1]) + L"', key: 'test-anon-key' };\n" + readText(argv[i + 2]);
+    LocalFree(argv);
     SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
     CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
     WNDCLASSEXW wc = { sizeof(wc) };

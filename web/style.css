@@ -288,3 +288,9 @@ body.phone .popbox { width:calc(100vw - 16px); max-height:calc(100vh - 40px); }
   input, textarea { -webkit-user-select:text; user-select:text; }
 }
 body.phone .rkh { width:118px; }
+
+/* Sync */
+#syncBtn.warn { border-color:#d4202c; color:#ff8a8a; }
+.popbox .discord { background:#5865f2; border-color:#5865f2; color:#fff; }
+#syList .lrow { display:flex; align-items:center; gap:8px; padding:6px 0; border-bottom:1px solid var(--line); }
+#syList .lrow > span { flex:1; min-width:0; }

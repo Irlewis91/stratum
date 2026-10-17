@@ -649,6 +649,49 @@
   U.showPop = (html) => showPop(html);
   const A = {
     install() { if (U.install) U.install(); },
+    // Sync: sign in once, then every beat is kept in your account and opens on your other devices.
+    async sync() {
+      const SY = S.sync;
+      if (!SY.configured()) return U.toast('Syncing is not switched on in this version yet.', true);
+      if (!SY.user()) {
+        return showPop(`<h3>Sync your beats</h3><p class="hint">Sign in once on each device. Every beat you work on is then saved to your account as you go and opens on your Mac, Windows PC, phone and tablet.</p>` +
+          `<p><button data-act="syncDiscord" class="primary discord">Continue with Discord</button></p>` +
+          `<p class="hint">Or get a sign-in code by email:</p><label>Email <input id="syEmail" type="email" autocomplete="email" placeholder="you@example.com"></label>` +
+          `<p><button data-act="syncSend">Email me a code</button> <button data-act="closePop">Cancel</button></p>`);
+      }
+      const u = SY.user(), when = (t) => new Date(t).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }), mb = (n) => (n / 1048576).toFixed(1) + ' MB';
+      showPop(`<h3>Your synced beats</h3><p class="hint">Signed in as ${esc(u.email || (u.user_metadata && u.user_metadata.full_name) || 'you')} on this ${esc(SY.device)}. Changes sync automatically.</p><div class="plist" id="syList"><span class="hint">Loading…</span></div>` +
+        `<p><button data-act="syncNow">Sync now</button> <button data-act="syncOut">Sign out</button> <button data-act="closePop">Close</button></p>`);
+      try {
+        const rows = await SY.list(), cur = S.proj.id;
+        const box = $('#syList'); if (!box) return;
+        box.innerHTML = rows.map((r) => `<div class="lrow"><span><b>${esc(r.name || 'Untitled')}</b>${r.id === cur ? ' <span class="hint">(open)</span>' : ''}<br><small class="hint">${esc(r.device || '')} · ${when(r.updated_at)} · ${mb(r.size || 0)}</small></span>` +
+          (r.id === cur ? '' : `<button data-act="syncOpen" data-id="${esc(r.id)}">Open</button>`) + `<button data-act="syncDel" data-id="${esc(r.id)}" data-n="${esc(r.name || 'Untitled')}" title="Delete from your account">✕</button></div>`).join('') ||
+          '<span class="hint">No beats synced yet. Make a change to this beat and it will appear here.</span>';
+      } catch (e) { const box = $('#syList'); if (box) box.innerHTML = `<span class="hint">Could not load your beats: ${esc(e.message || e)}</span>`; }
+    },
+    syncDiscord() { closePop(); S.sync.discord(); },
+    async syncSend() {
+      const email = ($('#syEmail').value || '').trim();
+      if (!/^\S+@\S+\.\S+$/.test(email)) return U.toast('Type your email address first.', true);
+      try { await S.sync.emailCode(email); } catch (e) { return U.toast('Could not send the code: ' + (e.message || e), true); }
+      U.syEmail = email;
+      showPop(`<h3>Check your email</h3><p>We sent a sign-in code to <b>${esc(email)}</b>. Type it here:</p><label>Code <input id="syCode" inputmode="numeric" autocomplete="one-time-code" placeholder="123456"></label>` +
+        `<p><button data-act="syncVerify" class="primary">Sign in</button> <button data-act="closePop">Cancel</button></p>`);
+    },
+    async syncVerify() {
+      try { await S.sync.verify(U.syEmail, $('#syCode').value || ''); closePop(); }
+      catch (e) { U.toast('That code did not work: ' + (e.message || e), true); }
+    },
+    async syncNow() { await S.sync.now(); A.sync(); },
+    async syncOut() { await S.sync.signOut(); closePop(); U.toast('Signed out. Beats already synced stay in your account.'); },
+    async syncOpen(el) {
+      closePop();
+      await S.sync.now();
+      try { const p = await S.sync.open(el.dataset.id); U.toast(`Opened “${p.name}”.`); } catch (e) { U.toast('Could not open it: ' + (e.message || e), true); }
+    },
+    syncDel(el) { showPop(`<h3>Delete “${esc(el.dataset.n)}” from your account?</h3><p class="hint">It disappears from all your devices. Copies saved as files are not affected.</p><p><button data-act="syncDelGo" data-id="${esc(el.dataset.id)}" class="primary">Delete</button> <button data-act="sync">Cancel</button></p>`); },
+    async syncDelGo(el) { try { await S.sync.remove(el.dataset.id); } catch (e) { U.toast('Could not delete it: ' + (e.message || e), true); } A.sync(); },
     phonePanel(el) { U.phonePanel = el.dataset.p; render(); },
     play() {
       if (E.playing) return A.pause();
@@ -1051,6 +1094,7 @@
   };
   S.menu = (a) => (a.startsWith('export:') ? IO.exportAs(a.slice(7)) : A[a] && A[a]());
 
+  U.setProject = (p) => setProject(p);
   U.imported = (res) => {
     if (res.proj) { S.snap(); setProject(res.proj); U.wantedUI(); U.report = res.report; return U.toast(res.report); }
     if (U.pendingSample && tr(U.pendingSample.t) && tr(U.pendingSample.t).type !== 'audio') {

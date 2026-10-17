@@ -74,7 +74,7 @@ final class Recorder {
     }
 }
 
-final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScriptMessageHandler {
+final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKNavigationDelegate, WKScriptMessageHandler {
     var window: NSWindow!
     var web: WKWebView!
     let recorder = Recorder()
@@ -86,8 +86,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
         let config = WKWebViewConfiguration()
         config.userContentController.add(self, name: "stratum")
         config.mediaTypesRequiringUserActionForPlayback = []
+        if let i = CommandLine.arguments.firstIndex(of: "--sync-test") {
+            // Self-check: point STRATUM Sync at a local test server instead of the real one.
+            config.userContentController.addUserScript(WKUserScript(source: "window.STRATUM_SYNC = { url: '\(CommandLine.arguments[i + 1])', key: 'test-anon-key' };", injectionTime: .atDocumentStart, forMainFrameOnly: true))
+        }
         web = WKWebView(frame: .zero, configuration: config)
         web.uiDelegate = self
+        web.navigationDelegate = self
 
         window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 1440, height: 900),
                           styleMask: [.titled, .closable, .miniaturizable, .resizable],
@@ -116,6 +121,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
         if CommandLine.arguments.contains("--pump-test") { pumpTest() }
         if CommandLine.arguments.contains("--tune-test") { tuneTest() }
         if CommandLine.arguments.contains("--skin-test") { skinTest() }
+        if CommandLine.arguments.contains("--sync-test") { syncTest() }
         if let i = CommandLine.arguments.firstIndex(of: "--live-test") { liveTest(CommandLine.arguments[i + 1], CommandLine.arguments[i + 2]) }
         if let i = CommandLine.arguments.firstIndex(of: "--manual-shots") { manualShots(URL(fileURLWithPath: CommandLine.arguments[i + 1])) }
         if let i = CommandLine.arguments.firstIndex(of: "--manual-pdf") { manualPDF(URL(fileURLWithPath: CommandLine.arguments[i + 1]), URL(fileURLWithPath: CommandLine.arguments[i + 2])) }
@@ -282,6 +288,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
     }
 
     // Share check: renders the demo song's first 12 seconds to the branded video and audio file, then reports what was made.
+    /// STRATUM Sync against a local test server: email-code sign-in and upload, then a Discord-style sign-in that leaves the
+    /// page and comes back through the Mac app's return address, with the unsaved beat restored.
+    private func syncTest() {
+        let one = """
+        localStorage.removeItem('stratum.sync.session');
+        await S.sync.emailCode('mac@example.com'); await S.sync.verify('mac@example.com', '123456');
+        S.proj.name = 'Mac Beat'; await S.sync.now();
+        const rows = await S.sync.list();
+        const db = await new Promise((res) => { try { const r = indexedDB.open('stratum-check', 1); r.onsuccess = () => res('ok'); r.onerror = () => res('error'); } catch (e) { res('missing'); } });
+        await S.sync.signOut();
+        S.ui.act('new'); S.proj.name = 'Mac unsaved'; S.proj.bpm = 133;
+        setTimeout(() => S.sync.discord(), 100);
+        return JSON.stringify({ emailSignIn: rows.map((r) => r.name), indexedDB: db });
+        """
+        let two = "return JSON.stringify({ user: S.sync.user() && S.sync.user().email, state: S.sync.state, beat: S.proj.name, bpm: S.proj.bpm, page: location.href.replace(/^.*\\//, '') });"
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            self.web.callAsyncJavaScript(one, arguments: [:], in: nil, in: .page) { r in
+                print("SYNCTEST step1", (try? r.get()) ?? "failed: \(r)")
+                DispatchQueue.main.asyncAfter(deadline: .now() + 6) {
+                    self.web.callAsyncJavaScript(two, arguments: [:], in: nil, in: .page) { r in print("SYNCTEST step2", (try? r.get()) ?? "failed: \(r)"); exit(0) }
+                }
+            }
+        }
+    }
+
     /// Switches through every Comfort Skin while the beat plays: the project and playback must carry over unchanged.
     private func skinTest() {
         let js = """
@@ -788,6 +819,48 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
             }
         default: break
         }
+    }
+
+    // MARK: sign-in for STRATUM Sync
+
+    /// The STRATUM page may go to the sign-in service and Discord and come back. Sign-in returns to the address below, which
+    /// is turned back into STRATUM's own page with the sign-in details attached. Other links open in the default browser.
+    static let syncReturn = "https://irlewis91.github.io/stratum/?app=mac"
+    func webView(_ webView: WKWebView, decidePolicyFor action: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+        guard webView === web, let url = action.request.url, let scheme = url.scheme?.lowercased(), scheme == "http" || scheme == "https" else { return decisionHandler(.allow) }
+        guard action.targetFrame?.isMainFrame ?? false else { return decisionHandler(.allow) }
+        if url.absoluteString.hasPrefix(Self.syncReturn) {
+            decisionHandler(.cancel)
+            var frag = url.fragment ?? ""
+            if frag.isEmpty, let q = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.filter({ $0.name.hasPrefix("error") }), !q.isEmpty {
+                frag = q.map { "\($0.name)=\($0.value?.addingPercentEncoding(withAllowedCharacters: .alphanumerics) ?? "")" }.joined(separator: "&")
+            }
+            if showingStratum {
+                // STRATUM's page is still showing: hand the sign-in straight to it.
+                let quoted = (try? JSONSerialization.data(withJSONObject: [frag])).flatMap { String(data: $0, encoding: .utf8) } ?? "[\"\"]"
+                web.evaluateJavaScript("S.sync.fromNative(\(quoted)[0])", completionHandler: nil)
+            } else {
+                let dir = Bundle.main.resourceURL!.appendingPathComponent("web")
+                let page = URL(string: dir.appendingPathComponent("index.html").absoluteString + "#" + frag)!
+                web.loadFileURL(page, allowingReadAccessTo: dir)
+            }
+            return
+        }
+        let host = url.host?.lowercased() ?? ""
+        let signIn = ["supabase.co", "supabase.in", "discord.com", "discordapp.com", "hcaptcha.com", "127.0.0.1", "localhost"].contains { host == $0 || host.hasSuffix("." + $0) }
+        if signIn || syncHost(host) { return decisionHandler(.allow) }
+        decisionHandler(.cancel)
+        NSWorkspace.shared.open(url)
+    }
+    /// Whether STRATUM's own page (not a sign-in page) is the one currently shown.
+    private var showingStratum = true
+    func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) { if webView === web { showingStratum = webView.url?.isFileURL ?? false } }
+
+    /// A custom domain for the sync service, if one is set in sync-config.js.
+    private func syncHost(_ host: String) -> Bool {
+        guard !host.isEmpty, let cfg = try? String(contentsOf: Bundle.main.resourceURL!.appendingPathComponent("web/js/sync-config.js"), encoding: .utf8),
+              let r = cfg.range(of: #"url:\s*'https://([^/']+)"#, options: .regularExpression) else { return false }
+        return cfg[r].hasSuffix(host)
     }
 
     // MARK: go live

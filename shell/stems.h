@@ -13,4 +13,7 @@ typedef void (*stratum_progress)(float fraction, void *ctx);
 int stratum_separate(const char *runtime_lib, const char *model_path, const float *left, const float *right, long n,
                      float *out, stratum_progress progress, void *ctx, char *err, int err_len);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

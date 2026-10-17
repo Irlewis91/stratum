@@ -670,12 +670,48 @@
       const q = (U.libQuery || '').toLowerCase(), list = all.filter((x) => (q ? (x.name + ' ' + x.category).toLowerCase().includes(q) : x.category === U.libCat)).slice(0, 300);
       const verb = (x) => (/\.mid$/i.test(x.path) ? (t.type === 'audio' ? '' : 'Add notes') : t.type === 'drums' ? 'Add to pad' : t.type === 'synth' ? 'Use as sample' : 'Add as clip');
       const pretty = (x) => x.name.replace(/^(VPFX|DVS|DVSV2|PP|HPR) - /, '');
-      showPop(`<h3>Sounds <span class="hint">· ${all.length} free sounds (public domain, CC0) · adding to “${esc(t.name)}”</span></h3>` +
+      showPop(`<p style="float:right;margin:0"><button data-act="capture">● Record from another app…</button></p><h3>Sounds <span class="hint">· ${all.length} free sounds (public domain, CC0) · adding to “${esc(t.name)}”</span></h3>` +
         `<input id="libQ" placeholder="Search all sounds" value="${esc(U.libQuery || '')}" oninput="S.ui.libSearch(this.value)">` +
         `<div class="stock">${cats.map((c) => `<button data-act="sounds" data-cat="${esc(c)}" class="${!q && c === U.libCat ? 'on' : ''}">${esc(c)} <small>${all.filter((x) => x.category === c).length}</small></button>`).join('')}</div>` +
         `<div class="plist lib">${list.map((x, i) => `<div class="lrow">${/\.mid$/i.test(x.path) ? '<span class="hint">MIDI</span>' : `<button data-act="libPlay" data-i="${all.indexOf(x)}" title="Preview">▶</button>`}<span title="${esc(x.collection)}">${esc(pretty(x))}</span>${verb(x) ? `<button data-act="libUse" data-i="${all.indexOf(x)}">${verb(x)}</button>` : ''}</div>`).join('') || '<span class="hint">No sounds match.</span>'}</div>` +
         `<p class="hint">Sounds from the Stargate sample pack and Producer Space, released as public domain (CC0): free to use in anything, no credit needed.</p><button data-act="closePop">Close</button>`);
       const box = $('#libQ'); if (box && U.libQuery) { box.focus(); box.setSelectionRange(box.value.length, box.value.length); }
+    },
+    // Record from another app: the sound one running app makes (a browser, a music player…) becomes an audio clip, the
+    // sampler's sound or a drum pad.
+    async capture() {
+      if (!IO.native()) return U.toast('Recording from another app needs the STRATUM Mac app.', true);
+      const res = await S.plug.ask({ op: 'capApps' });
+      if (!res || res.error) return U.toast((res && res.error) || 'Could not list apps.', true);
+      const t = curTrack(), dest = [['new', 'A new audio track']];
+      if (t.type === 'synth' && !t.plugin) dest.push(['sample', `The sampler on “${t.name}”`]);
+      if (t.type === 'drums' && !t.plugin) dest.push(['pad', `A drum pad on “${t.name}”`]);
+      if (t.type === 'audio') dest.unshift(['track', `This audio track (“${t.name}”)`]);
+      showPop(`<h3>Record from another app</h3><p class="hint">Choose the app, press Record, then play the sound in that app. Only that app is recorded — not your microphone or other apps — and silence at the start and end is trimmed.</p>` +
+        `<label>App <select id="capApp">${opts(res.apps.map((a) => [a.id, a.name]), (res.apps.find((a) => /safari|chrome|firefox|arc|edge|brave/i.test(a.name)) || {}).id)}</select></label>` +
+        `<label>Put it on <select id="capDest">${opts(dest, dest[0][0])}</select></label>` +
+        `<p><button data-act="captureGo" class="primary">● Record</button> <button data-act="closePop">Cancel</button></p>` +
+        `<p class="hint">The first time, macOS asks to allow STRATUM under Privacy &amp; Security › Screen &amp; System Audio Recording. Only record sounds you have the right to use.</p>`);
+    },
+    async captureGo() {
+      const app = $('#capApp').value, appName = $('#capApp').selectedOptions[0].textContent, dest = $('#capDest').value, t = curTrack();
+      const r = await S.plug.ask({ op: 'capStart', app });
+      if (!r || r.error) return U.toast((r && r.error) || 'Recording could not start.', true);
+      showPop(`<h3>● Recording from ${esc(appName)}</h3><p>Play the sound in ${esc(appName)} now.</p><p class="caprec"><span id="capTime">0:00</span></p><p><button data-act="captureStop" class="primary">■ Stop</button></p>`);
+      U.capDest = { dest, t: t.id };
+      clearInterval(U.capT);
+      U.capT = setInterval(async () => { const l = await S.plug.ask({ op: 'capLevel' }); const el = $('#capTime'); if (el && l) el.textContent = `${Math.floor(l.seconds / 60)}:${String(Math.floor(l.seconds % 60)).padStart(2, '0')}`; }, 300);
+    },
+    async captureStop() {
+      clearInterval(U.capT); closePop();
+      const r = await S.plug.ask({ op: 'capStop' }), d = U.capDest || { dest: 'new' };
+      if (!r || r.error) return U.toast((r && r.error) || 'Nothing was recorded.', true);
+      const bin = atob(r.b64), u = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+      U.pendingAudio = d.dest === 'track' ? d.t : null;
+      U.pendingSample = d.dest === 'sample' || d.dest === 'pad' ? { t: d.t } : null;
+      await IO.importBytes(r.name, u.buffer);
+      U.openDone();
     },
     async libPlay(el) {
       const x = (await IO.libList())[+el.dataset.i], ab = x && (await IO.libRead(x.path));

@@ -13,7 +13,7 @@ for arch in arm64 x86_64; do
   clang -O2 -c -target "$arch-apple-macos12.0" -I "$ORT/include" shell/stems.c -o "build/stems-$arch.o"
   ./build-vst3.sh "$arch"
   ./build-airwin.sh "$arch"
-  swiftc -O -target "$arch-apple-macos12.0" -import-objc-header shell/bridge.h -I vendor/vst3sdk shell/main.swift shell/plugins.swift shell/share.swift "build/stems-$arch.o" "build/libv3-$arch.a" "build/libaw-$arch.a" -Xlinker -lc++ -o "build/stratum-$arch"
+  swiftc -O -target "$arch-apple-macos12.0" -import-objc-header shell/bridge.h -I vendor/vst3sdk shell/main.swift shell/plugins.swift shell/share.swift shell/capture.swift "build/stems-$arch.o" "build/libv3-$arch.a" "build/libaw-$arch.a" -Xlinker -lc++ -o "build/stratum-$arch"
 done
 lipo -create build/stratum-arm64 build/stratum-x86_64 -output "$APP/Contents/MacOS/STRATUM"
 

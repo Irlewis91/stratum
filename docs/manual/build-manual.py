@@ -238,6 +238,7 @@ add("""<section><h1><span>10</span>Effects</h1>
 # 11
 add("""<section><h1><span>11</span>The sound library</h1><p>Click <b>Sounds</b> to browse 791 free sounds — kicks, snares, claps, hats, cymbals, toms, percussion, found sounds, vocal shouts and vocal percussion — and 99 MIDI chord, bass and piano kits. They are public domain (CC0): use them in anything, with no credit needed.</p>"""
     + figure("sounds", [("#pop .popbox", "Sounds browser", "search, pick a category, press ▶ to preview, and add the sound to the selected track: a drum pad, the sampler, an audio clip, or for MIDI, the notes.")], "The Sounds browser.")
+    + """<h3>Record from another app</h3><p>Choose <b>File › Record from Another App…</b> or the button at the top of the Sounds browser. Pick the app (a web browser, a music player), choose where the sound goes — a new audio track, the sampler or a drum pad — press Record and play the sound in that app. Only that app is recorded, and silence at both ends is trimmed. The first time, macOS asks you to allow STRATUM under Privacy &amp; Security › Screen &amp; System Audio Recording. Only record sounds you have the right to use.</p>"""
     + "</section>")
 
 # 12

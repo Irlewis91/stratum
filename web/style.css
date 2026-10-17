@@ -252,3 +252,5 @@ kbd { background:var(--cell); border:1px solid var(--line); border-radius:4px; p
 /* photographs for the Owner's Manual: the devices row wraps so every card is in view */
 body.manual .rackwrap { flex-wrap:wrap; align-items:flex-start; }
 body.manual .dev.wavedev, body.manual .dev.pads { flex:1 1 100%; }
+.caprec { font:600 28px ui-monospace, Menlo, monospace; color:var(--acc); margin:6px 0 12px; }
+.popbox .primary { background:var(--acc); color:#111; border-color:var(--acc); font-weight:600; }

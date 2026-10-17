@@ -687,6 +687,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
             item("Play / Stop", "play", ""),
             item("Return to Start", "stop", ""),
             item("Record", "rec", ""),
+            item("Record from Another App\u{2026}", "capture", ""),
             item("Metronome", "metronome", ""),
             item("Dump Score Log", "dump", ""),
         ])
@@ -724,6 +725,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
             web.callAsyncJavaScript("await S.io.found(name, b64);", arguments: ["name": (wanted.replacingOccurrences(of: "\\", with: "/") as NSString).lastPathComponent, "b64": data.base64EncodedString()], in: nil, in: .page) { _ in next() }
         }
         next()
+    }
+
+    // MARK: record from another app
+
+    private var capture: AnyObject?
+    private func captureOp(_ op: String, _ body: [String: Any]) {
+        guard #available(macOS 13.0, *) else { return reply(body, ["error": "Recording from another app needs macOS 13 (Ventura) or later."]) }
+        let cap = (capture as? AppAudioCapture) ?? AppAudioCapture()
+        capture = cap
+        switch op {
+        case "capApps": AppAudioCapture.apps { self.reply(body, ["apps": $0]) }
+        case "capStart": cap.start(bundle: body["app"] as? String ?? "") { err in self.reply(body, err.map { ["error": $0] } ?? ["ok": true]) }
+        case "capLevel": reply(body, ["seconds": cap.seconds])
+        case "capStop":
+            cap.stop { data in
+                guard let d = data else { return self.reply(body, ["error": "Nothing was heard from \(cap.appName.isEmpty ? "that app" : cap.appName). Play the sound while recording."]) }
+                self.reply(body, ["name": "\(cap.appName.isEmpty ? "Recording" : cap.appName) recording.wav", "b64": d.base64EncodedString()])
+            }
+        default: break
+        }
     }
 
     // MARK: sharing
@@ -980,6 +1001,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
         if op == "open" { openFile(many: body["many"] as? Bool ?? false) }
         if op.hasPrefix("au") || op.hasPrefix("lib") { return pluginOp(op, body) }
         if op == "share" { share(body) }
+        if op.hasPrefix("cap") { return captureOp(op, body) }
         if op == "manual", let url = Bundle.main.url(forResource: "STRATUM Owner's Manual", withExtension: "pdf") { NSWorkspace.shared.open(url) }
         if op == "prefSet", let key = body["key"] as? String {
             var p = UserDefaults.standard.dictionary(forKey: "stratumPrefs") ?? [:]

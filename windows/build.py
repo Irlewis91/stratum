@@ -78,7 +78,9 @@ def app():
     objs += compile_group('stratum-dsp', [ROOT + '/shell/airwin.cpp', ROOT + '/shell/wavesynth.cpp', ROOT + '/shell/tune.cpp'], [AW, ROOT + '/shell'])
     objs += compile_group('vst3sdk', sdk_hosting(), [SDK])
     objs += compile_group('stems', [ROOT + '/shell/stems.c'], [ORT + '/include', ROOT + '/shell'])
-    objs += compile_group('app', [HERE + '/stratum.cpp', HERE + '/engine.cpp', HERE + '/vst3host_win.cpp', HERE + '/features.cpp', HERE + '/rtmp_win.cpp', HERE + '/live_win.cpp'], [SDK, wv + '/include', HERE, ROOT + '/shell'], ['/W3', '/permissive-'])
+    objs += compile_group('app', [HERE + '/stratum.cpp', HERE + '/engine.cpp', HERE + '/vst3host_win.cpp', HERE + '/rtmp_win.cpp', HERE + '/live_win.cpp'], [SDK, wv + '/include', HERE, ROOT + '/shell'], ['/W3', '/permissive-'])
+    # The Windows share sheet comes through C++/WinRT, which wants C++20.
+    objs += compile_group('winrt', [HERE + '/features.cpp'], [HERE, ROOT + '/shell', ORT + '/include'], ['/W3', '/permissive-', '/std:c++20'])
     exe = os.path.join(OUT, 'STRATUM.exe')
     rsp = os.path.join(OUT, 'link.rsp')
     with open(rsp, 'w') as fh:

@@ -53,6 +53,16 @@ if (location.host === 'app.stratum') addEventListener('load', () => setTimeout(a
     out.airwindowsControls = (await S.plug.params(S.proj.tracks[0], 0)).length;
     out.tune = { ...(await trial(wave, tune)), controls: (await S.plug.params(S.proj.tracks[0], 0)).length };
     if (v3i) { out.vst3controls = (await trial(v3i)) && (await S.plug.params(S.proj.tracks[0], -1)).length; }
+    // Settings saved by the Mac app (Galactic at 0.9/0.1/0.2/0.3/0.4, Tune in D# chromatic) load on Windows.
+    {
+      const p = S.blankProject(); if (!p.scenes.length) S.newScene(p, 'A', 1);
+      const t = S.newTrack(p, 'synth', 'From the Mac');
+      t.pfx = [{ id: 'aw|Galactic', name: 'Galactic', state: "YnBsaXN0MDDRAQJfEBJzdHJhdHVtLmFpcndpbmRvd3OlAwQFBgcjP+zMzMAAAAAjP7mZmaAAAAAjP8mZmaAAAAAjP9MzM0AAAAAjP9mZmaAAAAAICyAmLzhBSgAAAAAAAAEBAAAAAAAAAAgAAAAAAAAAAAAAAAAAAABT" }, { id: 'stratum|tune', name: 'STRATUM Tune', state: "YnBsaXN0MDDRAQJcc3RyYXR1bS50dW5lpQMEBQYHI0AIAAAAAAAAIwAAAAAAAAAAIz/gAAAAAAAAIz/oAAAAAAAAIz/wAAAAAAAACAsYHicwOUIAAAAAAAABAQAAAAAAAAAIAAAAAAAAAAAAAAAAAAAASw==" }];
+      S.ui.imported({ proj: p, report: '' }); S.engine.rebuild();
+      await new Promise((r) => setTimeout(r, 1500));
+      const T = S.proj.tracks[0];
+      out.macSettings = { airwindows: (await S.plug.params(T, 0)).map((x) => +x.v.toFixed(2)), tune: (await S.plug.params(T, 1)).map((x) => x.text).slice(0, 2) };
+    }
   } catch (e) { out.error = String((e && e.stack) || e); }
   done(out);
 }, 2500));

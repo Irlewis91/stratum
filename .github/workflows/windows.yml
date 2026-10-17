@@ -19,6 +19,7 @@ jobs:
         with:
           path: windows/out/obj/airwin
           key: airwin-obj-${{ hashFiles('fetch-code.sh', 'windows/build.py') }}
+          restore-keys: airwin-obj-
       - name: Fetch vendor code
         shell: bash
         run: ./fetch-code.sh
@@ -104,6 +105,7 @@ jobs:
             "Airwindows effect passes sound" = ($j.airwindows.held -gt 0.005)
             "Tune passes sound" = ($j.tune.held -gt 0.005)
             "Live playback" = ($j.live.livePeakSoFar -gt 0.001)
+            "Mac plugin settings load" = (($j.macSettings.airwindows -join ",") -eq "0.9,0.1,0.2,0.3,0.4" -and $j.macSettings.tune[0] -eq "D#")
           }
           $failed = $checks.GetEnumerator() | Where-Object { -not $_.Value } | ForEach-Object { $_.Key }
           $checks.GetEnumerator() | ForEach-Object { Write-Host ("{0,-34} {1}" -f $_.Key, $(if ($_.Value) { "ok" } else { "FAILED" })) }

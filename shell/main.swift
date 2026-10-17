@@ -122,6 +122,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKNaviga
         if CommandLine.arguments.contains("--tune-test") { tuneTest() }
         if CommandLine.arguments.contains("--skin-test") { skinTest() }
         if CommandLine.arguments.contains("--sync-test") { syncTest() }
+        if CommandLine.arguments.contains("--state-test") { stateTest() }
         if let i = CommandLine.arguments.firstIndex(of: "--vis-test") { visTest(URL(fileURLWithPath: CommandLine.arguments[i + 1])) }
         if let i = CommandLine.arguments.firstIndex(of: "--live-test") { liveTest(CommandLine.arguments[i + 1], CommandLine.arguments[i + 2]) }
         if let i = CommandLine.arguments.firstIndex(of: "--manual-shots") { manualShots(URL(fileURLWithPath: CommandLine.arguments[i + 1])) }
@@ -316,6 +317,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKNaviga
                     }
                 }
             }
+        }
+    }
+
+    /// Plugin settings saved by the Windows app load on the Mac: an Airwindows effect and STRATUM Tune with "WJ:" settings.
+    private func stateTest() {
+        let js = """
+        const p = S.blankProject(); if (!p.scenes.length) S.newScene(p, 'A', 1);
+        const t = S.newTrack(p, 'synth', 'Win');
+        t.pfx = [{ id: 'aw|Galactic', name: 'Galactic', state: 'WJ:[0.9,0.1,0.2,0.3,0.4]' }, { id: 'stratum|tune', name: 'STRATUM Tune', state: 'WJ:[3,0.25,0.5,0.75,1]' }];
+        t.regions.push({ id: S.uid(), start: 0, len: 4, off: 0, clip: { bars: 1, notes: [{ t: 0, d: 1, p: 60, v: 1 }] } });
+        S.ui.imported({ proj: p, report: '' }); S.engine.rebuild();
+        await new Promise((r) => setTimeout(r, 1500));
+        const T = S.proj.tracks[0];
+        const out = { airwindows: (await S.plug.params(T, 0)).map((x) => +x.v.toFixed(2)), tune: (await S.plug.params(T, 1)).map((x) => x.name + '=' + x.text) };
+        await S.plug.capture(); out.macStates = T.pfx.map((f) => f.state);
+        return JSON.stringify(out);
+        """
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            self.web.callAsyncJavaScript(js, arguments: [:], in: nil, in: .page) { r in print("STATETEST", (try? r.get()) ?? "failed: \(r)"); exit(0) }
         }
     }
 

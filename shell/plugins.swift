@@ -234,7 +234,9 @@ final class PluginHost {
     private func finish(_ desc: AudioComponentDescription, state: String?, done: @escaping (AVAudioUnit?) -> Void) {
         AVAudioUnit.instantiate(with: desc, options: []) { unit, _ in
             DispatchQueue.main.async {
-                if let unit = unit, let b64 = state, let data = Data(base64Encoded: b64),
+                if let unit = unit, let st = state, let windows = Self.windowsState(st, for: unit.auAudioUnit) {
+                    unit.auAudioUnit.fullState = windows
+                } else if let unit = unit, let b64 = state, let data = Data(base64Encoded: b64),
                    let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any] {
                     unit.auAudioUnit.fullState = plist
                 }
@@ -243,6 +245,23 @@ final class PluginHost {
                 done(unit)
             }
         }
+    }
+
+    /// Settings saved by the Windows app ("W3:" plugin data, "WJ:" JSON for STRATUM's own units), as this unit's fullState,
+    /// so projects move between Windows and the Mac with their plugin settings.
+    static func windowsState(_ st: String, for au: AUAudioUnit) -> [String: Any]? {
+        if st.hasPrefix("W3:") { return Data(base64Encoded: String(st.dropFirst(3))).map { [VST3Unit.stateKey: $0] } }
+        guard st.hasPrefix("WJ:"), let j = try? JSONSerialization.jsonObject(with: Data(st.dropFirst(3).utf8)) else { return nil }
+        if au is AirwinUnit, let v = j as? [Double] { return [AirwinUnit.stateKey: v] }
+        if au is TuneUnit, let v = j as? [Double] { return ["stratum.tune": v] }
+        if au is WaveUnit, let o = j as? [String: Any] {
+            var out: [String: Any] = ["stratum.wave": o["v"] as? [Double] ?? []]
+            for osc in 0..<2 {
+                if let t = o["t\(osc)"] as? String, let d = Data(base64Encoded: t) { out["stratum.wave.table\(osc)"] = d; out["stratum.wave.name\(osc)"] = o["n\(osc)"] as? String ?? "Imported" }
+            }
+            return out
+        }
+        return nil
     }
 
     private func drop(_ unit: AVAudioUnit?) {

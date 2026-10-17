@@ -44,7 +44,7 @@
   // `many` lets the picker return several files (used to load a set of drum sounds at once).
   IO.open = (many) => {
     const inp = document.getElementById('file');
-    if (native()) native().postMessage({ op: 'open', many: !!many });
+    if (IO.host()) IO.host().postMessage({ op: 'open', many: !!many });
     else { inp.multiple = !!many; inp.click(); }
   };
   // A .logicx package opened from the Mac app: the shell sends the files inside it.
@@ -76,14 +76,14 @@
     proj.wanted = proj.wanted.filter((w) => !ws.includes(w));
     return true;
   };
-  // After an import, ask the Mac shell to look for the missing files where the project says they are and beside the project file.
+  // After an import, ask the Mac or Windows app to look for the missing files where the project says they are and beside the project file.
   IO.seek = () => new Promise((res) => {
     const w = (S.proj && S.proj.wanted) || [];
-    if (!w.length || !native()) return res(0);
+    if (!w.length || !IO.host()) return res(0);
     let n = 0;
     IO.found = async (name, data) => { if (await IO.offer(name, unb64(data).buffer)) n++; };
     IO.foundDone = () => { try { S.ui.wantedDone(n); } catch (e) { S.ui.toast('Samples: ' + (e.message || e), true); } res(n); };
-    native().postMessage({ op: 'findFiles', paths: [...new Set(w.map((x) => x.path))], near: IO.lastPath || '' });
+    IO.host().postMessage({ op: 'findFiles', paths: [...new Set(w.map((x) => x.path))], near: IO.lastPath || '' });
   });
   // VST instruments an imported project used: put the same plugin on the track when it is installed on this Mac.
   IO.matchPlugins = async () => {

@@ -341,6 +341,83 @@ void shareFiles(const Json &b) {
     shareDone(true, "Saved in Videos › STRATUM: " + utf8(v.substr(v.find_last_of(L'\\') + 1)) + " and " + safe + ".wav.");
 }
 
+// ---------------------------------------------------------------- opening files, and finding missing samples
+// Files go to the page one at a time; the page asks for the next once it has taken each one in.
+struct Pending { std::string name, b64, path; };
+std::vector<Pending> openQueue, foundQueue;
+bool readAll(const std::wstring &path, std::vector<unsigned char> &out) {
+    HANDLE f = CreateFileW(path.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, 0, nullptr);
+    if (f == INVALID_HANDLE_VALUE) return false;
+    LARGE_INTEGER size{}; GetFileSizeEx(f, &size);
+    if (size.QuadPart > 400000000) { CloseHandle(f); return false; }
+    out.resize((size_t)size.QuadPart); DWORD n = 0;
+    BOOL ok = out.empty() || ReadFile(f, out.data(), (DWORD)out.size(), &n, nullptr);
+    CloseHandle(f);
+    return ok && n == out.size();
+}
+std::wstring baseName(const std::wstring &p) { size_t k = p.find_last_of(L"\\/"); return k == std::wstring::npos ? p : p.substr(k + 1); }
+void openNext() {
+    if (openQueue.empty()) { runJs(L"S.ui.openDone()"); return; }
+    Pending p = openQueue.front(); openQueue.erase(openQueue.begin());
+    runJs(L"S.io.nativeOpen(" + jsString(p.name) + L", '" + wide(p.b64) + L"', " + jsString(p.path) + L").catch((e) => S.ui.toast('Could not open ' + " + jsString(p.name) + L" + ': ' + (e.message || e), true)).then(() => window.chrome.webview.postMessage({ op: 'openNext' }))");
+}
+void openDialog(bool many) {
+    IFileOpenDialog *dlg = nullptr;
+    if (FAILED(CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&dlg)))) return;
+    FILEOPENDIALOGOPTIONS o = 0; dlg->GetOptions(&o); dlg->SetOptions(o | FOS_FILEMUSTEXIST | FOS_FORCEFILESYSTEM | (many ? FOS_ALLOWMULTISELECT : 0));
+    dlg->SetTitle(many ? L"Choose one or more sound files" : L"Open a STRATUM project, or import MIDI, Ableton .als, FL Studio .flp, a zipped project or loop package, a Reason song or an audio file");
+    openQueue.clear();
+    if (SUCCEEDED(dlg->Show(mainWnd))) {
+        IShellItemArray *items = nullptr;
+        if (SUCCEEDED(dlg->GetResults(&items))) {
+            DWORD n = 0; items->GetCount(&n);
+            for (DWORD i = 0; i < n; i++) {
+                IShellItem *it = nullptr; PWSTR path = nullptr;
+                if (SUCCEEDED(items->GetItemAt(i, &it)) && SUCCEEDED(it->GetDisplayName(SIGDN_FILESYSPATH, &path))) {
+                    std::vector<unsigned char> d;
+                    if (readAll(path, d)) openQueue.push_back({utf8(baseName(path)), b64encode(d.data(), d.size()), utf8(path)});
+                    else runJs(L"S.ui.toast(" + jsString("Could not read " + utf8(baseName(path)) + " (files over 400 MB can't be imported).") + L", true)");
+                    CoTaskMemFree(path);
+                }
+                if (it) it->Release();
+            }
+            items->Release();
+        }
+    }
+    dlg->Release();
+    openNext();
+}
+void foundNext() {
+    if (foundQueue.empty()) { runJs(L"S.io.foundDone()"); return; }
+    Pending p = foundQueue.front(); foundQueue.erase(foundQueue.begin());
+    runJs(L"S.io.found(" + jsString(p.name) + L", '" + wide(p.b64) + L"').then(() => window.chrome.webview.postMessage({ op: 'foundNext' }))");
+}
+// Looks for the sound files a project refers to: where the project says they are, and beside the project file.
+void findFiles(const Json &paths, const std::string &nearUtf8) {
+    foundQueue.clear();
+    std::wstring nearP = wide(nearUtf8), dir, stem;
+    if (!nearP.empty()) { size_t k = nearP.find_last_of(L"\\/"); dir = nearP.substr(0, k); stem = nearP.substr(k + 1); stem = stem.substr(0, stem.find_last_of(L'.')); }
+    wchar_t prof[MAX_PATH] = {0}; GetEnvironmentVariableW(L"USERPROFILE", prof, MAX_PATH);
+    for (auto &pj : paths.a) {
+        std::wstring p = wide(pj.str()), name = p;
+        for (auto &c : name) if (c == L'/') c = L'\\';
+        name = baseName(name);
+        std::vector<std::wstring> tries;
+        std::wstring fl = p; size_t at = fl.find(L"%FLStudioUserData%");
+        if (at != std::wstring::npos) fl.replace(at, 18, std::wstring(prof) + L"\\Documents\\Image-Line\\FL Studio");
+        tries.push_back(fl);
+        if (!dir.empty()) { tries.push_back(dir + L"\\" + name); tries.push_back(dir + L"\\Samples\\" + name); tries.push_back(dir + L"\\" + stem + L"\\Samples\\" + name); tries.push_back(dir + L"\\" + stem + L"\\" + name); }
+        for (auto &t : tries) {
+            DWORD a = GetFileAttributesW(t.c_str());
+            if (a == INVALID_FILE_ATTRIBUTES || (a & FILE_ATTRIBUTE_DIRECTORY)) continue;
+            std::vector<unsigned char> d;
+            if (readAll(t, d)) foundQueue.push_back({utf8(name), b64encode(d.data(), d.size()), utf8(t)});
+            break;
+        }
+    }
+    foundNext();
+}
+
 } // namespace
 
 void init(HWND main, std::function<void(const std::wstring &)> js, std::function<void(int, const Json &)> r) { mainWnd = main; runJs = std::move(js); replyFn = std::move(r); }
@@ -365,6 +442,10 @@ bool op(const std::string &name, const Json &b) {
         reply(b, o); return true;
     }
     if (name == "shareFiles") { shareFiles(b); return true; }
+    if (name == "open") { openDialog(b["many"].truthy()); return true; }
+    if (name == "openNext") { openNext(); return true; }
+    if (name == "findFiles") { findFiles(b["paths"], b["near"].str()); return true; }
+    if (name == "foundNext") { foundNext(); return true; }
     if (name == "liveStart") {
         if (b["remember"].truthy()) live::saveKey(b["platform"].str("custom"), b["url"].str(), b["key"].str());
         // Connecting can take several seconds, so it happens off the window's thread; the answer goes back through the page.

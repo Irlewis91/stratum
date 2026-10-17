@@ -125,19 +125,23 @@ final class LiveSession: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate,
         lock.lock(); let win = windowImage, camImg = cameraImage; lock.unlock()
         let W = CGFloat(Self.width), H = CGFloat(Self.height)
         var canvas = CIImage(color: CIColor(red: 0x0f / 255, green: 0x10 / 255, blue: 0x16 / 255)).cropped(to: CGRect(x: 0, y: 0, width: W, height: H))
+        // With the camera on, the window shrinks a little to leave a column on the right, and the camera box sits at the
+        // bottom of that column, so it never covers any of the session.
+        let pad: CGFloat = 12, bw = camImg == nil ? 0 : (W * 0.17).rounded(), bh = (bw * 9 / 16).rounded()
+        let area = CGRect(x: pad, y: 0, width: W - (bw > 0 ? bw + pad * 3 : pad * 2), height: H)
         if let win = win {
-            let w = CGFloat(win.width), h = CGFloat(win.height), s = min(W / w, H / h)
-            let img = CIImage(cgImage: win).transformed(by: CGAffineTransform(scaleX: s, y: s)).transformed(by: CGAffineTransform(translationX: (W - w * s) / 2, y: (H - h * s) / 2))
+            let w = CGFloat(win.width), h = CGFloat(win.height), s = min(area.width / w, area.height / h)
+            let x = bw > 0 ? area.minX : (W - w * s) / 2
+            let img = CIImage(cgImage: win).transformed(by: CGAffineTransform(scaleX: s, y: s)).transformed(by: CGAffineTransform(translationX: x, y: (H - h * s) / 2))
             canvas = img.composited(over: canvas)
         }
         if let cam = camImg {
-            // Camera box: bottom-right, a quarter of the width, with an amber frame.
-            let bw = W * 0.25, bh = bw * 9 / 16, x = W - bw - 20, y: CGFloat = 20
+            let x = W - bw - pad, y = pad + 3
             let e = cam.extent, s = max(bw / e.width, bh / e.height)
             let scaled = cam.transformed(by: CGAffineTransform(scaleX: s, y: s))
             let fitted = scaled.transformed(by: CGAffineTransform(translationX: x - scaled.extent.minX - (scaled.extent.width - bw) / 2, y: y - scaled.extent.minY - (scaled.extent.height - bh) / 2))
                 .cropped(to: CGRect(x: x, y: y, width: bw, height: bh))
-            let frame = CIImage(color: CIColor(red: 0xe3 / 255, green: 0x9a / 255, blue: 0x12 / 255)).cropped(to: CGRect(x: x - 3, y: y - 3, width: bw + 6, height: bh + 6))
+            let frame = CIImage(color: CIColor(red: 0xe3 / 255, green: 0x9a / 255, blue: 0x12 / 255)).cropped(to: CGRect(x: x - 2, y: y - 2, width: bw + 4, height: bh + 4))
             canvas = fitted.composited(over: frame.composited(over: canvas))
         }
         ci.render(canvas, to: px, bounds: CGRect(x: 0, y: 0, width: W, height: H), colorSpace: CGColorSpaceCreateDeviceRGB())

@@ -297,9 +297,11 @@
   E.scheduleRange = (ctx, g, proj, mode, sceneId, a, b, toTime, live, first) => {
     const spb = 60 / proj.bpm;
     if (mode === 'song') E.automate(g, proj, a, b, toTime, first);
+    const kicks = [];
     E.walk(proj, mode, sceneId, a, b, (tr, kind, beat, n, info, clip, L) => {
       const tg = g.tracks[tr.id];
       if (!tg) return;
+      if (kind === 'note' && tr.type === 'drums' && S.drumMap(n.p) === 36) kicks.push(beat);   // muted "ghost" kicks count too
       const when = toTime(beat);
       if (kind === 'note') {
         const dur = Math.min(n.d, info.end - beat) * spb;
@@ -316,6 +318,8 @@
       info.abs = beat;
       E.playAudio(ctx, tg.input, proj, clip, info, when, L, live);
     }, first);
+    // Tempo-locked effects (sidechain pump, gate / stutter) shape this window on the beat grid.
+    for (const id in g.tracks) for (const f of g.tracks[id].fx || []) for (const sc of f.scheds || []) sc(a, b, toTime, first, kicks, spb);
   };
 
   E.beatAt = (t) => E.anchorB + ((t - E.anchorT) * S.proj.bpm) / 60;
@@ -351,7 +355,7 @@
     E.sources.forEach((s) => { try { s.stop(); } catch (e) {} });
     E.sources.clear();
     if (S.plug) { S.plug.allOff(); S.plug.transport(false, 0, 0); }
-    if (E.graph && E.ctx) { for (const [param] of E.lanes(E.graph, S.proj)) param.cancelScheduledValues(0); E.applyMix(); }
+    if (E.graph && E.ctx) { for (const [param] of E.lanes(E.graph, S.proj)) param.cancelScheduledValues(0); E.applyMix(); for (const id in E.graph.tracks) for (const f of E.graph.tracks[id].fx || []) (f.resets || []).forEach((r) => r()); }
   };
   E.setBpm = (v) => {
     if (E.playing) { const now = E.ctx.currentTime, b = E.beatAt(now); S.proj.bpm = v; E.anchorT = now; E.anchorB = b; if (S.plug) S.plug.transport(true, b, 0); }

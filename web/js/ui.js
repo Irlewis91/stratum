@@ -343,7 +343,13 @@
         for (const k in def.params) {
           const label = (f.blocks.length > 1 ? def.label.split(' ')[0] + ' ' : '') + def.params[k][0];
           if (back) { if (!NOCV[b.type + '.' + k]) h += jack(fi, bi + '.' + k, label); }
+          else if (def.choices && def.choices[k]) { const ch = def.choices[k], idx = Math.round(b.vals[k] * (ch.length - 1)); h += `<label class="prm">${esc(label)} <select data-chg="fxChoice" data-i="${fi}" data-b="${bi}" data-k="${k}" data-n="${ch.length}">${opts(ch.map((c, j) => [j, c]), idx)}</select></label>`; }
           else h += ctl(kn, { k: 'fx', t: t.id, i: fi, key: bi + '.' + k }, b.vals[k], label);
+        }
+        if (b.type === 'gate' && !back) {
+          // The 16-step pattern: click a step to cycle play, mute, repeat 1/32, repeat 1/64, tape stop.
+          const pat = b.pattern || '0000000000000000', mark = ['', 'M', 'R', 'r', 'T'];
+          h += `<div class="gatepat">${[...pat].map((m, s) => `<button class="gstep g${m} ${s % 4 === 0 ? 'beat' : ''}" data-act="gateStep" data-i="${fi}" data-b="${bi}" data-s="${s}" title="Step ${s + 1}: ${D.GATE_MODES[+m]}">${mark[+m]}</button>`).join('')}</div><p class="hint">Click steps: M mute · R repeat 1/32 · r repeat 1/64 · T tape stop.</p>`;
         }
       });
       h += `</div><p class="safe">${back ? 'CV inputs' : 'Output limited at 0 dBFS'}</p></div>`;
@@ -807,6 +813,11 @@
         `<p class="hint">Press Return to build it. The builder recognises effect words (saturation, tape, lo-fi, filter, chorus, phaser, delay, reverb, compressor, bit-crush, tremolo, vinyl…) and intensity words (subtle, heavy, slow, fast, huge, short).</p>` +
         `<div class="stock">Or add a single effect: ${D.ORDER.map((k) => `<button data-act="addStock" data-type="${k}">${D.BLOCKS[k].label}</button>`).join('')}</div><button data-act="closePop">Cancel</button>`);
     },
+    gateStep(el) {
+      const b = curTrack().fx[+el.dataset.i].blocks[+el.dataset.b], s = +el.dataset.s, pat = [...(b.pattern || '0000000000000000')];
+      pat[s] = String((+pat[s] + 1) % 5); b.pattern = pat.join('');
+      renderDevices();
+    },
     addStock(el) { structural(() => curTrack().fx.push(D.stock(el.dataset.type))); closePop(); A.showDevices(); },
     rmFx(el) { structural(() => { const t = curTrack(), i = +el.dataset.i; t.fx.splice(i, 1); t.cables = t.cables.filter((c) => c.dev !== i).map((c) => (c.dev > i ? { ...c, dev: c.dev - 1 } : c)); }); },
     jackOut(el) { U.arm = U.arm === +el.dataset.i ? null : +el.dataset.i; renderDevices(); },
@@ -997,6 +1008,10 @@
     inst(el) { S.snap(); curTrack().inst[el.dataset.key] = el.value; },
     // Switch what a note track plays: built-in synth, the producer's own sample, a drum kit, or a plugin.
     plugParam() {},
+    fxChoice(el) {
+      const t = curTrack(), f = t.fx[+el.dataset.i], b = f.blocks[+el.dataset.b], n = +el.dataset.n;
+      S.snap(); b.vals[el.dataset.k] = n > 1 ? +el.value / (n - 1) : 0;
+    },
     plugSel(el) {
       const n = +el.dataset.n, t = curTrack(), slot = +el.dataset.slot;
       S.plug.setParam(t, slot, +el.dataset.i, n > 1 ? +el.value / (n - 1) : 0).then(() => { if (slot < 0) fillControls(); });

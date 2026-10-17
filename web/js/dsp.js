@@ -99,7 +99,61 @@
         return { in: thru, out: thru, aps: { level: [{ ap: lvl.gain, fn: lin(0, 0.06) }] } }; },
     },
   };
-  D.ORDER = ['highpass', 'comp', 'sat', 'crush', 'wobble', 'lowpass', 'tilt', 'chorus', 'phaser', 'tremolo', 'delay', 'reverb', 'noise'];
+  // ---- tempo-locked blocks: they shape their gain on the beat grid, so the scheduler calls their `sched` for each window ----
+  // Sidechain pump: ducks the volume on every grid step (or on every kick drum hit) and lets it swell back.
+  D.PUMP_RATES = [4, 2, 1, 0.5, 0.25];
+  D.BLOCKS.pump = {
+    label: 'Sidechain Pump', params: { depth: ['Depth', 0.7], rate: ['Rate', 0.5], release: ['Release', 0.55], follow: ['Follow kick', 0] },
+    choices: { rate: ['1 bar', '1/2', '1/4', '1/8', '1/16'], follow: ['Grid', 'Kick drum hits'] },
+    make(ctx) {
+      const g = ctx.createGain();
+      const sched = (b, a, z, toTime, first, kicks, spb) => {
+        const v = b.vals, depth = v.depth, per = D.PUMP_RATES[Math.round(v.rate * 4)], rel = (0.08 + v.release * 0.85) * per * spb;
+        const hits = v.follow >= 0.5 ? kicks.filter((k) => k >= a && k < z) : [];
+        if (v.follow < 0.5) for (let k = Math.ceil(a / per - 1e-9) * per; k < z; k += per) hits.push(k);
+        if (first) { g.gain.cancelScheduledValues(0); g.gain.setValueAtTime(1, Math.max(0, toTime(a))); }
+        for (const k of hits) { const t = toTime(k); g.gain.setTargetAtTime(1 - depth, t, 0.002); g.gain.setTargetAtTime(1, t + 0.012, rel / 3); }
+      };
+      const reset = () => { g.gain.cancelScheduledValues(0); g.gain.value = 1; };
+      return { in: g, out: g, sched, reset };
+    },
+  };
+  // Gate / stutter: a 16-step pattern per bar; each step plays, mutes, repeats a short slice, or slows to a tape stop.
+  D.GATE_MODES = ['Play', 'Mute', 'Repeat 1/32', 'Repeat 1/64', 'Tape stop'];
+  D.BLOCKS.gate = {
+    label: 'Gate / Stutter', params: { smooth: ['Smooth', 0.3], mix: ['Mix', 1] },
+    make(ctx) {
+      const inp = ctx.createGain(), dry = ctx.createGain(), feed = ctx.createGain(), fb = ctx.createGain(), wet = ctx.createGain(), out = ctx.createGain(), dl = ctx.createDelay(2);
+      inp.connect(dry); dry.connect(out); inp.connect(feed); feed.connect(dl); dl.connect(fb); fb.connect(dl); dl.connect(wet); wet.connect(out);
+      fb.gain.value = 0; wet.gain.value = 0;
+      const sched = (b, a, z, toTime, first, kicks, spb) => {
+        const pat = b.pattern || '0000000000000000', sm = 0.001 + b.vals.smooth * 0.008, mix = b.vals.mix;
+        const set = (p, v, t) => p.setTargetAtTime(v, t, sm);
+        if (first) [dry.gain, feed.gain, fb.gain, wet.gain, dl.delayTime].forEach((p) => p.cancelScheduledValues(0));
+        for (let s = Math.ceil(a * 4 - 1e-9) / 4; s < z; s += 0.25) {
+          const t = toTime(s), len = 0.25 * spb, mode = +pat[Math.round(s * 4) % 16] || 0;
+          if (mode === 0) { set(dry.gain, 1, t); set(wet.gain, 0, t); set(fb.gain, 0, t); set(feed.gain, 1, t); }
+          else if (mode === 1) { set(dry.gain, 1 - mix, t); set(wet.gain, 0, t); }
+          else if (mode === 2 || mode === 3) {
+            // Let the first slice through, then loop it: the delay holds exactly one slice and feeds back on itself.
+            const r = mode === 2 ? len / 2 : len / 4;
+            dl.delayTime.setValueAtTime(r, t);
+            set(dry.gain, 1, t); set(feed.gain, 1, t); set(fb.gain, 0, t);
+            set(dry.gain, 1 - mix, t + r); set(feed.gain, 0, t + r); fb.gain.setValueAtTime(1, t + r); set(wet.gain, mix, t + r);
+          } else if (mode === 4) {
+            // Tape stop: the delay grows so the sound slows from full speed to a halt over the step.
+            const n = 32, curve = new Float32Array(n);
+            for (let i = 0; i < n; i++) { const x = (i / (n - 1)) * len; curve[i] = (x * x) / (2 * len); }
+            set(fb.gain, 0, t); set(feed.gain, 1, t); set(dry.gain, 1 - mix, t); set(wet.gain, mix, t);
+            dl.delayTime.setValueCurveAtTime(curve, t, len * 0.98);
+          }
+        }
+      };
+      const reset = () => { [dry.gain, feed.gain, fb.gain, wet.gain, dl.delayTime].forEach((p) => p.cancelScheduledValues(0)); dry.gain.value = 1; feed.gain.value = 1; fb.gain.value = 0; wet.gain.value = 0; };
+      return { in: inp, out, sched, reset };
+    },
+  };
+  D.ORDER = ['highpass', 'comp', 'sat', 'crush', 'wobble', 'lowpass', 'tilt', 'chorus', 'phaser', 'tremolo', 'delay', 'reverb', 'noise', 'pump', 'gate'];
 
   D.applyParam = (ctx, p, v, live) => {
     for (const a of p.aps) {
@@ -111,12 +165,14 @@
 
   // Turn a stored plugin description into live nodes, ending in a brick-wall safety stage.
   D.instantiate = (ctx, pl) => {
-    const input = ctx.createGain(), params = {};
+    const input = ctx.createGain(), params = {}, scheds = [], resets = [];
     let node = input;
     pl.blocks.forEach((b, i) => {
       const def = D.BLOCKS[b.type];
       if (!def) return;
       const inst = def.make(ctx);
+      if (inst.sched) scheds.push((...args) => inst.sched(b, ...args));
+      if (inst.reset) resets.push(inst.reset);
       node.connect(inst.in);
       node = inst.out;
       for (const k in def.params) {
@@ -128,7 +184,7 @@
     const lim = ctx.createDynamicsCompressor(), clip = shaper(ctx, (x) => x);
     lim.threshold.value = -3; lim.knee.value = 0; lim.ratio.value = 20; lim.attack.value = 0.001; lim.release.value = 0.05;
     node.connect(lim); lim.connect(clip);
-    return { in: input, out: clip, params, setParam(key, v) { if (params[key]) D.applyParam(ctx, params[key], v, true); } };
+    return { in: input, out: clip, params, scheds, resets, setParam(key, v) { if (params[key]) D.applyParam(ctx, params[key], v, true); } };
   };
 
   D.stock = (type) => {
@@ -149,7 +205,9 @@
     [/bright|air|crisp|sparkl|shin|presence/, 'tilt', { bright: 0.8 }],
     [/chorus|ensemble|thick|lush|wide/, 'chorus', {}],
     [/phaser|phase|swirl|jet/, 'phaser', {}],
-    [/tremolo|pulse|stutter|chop/, 'tremolo', {}],
+    [/tremolo|pulse/, 'tremolo', {}],
+    [/sidechain|side-chain|pump|duck/, 'pump', {}],
+    [/stutter|chop|gate|glitch|tape ?stop|beat ?repeat/, 'gate', {}],
     [/delay|echo|repeat|dub|slapback/, 'delay', {}],
     [/reverb|room|hall|space|ambient|shimmer|wash|cathedral|plate|cave/, 'reverb', {}],
     [/dust|vinyl|crackle|hiss|noise|lo-?fi/, 'noise', {}],

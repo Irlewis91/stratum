@@ -113,6 +113,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
         if CommandLine.arguments.contains("--share-test") { shareTest() }
         if CommandLine.arguments.contains("--lib-test") { libTest() }
         if CommandLine.arguments.contains("--wave-test") { waveTest() }
+        if CommandLine.arguments.contains("--pump-test") { pumpTest() }
         if let i = CommandLine.arguments.firstIndex(of: "--import-test") { importTest(Array(CommandLine.arguments[(i + 1)...])) }
     }
 
@@ -382,6 +383,53 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
                 switch result {
                 case .success(let v): print("WAVETEST", v)
                 case .failure(let e): print("WAVETEST error", e)
+                }
+                NSApp.terminate(nil)
+            }
+        }
+    }
+
+    // Sidechain pump and gate / stutter check, on a rising tone so repeats and slow-downs are measurable.
+    private func pumpTest() {
+        let js = """
+        const ctx = S.engine.ensure(), D = S.dsp, sr = 44100;
+        const chirp = ctx.createBuffer(1, sr * 4, sr), c = chirp.getChannelData(0);
+        for (let i = 0, ph = 0; i < c.length; i++) { const f = 200 + (i / c.length) * 800; ph += f / sr; c[i] = 0.5 * Math.sin(2 * Math.PI * ph); }
+        const id = S.uid(); S.buffers[id] = { id, name: 'chirp', buf: chirp, bpm: 0 };
+        const p = S.blankProject(); p.bpm = 120; if (!p.scenes.length) S.newScene(p, 'A', 1);
+        const A = S.newTrack(p, 'audio', 'Tone'), K = S.newTrack(p, 'drums', 'Kick');
+        A.vol = 1; A.regions.push({ id: S.uid(), start: 0, len: 8, off: 0, clip: { audio: id, warp: false, bars: 2, gain: 1 } });
+        K.mute = true; K.regions.push({ id: S.uid(), start: 0, len: 4, off: 0, clip: { bars: 1, notes: [{ t: 0, d: 0.25, p: 36, v: 1 }, { t: 2.5, d: 0.25, p: 36, v: 1 }] } });
+        S.ui.imported({ proj: p, report: '' });
+        const T = S.proj.tracks[0], at = (beat) => 0.07 + beat * 0.5;   // 20 ms allows for the output limiter's look-ahead
+        const render = async () => (await S.engine.render(S.proj, 'song', S.proj.scenes[0].id, 4)).getChannelData(0);
+        const rms = (d, a, b) => { let s = 0; for (let i = Math.floor(a * sr); i < b * sr; i++) s += d[i] * d[i]; return +Math.sqrt(s / ((b - a) * sr)).toFixed(3); };
+        const zc = (d, a, b) => { let z = 0; for (let i = Math.floor(a * sr) + 1; i < b * sr; i++) if (d[i - 1] <= 0 && d[i] > 0) z++; return Math.round(z / (b - a)); };
+        const corr = (d, a, b, lag) => { let xy = 0, xx = 0, yy = 0; for (let i = Math.floor(a * sr); i < b * sr; i++) { const x = d[i], y = d[i - Math.round(lag * sr)]; xy += x * y; xx += x * x; yy += y * y; } return +(xy / Math.sqrt(xx * yy + 1e-12)).toFixed(3); };
+        const dry = await render();
+        T.fx = [D.stock('pump')]; T.fx[0].blocks[0].vals.rate = 0.5; T.fx[0].blocks[0].vals.depth = 0.8;
+        const grid = await render();
+        T.fx[0].blocks[0].vals.follow = 1;
+        const follow = await render();
+        T.fx = [D.stock('gate')]; T.fx[0].blocks[0].pattern = '0100200040000000';
+        const gate = await render();
+        const step = (n) => at(n * 0.25);
+        const trace = (d, a, b) => { const o = []; for (let x = a; x < b; x += 0.02) o.push(rms(d, x, x + 0.02)); return o; };
+        return JSON.stringify({ traceGrid: trace(grid, 0.45, 1.1), traceDry: trace(dry, 0.45, 0.7), traceGate: trace(gate, 0.1, 0.35),
+          pumpGrid: { onBeat: rms(grid, at(1), at(1) + 0.03), midBeat: rms(grid, at(1.6), at(1.6) + 0.03), dryOnBeat: rms(dry, at(1), at(1) + 0.03) },
+          pumpFollowKick: { atKick: rms(follow, at(2.5), at(2.5) + 0.03), beat1NoKick: rms(follow, at(1), at(1) + 0.03) },
+          gate: {
+            muteStep: rms(gate, step(1) + 0.01, step(2) - 0.01), playStep: rms(gate, step(2) + 0.01, step(3) - 0.01),
+            repeatSecondHalfMatchesFirst: corr(gate, step(4) + 0.0625 + 0.005, step(5) - 0.005, 0.0625), dryAtSameLag: corr(dry, step(4) + 0.0625 + 0.005, step(5) - 0.005, 0.0625),
+            tapeStopPitch: [zc(gate, step(8), step(8) + 0.04), zc(gate, step(8) + 0.08, step(9) - 0.005)], dryPitch: [zc(dry, step(8), step(8) + 0.04), zc(dry, step(8) + 0.08, step(9) - 0.005)],
+            afterStep: rms(gate, step(10) + 0.01, step(11)) }
+        });
+        """
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            self.web.callAsyncJavaScript(js, arguments: [:], in: nil, in: .page) { result in
+                switch result {
+                case .success(let v): print("PUMPTEST", v)
+                case .failure(let e): print("PUMPTEST error", e)
                 }
                 NSApp.terminate(nil)
             }

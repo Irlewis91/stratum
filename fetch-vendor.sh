@@ -31,5 +31,10 @@ mkdir -p vendor/vst3sdk
 sdk pluginterfaces vst3_pluginterfaces 4f547e8e102b47de4a8b8aaf343c73b700786372
 sdk base vst3_base fcf9da0bd27a16f7f03773a3a39822f28f5c8477
 sdk public.sdk vst3_public_sdk 586dc5e6c8012c3e4b01c79389375cbe96bdb1da
+# Airwindows Consolidated (MIT licence), pinned.
+if [ ! -d vendor/airwin2rack ]; then
+  git clone -q https://github.com/baconpaul/airwin2rack.git vendor/airwin2rack
+  git -C vendor/airwin2rack checkout -q 8a67b80e04230a5cf40e84d6e8b9a2fd70b13a75
+fi
 ./fetch-library.sh
 echo "Vendor files ready."

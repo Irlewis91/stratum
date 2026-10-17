@@ -9,11 +9,11 @@ OUT="build-cache/airwin-$arch"
 mkdir -p "$OUT"
 compile() {
   local f="$1" o="$OUT/$(basename "$1").o"
-  [ -f "$o" ] && [ "$o" -nt "$f" ] && [ "$o" -nt shell/wavesynth.h ] && return 0
+  [ -f "$o" ] && [ "$o" -nt "$f" ] && [ "$o" -nt shell/wavesynth.h ] && [ "$o" -nt shell/tune.h ] && return 0
   clang++ -std=c++17 -O2 -w -target "$arch-apple-macos12.0" -I "$AW" -I shell -c "$f" -o "$o"
 }
 export -f compile; export OUT AW arch
-{ ls "$AW"/autogen_airwin/*.cpp; echo "$AW/airwin_consolidated_base.cpp"; echo shell/airwin.cpp; echo shell/wavesynth.cpp; } | xargs -P "$(sysctl -n hw.ncpu)" -I{} bash -c 'compile "{}"'
+{ ls "$AW"/autogen_airwin/*.cpp; echo "$AW/airwin_consolidated_base.cpp"; echo shell/airwin.cpp; echo shell/wavesynth.cpp; echo shell/tune.cpp; } | xargs -P "$(sysctl -n hw.ncpu)" -I{} bash -c 'compile "{}"'
 rm -f "build/libaw-$arch.a"
 mkdir -p build
 find "$OUT" -name '*.o' > "$OUT/list.txt"

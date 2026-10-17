@@ -855,6 +855,19 @@
         else S.plug.fxList(t).push({ id: d.id, name: d.name, state: '' });
       });
       closePop();
+      // STRATUM Tune starts in the song's key and scale.
+      if (d.id === 'stratum|tune') {
+        const slot = S.plug.fxList(t).length - 1, p = P();
+        const apply = async (tries) => {
+          const list = (await S.plug.params(t, slot)) || [], key = list.find((q) => q.name === 'Key'), sc = list.find((q) => q.name === 'Scale');
+          if (!key) return tries < 8 && setTimeout(() => apply(tries + 1), 400);
+          await S.plug.setParam(t, slot, key.i, p.root / 11);
+          const si = sc ? sc.options.indexOf(p.scale) : -1;
+          if (sc) await S.plug.setParam(t, slot, sc.i, (si < 0 ? 0 : si) / (sc.options.length - 1));
+          renderDevices();
+        };
+        apply(0);
+      }
     },
     plugOpen(el) { S.plug.show(curTrack(), +el.dataset.slot); },
     plugCtl(el) { U.pctl[curTrack().id + ':' + el.dataset.slot] = el.dataset.open !== '1'; renderDevices(); },

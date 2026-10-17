@@ -114,6 +114,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
         if CommandLine.arguments.contains("--lib-test") { libTest() }
         if CommandLine.arguments.contains("--wave-test") { waveTest() }
         if CommandLine.arguments.contains("--pump-test") { pumpTest() }
+        if CommandLine.arguments.contains("--tune-test") { tuneTest() }
         if let i = CommandLine.arguments.firstIndex(of: "--import-test") { importTest(Array(CommandLine.arguments[(i + 1)...])) }
     }
 
@@ -436,6 +437,45 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
         }
     }
 
+    // STRATUM Tune check: an off-key tone and a slow glide go through pitch correction; the output pitch is measured.
+    private func tuneTest() {
+        let js = """
+        const ctx = S.engine.ensure(), sr = 44100;
+        const tone = (fOf, secs) => { const b = ctx.createBuffer(1, sr * secs, sr), d = b.getChannelData(0); let ph = 0; for (let i = 0; i < d.length; i++) { ph += fOf(i / sr) / sr; d[i] = 0.35 * (Math.sin(2 * Math.PI * ph) + 0.5 * Math.sin(4 * Math.PI * ph) + 0.25 * Math.sin(6 * Math.PI * ph)); } const id = S.uid(); S.buffers[id] = { id, name: 't', buf: b, bpm: 0 }; return id; };
+        const steady = tone(() => 452, 3), glide = tone((t) => 400 + 100 * (t / 3), 3);
+        const p = S.blankProject(); p.bpm = 120; p.root = 0; p.scale = 'Major'; if (!p.scenes.length) S.newScene(p, 'A', 1);
+        const T = S.newTrack(p, 'audio', 'Vox'); T.vol = 1;
+        T.regions.push({ id: S.uid(), start: 0, len: 6, off: 0, clip: { audio: steady, warp: false, bars: 2, gain: 1 } });
+        T.pfx = [{ id: 'stratum|tune', name: 'STRATUM Tune', state: '' }];
+        S.ui.imported({ proj: p, report: '' }); S.engine.rebuild();
+        await new Promise((r) => setTimeout(r, 1500));
+        const X = S.proj.tracks[0], list = await S.plug.params(X, 0), id = (n) => list.find((q) => q.name === n).i;
+        const set = (n, v) => S.plug.setParam(X, 0, id(n), v);
+        const render = async () => { const b = await S.engine.render(S.proj, 'song', S.proj.scenes[0].id, 6); await S.plug.mixInto(b, S.engine.plugEvents); return b.getChannelData(0); };
+        const pitch = (d, a) => { const s0 = Math.floor(a * sr), n = 4096; let best = 0, bl = 0; for (let lag = 60; lag < 300; lag++) { let c = 0; for (let i = 0; i < n; i++) c += d[s0 + i] * d[s0 + i + lag]; if (c > best) { best = c; bl = lag; } } const a1 = (() => { let c = 0; for (let i = 0; i < n; i++) c += d[s0 + i] * d[s0 + i + bl - 1]; return c; })(), a3 = (() => { let c = 0; for (let i = 0; i < n; i++) c += d[s0 + i] * d[s0 + i + bl + 1]; return c; })(); const off = 0.5 * (a1 - a3) / (a1 - 2 * best + a3); return +(sr / (bl + off)).toFixed(1); };
+        await set('Key', 0); await set('Scale', 1 / 8); await set('Retune speed', 0); await set('Mix', 1); await set('Amount', 1);
+        const a = await render();
+        await set('Mix', 0);
+        const dry = await render();
+        await set('Mix', 1); await set('Scale', 0);
+        const chrom = await render();
+        S.proj.tracks[0].regions[0].clip.audio = glide; await set('Scale', 1 / 8);
+        const g = await render();
+        const meter = await S.plug.ask({ op: 'auTuneMeter', t: X.id, slot: 0 });
+        return JSON.stringify({ controls: list.map((q) => q.name + '=' + q.text), steady452: { dry: pitch(dry, 1.0), tunedCMajor: [pitch(a, 0.6), pitch(a, 1.5), pitch(a, 2.5)], tunedChromatic: pitch(chrom, 1.5) },
+          glide400to500CMajor: [0.3, 0.9, 1.5, 2.1, 2.7].map((t) => [t, +(400 + 100 * ((t - 0.05) / 3)).toFixed(1), pitch(g, t)]), meter });
+        """
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            self.web.callAsyncJavaScript(js, arguments: [:], in: nil, in: .page) { result in
+                switch result {
+                case .success(let v): print("TUNETEST", v)
+                case .failure(let e): print("TUNETEST error", e)
+                }
+                NSApp.terminate(nil)
+            }
+        }
+    }
+
     // Importer check: opens each file through the same path as File > Open and prints what came in.
     private func importTest(_ paths: [String]) {
         var queue = paths
@@ -726,6 +766,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
         case "auUI": plugins.showUI(track, slot: body["slot"] as? Int ?? -1, title: body["title"] as? String ?? "Plugin")
         case "auStates": reply(body, plugins.states())
         case "auWavePresets": reply(body, plugins.wavePresets())
+        case "auTuneMeter": reply(body, plugins.tuneMeter(track, slot: body["slot"] as? Int ?? 0))
         case "auWavePreset": reply(body, plugins.wavePreset(track, body["i"] as? Int ?? 0))
         case "auWaveTable": reply(body, plugins.waveTable(track, osc: body["osc"] as? Int ?? 0, data: Data(base64Encoded: body["b64"] as? String ?? "") ?? Data(), name: body["name"] as? String ?? "Imported"))
         case "auWaveFrame": reply(body, [plugins.waveFrame(track, osc: 0), plugins.waveFrame(track, osc: 1)])

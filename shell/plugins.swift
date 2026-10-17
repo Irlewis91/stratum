@@ -150,6 +150,7 @@ final class PluginHost {
         out += VST3Unit.catalogue()
         out += AirwinUnit.catalogue()
         out += WaveUnit.catalogue()
+        out += TuneUnit.catalogue()
         return out.sorted { ($0["maker"]!.lowercased(), $0["name"]!.lowercased()) < ($1["maker"]!.lowercased(), $1["name"]!.lowercased()) }
     }
 
@@ -203,6 +204,10 @@ final class PluginHost {
                 }
             }
             return nextVST3()
+        }
+        if id == TuneUnit.id {
+            TuneUnit.register()
+            return finish(TuneUnit.effect, state: state, done: done)
         }
         if id == WaveUnit.id {
             WaveUnit.register()
@@ -436,6 +441,11 @@ final class PluginHost {
 
     // STRATUM Wave on a track: presets, wavetable import and the waveform display.
     private func wave(_ track: String) -> WaveUnit? { unit(track, -1)?.auAudioUnit as? WaveUnit }
+    /// What STRATUM Tune on a track hears right now: [detected note, target note] (MIDI numbers, 0 when silent).
+    func tuneMeter(_ track: String, slot: Int) -> [Double] {
+        guard let t = unit(track, slot)?.auAudioUnit as? TuneUnit else { return [] }
+        return [Double(tn_detected(t.tune)), Double(tn_target(t.tune))]
+    }
     func wavePresets() -> [String] { (0..<Int(ws_preset_count())).map { String(cString: ws_preset_name(Int32($0))) } }
     func wavePreset(_ track: String, _ i: Int) -> Bool {
         guard let w = wave(track) else { return false }
@@ -909,6 +919,102 @@ final class WaveUnit: AUAudioUnit {
             }
             if let v = st["stratum.wave"] as? [Double] { for (i, x) in v.enumerated() { ws_set(synth, Int32(i), Float(x)) } }
             refreshParameters()
+        }
+    }
+}
+
+// MARK: - STRATUM Tune
+
+/// STRATUM's own pitch correction (tune.cpp) as an Audio Unit effect, with its controls as parameters.
+final class TuneUnit: AUAudioUnit {
+    static let effect = AudioComponentDescription(componentType: kAudioUnitType_Effect, componentSubType: 0x74756E65, componentManufacturer: 0x5374726D, componentFlags: 0, componentFlagsMask: 0)
+    static let id = "stratum|tune"
+    private static var registered = false
+    static func register() {
+        guard !registered else { return }
+        registered = true
+        AUAudioUnit.registerSubclass(TuneUnit.self, as: effect, name: "STRATUM: Tune", version: 1)
+    }
+    static func catalogue() -> [[String: String]] {
+        [["id": id, "name": "STRATUM Tune", "maker": "STRATUM", "kind": "fx", "category": "Pitch correction", "what": "Pulls vocals and other single notes to the nearest note in the song's key.", "collections": "Recommended"]]
+    }
+
+    let tune: UnsafeMutableRawPointer
+    private var inputs: AUAudioUnitBusArray!
+    private var outputs: AUAudioUnitBusArray!
+    private var frames = 0
+    private var bufs: [UnsafeMutablePointer<Float>] = []
+    private let inPtrs = UnsafeMutablePointer<UnsafePointer<Float>?>.allocate(capacity: 2)
+    private let outPtrs = UnsafeMutablePointer<UnsafeMutablePointer<Float>?>.allocate(capacity: 2)
+    private let abl = AudioBufferList.allocate(maximumBuffers: 2)
+
+    override init(componentDescription: AudioComponentDescription, options: AudioComponentInstantiationOptions = []) throws {
+        tune = tn_create(44100)
+        try super.init(componentDescription: componentDescription, options: options)
+        let format = AVAudioFormat(standardFormatWithSampleRate: 44100, channels: 2)!
+        outputs = AUAudioUnitBusArray(audioUnit: self, busType: .output, busses: [try AUAudioUnitBus(format: format)])
+        inputs = AUAudioUnitBusArray(audioUnit: self, busType: .input, busses: [try AUAudioUnitBus(format: format)])
+        maximumFramesToRender = 4096
+        let t = tune
+        let params: [AUParameter] = (0..<Int(tn_param_count())).map { i in
+            let n = Int(tn_param_options(Int32(i))), indexed = tn_param_kind(Int32(i)) == 1
+            let labels = indexed ? (0..<n).map { String(cString: tn_param_option(Int32(i), Int32($0))) } : nil
+            let p = AUParameterTree.createParameter(withIdentifier: "t\(i)", name: String(cString: tn_param_name(Int32(i))), address: AUParameterAddress(i), min: 0, max: indexed ? AUValue(n - 1) : 1,
+                                                    unit: indexed ? .indexed : .generic, unitName: nil, flags: [.flag_IsReadable, .flag_IsWritable], valueStrings: labels, dependentParameters: nil)
+            p.value = tn_get(t, Int32(i))
+            return p
+        }
+        let tree = AUParameterTree.createTree(withChildren: params)
+        tree.implementorValueObserver = { p, v in tn_set(t, Int32(p.address), v) }
+        tree.implementorValueProvider = { p in tn_get(t, Int32(p.address)) }
+        tree.implementorStringFromValueCallback = { p, _ in
+            var s = [CChar](repeating: 0, count: 64)
+            tn_display(t, Int32(p.address), &s, 64)
+            return String(cString: s)
+        }
+        parameterTree = tree
+    }
+    deinit { tn_destroy(tune); bufs.forEach { $0.deallocate() }; inPtrs.deallocate(); outPtrs.deallocate(); free(abl.unsafeMutablePointer) }
+
+    override var inputBusses: AUAudioUnitBusArray { inputs }
+    override var outputBusses: AUAudioUnitBusArray { outputs }
+
+    override func allocateRenderResources() throws {
+        try super.allocateRenderResources()
+        tn_set_rate(tune, outputs[0].format.sampleRate)
+        let n = Int(maximumFramesToRender)
+        if n > frames { bufs.forEach { $0.deallocate() }; bufs = (0..<4).map { _ in .allocate(capacity: n) }; frames = n }
+    }
+
+    override var internalRenderBlock: AUInternalRenderBlock {
+        let t = tune, inPtrs = self.inPtrs, outPtrs = self.outPtrs, abl = self.abl, bufs = { [unowned self] in self.bufs }, cap = { [unowned self] in self.frames }
+        return { _, timestamp, frameCount, _, outputData, _, pull in
+            let b = bufs(), n = min(Int(frameCount), cap())
+            guard b.count == 4, n > 0 else { return noErr }
+            for c in 0..<2 { abl[c] = AudioBuffer(mNumberChannels: 1, mDataByteSize: UInt32(n * 4), mData: UnsafeMutableRawPointer(b[c])) }
+            abl.unsafeMutablePointer.pointee.mNumberBuffers = 2
+            var flags = AudioUnitRenderActionFlags()
+            if let pull = pull, pull(&flags, timestamp, AUAudioFrameCount(n), 0, abl.unsafeMutablePointer) == noErr {
+                for c in 0..<2 { inPtrs[c] = UnsafePointer(abl[c].mData?.assumingMemoryBound(to: Float.self) ?? b[c]) }
+            } else {
+                for c in 0..<2 { b[c].update(repeating: 0, count: n); inPtrs[c] = UnsafePointer(b[c]) }
+            }
+            let out = UnsafeMutableAudioBufferListPointer(outputData)
+            for c in 0..<2 {
+                let i = min(c, out.count - 1)
+                if out[i].mData == nil { out[i].mData = UnsafeMutableRawPointer(b[2 + c]) }
+                outPtrs[c] = out[i].mData!.assumingMemoryBound(to: Float.self)
+            }
+            tn_process(t, inPtrs, outPtrs, Int32(n))
+            return noErr
+        }
+    }
+
+    override var fullState: [String: Any]? {
+        get { ["stratum.tune": (0..<Int(tn_param_count())).map { Double(tn_get(tune, Int32($0))) }] }
+        set {
+            guard let v = newValue?["stratum.tune"] as? [Double] else { return }
+            for (i, x) in v.enumerated() { tn_set(tune, Int32(i), Float(x)); parameterTree?.parameter(withAddress: AUParameterAddress(i))?.value = Float(x) }
         }
     }
 }

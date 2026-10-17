@@ -458,7 +458,11 @@ bool op(const std::string &name, const Json &b) {
         }).detach();
         return true;
     }
-    if (name == "liveStop") { live::stop(); Json o; o["ok"] = true; reply(b, o); return true; }
+    if (name == "liveStop") {
+        int req = b["req"].integer();
+        std::thread([req] { live::stop(); runJs(L"S.plug.cb(" + std::to_wstring(req) + L", {\"ok\":true})"); }).detach();
+        return true;
+    }
     if (name == "liveStatus") { reply(b, live::status()); return true; }
     if (name == "liveKey") { reply(b, live::loadKey(b["platform"].str())); return true; }
     return false;

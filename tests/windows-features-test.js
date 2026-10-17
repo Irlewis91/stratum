@@ -3,7 +3,8 @@
 // and saving a share video. The results are written to the file in STRATUM_TEST_OUT.
 if (location.host === 'app.stratum') addEventListener('load', () => setTimeout(async () => {
   const out = {}, ask = S.plug.ask, wait = (ms) => new Promise((r) => setTimeout(r, ms));
-  const step = async (name, fn) => { try { out[name] = await fn(); } catch (e) { out[name] = { error: String((e && e.stack) || e) }; } };
+  const report = () => window.chrome.webview.postMessage({ op: 'testResult', text: JSON.stringify(out) });
+  const step = async (name, fn) => { out.at = name; report(); try { out[name] = await fn(); } catch (e) { out[name] = { error: String((e && e.stack) || e) }; } report(); };
   S.ui.toast = () => {};
   await step('live', async () => {
     const r = await ask({ op: 'liveStart', platform: 'custom', url: 'rtmp://127.0.0.1:19350/app', key: 'stratum-test', camera: false, mic: false, remember: true });
@@ -35,5 +36,5 @@ if (location.host === 'app.stratum') addEventListener('load', () => setTimeout(a
     const msg = await new Promise((res) => { S.ui.shareDone = (ok, m) => res([ok, m]); S.ui.act('share'); document.querySelector('#shLook').value = 'Hyperdrive'; document.querySelector('#shClip').value = '15'; document.querySelector('[data-act=shareGo][data-target=save]').click(); setTimeout(() => res(['timeout']), 60000); });
     return { msg };
   });
-  window.chrome.webview.postMessage({ op: 'testResult', text: JSON.stringify(out) });
+  out.done = true; report();
 }, 2500));

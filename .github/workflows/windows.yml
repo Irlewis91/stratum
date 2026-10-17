@@ -121,10 +121,13 @@ jobs:
           Start-Sleep 2
           $env:STRATUM_TEST_OUT = "$PWD\features-test.json"
           $p = Start-Process smoke/STRATUM.exe -ArgumentList "--test-script", "$PWD/tests/windows-features-test.js" -PassThru
-          for ($i = 0; $i -lt 400 -and -not (Test-Path features-test.json); $i++) { Start-Sleep 1 }
+          $done = $false
+          for ($i = 0; $i -lt 400 -and -not $done -and -not $p.HasExited; $i++) { Start-Sleep 1; if (Test-Path features-test.json) { $done = (Get-Content features-test.json -Raw) -like '*"done":true*' } }
+          if ($p.HasExited) { Write-Host "STRATUM exited early with code $($p.ExitCode)" }
           Stop-Process $p -ErrorAction SilentlyContinue
           $srv.WaitForExit(60000) | Out-Null
-          if (-not (Test-Path features-test.json)) { throw "The features test did not finish" }
+          if (-not (Test-Path features-test.json)) { throw "The features test did not start" }
+          if (-not $done) { Write-Host "Last report: $(Get-Content features-test.json -Raw)"; throw "The features test did not finish" }
           $r = Get-Content features-test.json -Raw; Write-Host $r
           $l = Get-Content live.json -Raw; Write-Host "RTMP server received: $l"
           $j = $r | ConvertFrom-Json; $s = $l | ConvertFrom-Json

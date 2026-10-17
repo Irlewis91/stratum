@@ -172,6 +172,8 @@ kbd { background:var(--cell); border:1px solid var(--line); border-radius:4px; p
 .popbox { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:18px; width:min(620px, 92vw); max-height:86vh; overflow:auto; box-shadow:0 20px 60px #000a; }
 .popbox h3 { margin:0 0 12px; }
 .popbox input { width:100%; padding:9px 10px; font-size:14px; }
+.popbox label:has(> input:not([type=checkbox])) { display:flex; gap:8px; align-items:center; margin:6px 0; }
+.popbox label > input:not([type=checkbox]) { flex:1; min-width:0; width:auto; }
 .popbox .stock { display:flex; flex-wrap:wrap; gap:5px; margin:10px 0 14px; align-items:center; }
 .keys td { padding:3px 14px 3px 0; }
 #toast { position:fixed; left:50%; bottom:18px; transform:translateX(-50%); max-width:min(760px, 92vw); background:#16181b; color:#f1f3f5; border:1px solid #000; border-left:4px solid var(--acc2); border-radius:6px; padding:9px 14px; z-index:60; box-shadow:0 8px 30px #0009; }
@@ -254,3 +256,10 @@ body.manual .rackwrap { flex-wrap:wrap; align-items:flex-start; }
 body.manual .dev.wavedev, body.manual .dev.pads { flex:1 1 100%; }
 .caprec { font:600 28px ui-monospace, Menlo, monospace; color:var(--acc); margin:6px 0 12px; }
 .popbox .primary { background:var(--acc); color:#111; border-color:var(--acc); font-weight:600; }
+
+/* Go live */
+#livePill { background:#d4202c; color:#fff; border-color:#d4202c; font-weight:600; }
+#livePill.connecting { background:transparent; color:#d4202c; }
+.liveplat button.on { background:var(--acc); color:#111; border-color:var(--acc); }
+.livechecks label { display:inline-flex; gap:6px; align-items:center; margin-right:14px; }
+.livechecks input { width:auto; }

@@ -129,7 +129,7 @@ add("""<section><h1><span>1</span>Welcome and installing</h1>
     + figure("tour", [(".tour-box", "Highlighted control", "the part of the window the tour is explaining."), (".tour-card", "Tour card", "what it does; Next and Back move through the tour, Skip leaves it.")],
              "The guided tour pointing out the Comfort Skin menu.")
     + """<h3>Permissions STRATUM may ask for</h3>
-<ul><li><b>Microphone</b> — only when you first record.</li><li><b>Photos</b> — only when you share to an Instagram Story, so the video can reach your phone.</li></ul></section>""")
+<ul><li><b>Microphone</b> — only when you first record.</li><li><b>Photos</b> — only when you share to an Instagram Story, so the video can reach your phone.</li><li><b>Camera</b> — only when you go live with your camera on.</li><li><b>Screen &amp; System Audio Recording</b> — when you record from another app, or go live, so viewers hear your sound.</li></ul></section>""")
 
 # 2
 add("""<section><h1><span>2</span>The window at a glance</h1>
@@ -253,7 +253,11 @@ add("""<section><h1><span>14</span>Exporting and sharing</h1><p><b>Export</b> sa
     + table(["Destination", "Video shape", "How"], [["Messages, AirDrop", "9:16", "opens with the video attached"], ["Mail", "audio file", "opens with the audio attached"],
                                                     ["Instagram Story", "9:16, up to 60 s", "saved to Photos to post from your phone"], ["Instagram Reel, TikTok, YouTube Shorts", "9:16", "opens the upload page; the video is selected in Finder"],
                                                     ["Instagram Post, Facebook, Threads", "4:5", "opens the upload page"], ["X (Twitter)", "square, up to 2:20", "opens the post composer"]])
-    + "</section>")
+    + """<h3>Going live</h3><p>The <b>Go live</b> row in the Share window streams your session as you work. Viewers see the STRATUM window and, if you tick <b>Show my camera in a box</b>, your camera in the bottom-right corner. They hear whatever your Mac plays, plus your microphone if you add it. Pick a platform, paste the server URL and stream key it gives you, and press <b>Go live</b>. A red <b>● LIVE</b> timer appears at the top of the window. Press it to end the stream.</p>"""
+    + table(["Platform", "Where to find the server URL and stream key"], [["Twitch", "Creator Dashboard › Settings › Stream (STRATUM fills in the server)"], ["YouTube", "YouTube Studio › Create › Go live › Stream (STRATUM fills in the server)"],
+                                                                         ["Instagram", "instagram.com on a computer › Create › Live video; press Go live in Instagram once STRATUM is streaming"], ["TikTok", "LIVE Center or TikTok LIVE Studio, for accounts with LIVE access"],
+                                                                         ["Other (RTMP)", "any service that gives a server URL and stream key: Kick, Facebook Live, Restream…"]])
+    + "<p>Tick <b>Remember for next time</b> to keep the key in your Mac's Keychain. Keep your stream key private: anyone who has it can stream to your channel. If you stream with OBS today, STRATUM does that job on its own, sending 720p video at 30 frames a second.</p></section>")
 
 # 15
 add("""<section><h1><span>15</span>Coming from another DAW</h1><p>Most ideas you know have a home in STRATUM. Choose the matching Comfort Skin first, then use this table to find things.</p>"""

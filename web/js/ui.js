@@ -116,6 +116,14 @@
   U.libSearch = (v) => { U.libQuery = v; clearTimeout(U.libT); U.libT = setTimeout(() => A.sounds(), 250); };
   U.shareProgress = (f) => U.toast(`Making your STRATUM video… ${Math.round(f * 100)}%`);
   U.shareDone = (ok, msg) => U.toast(msg, !ok);
+  const LIVE = {
+    twitch: { name: 'Twitch', url: 'rtmp://live.twitch.tv/app', how: 'Find your stream key in Twitch: Creator Dashboard › Settings › Stream.' },
+    youtube: { name: 'YouTube', url: 'rtmps://a.rtmps.youtube.com/live2', how: 'In YouTube Studio choose Create › Go live › Stream, then copy the stream key. (The first time, YouTube can take up to 24 hours to enable live streaming.)' },
+    instagram: { name: 'Instagram', url: '', how: 'On instagram.com (desktop) choose Create › Live video, set it up, then copy the Stream URL and Stream key here. Press Go live in Instagram once STRATUM is streaming.' },
+    tiktok: { name: 'TikTok', url: '', how: 'TikTok gives out a server URL and stream key only to accounts with LIVE access: in LIVE Center (or TikTok LIVE Studio) choose to stream with third-party software, then copy both here.' },
+    custom: { name: 'another service', url: '', how: 'Any service that takes a server URL and stream key works (Kick, Facebook Live, Restream…).' },
+  };
+  const livePill = (text, connecting) => { const b = $('#livePill'); if (!b) return; b.hidden = !text; b.textContent = text || ''; b.classList.toggle('connecting', !!connecting); };
   // A follow-up to an import (samples found, plugins matched): shown after the import report so that is not lost.
   U.followUp = (msg, err) => { U.report = (U.report ? U.report + ' ' : '') + msg; U.toast(U.report, err); };
 
@@ -745,7 +753,48 @@
         `<div class="stock"><b>Send</b> ${go('messages', 'Text (Messages)')}${go('mail', 'Email')}${go('airdrop', 'AirDrop')}${go('more', 'More…')}</div>` +
         `<div class="stock"><b>Post</b> ${go('ig_story', 'Instagram Story')}${go('ig_reel', 'Instagram Reel')}${go('ig_post', 'Instagram Post')}${go('facebook', 'Facebook')}${go('tiktok', 'TikTok')}${go('x', 'X (Twitter)')}${go('threads', 'Threads')}${go('youtube', 'YouTube Shorts')}</div>` +
         `<p class="hint">Each gets the right shape: 9:16 for Stories, Reels, TikTok and Shorts, 4:5 for Instagram, Facebook and Threads posts, square for X. STRATUM opens the upload page and shows the video in Finder, ready to drag in. Instagram Stories can only be posted from the phone app, so that video is saved to Photos.</p>` +
+        `<div class="stock"><b>Go live</b> <button data-act="live" data-p="twitch">Twitch</button><button data-act="live" data-p="youtube">YouTube</button><button data-act="live" data-p="instagram">Instagram</button><button data-act="live" data-p="tiktok">TikTok</button><button data-act="live" data-p="custom">Other (RTMP)</button></div>` +
         `${go('save', 'Just save the files')} <button data-act="closePop">Cancel</button>`);
+    },
+    // Go live: the STRATUM window (and the producer's camera, if they allow it) streams to Twitch, YouTube, Instagram or
+    // TikTok using the server address and stream key each platform gives out.
+    async live(el) {
+      if (!IO.native()) return U.toast('Going live needs the STRATUM Mac app.', true);
+      if (U.liveOn) return U.toast('You are already live. Press the red LIVE button to end the stream first.', true);
+      const p = el.dataset.p, L = LIVE[p], saved = (await S.plug.ask({ op: 'liveKey', platform: p })) || {};
+      showPop(`<h3>Go live on ${L.name}</h3><p class="hint">Viewers see the STRATUM window as you work and hear what your Mac plays. ${L.how}</p>` +
+        `<label>Server URL <input id="lvUrl" value="${esc(saved.url || L.url)}" placeholder="rtmp://… or rtmps://…"></label>` +
+        `<label>Stream key <input id="lvKey" type="password" value="${esc(saved.key || '')}" placeholder="Paste your stream key" autocomplete="off"></label>` +
+        `<div class="livechecks"><label><input type="checkbox" id="lvCam" checked> Show my camera in a box</label><label><input type="checkbox" id="lvMic"> Add my microphone</label><label><input type="checkbox" id="lvRem" ${saved.key ? 'checked' : ''}> Remember for next time</label></div>` +
+        `<p class="hint">The first time, macOS asks to allow the camera, the microphone and Screen &amp; System Audio Recording (for the sound). Saved keys go in your Mac's Keychain. Keep your stream key private: anyone with it can stream to your channel.</p>` +
+        `<p><button data-act="liveGo" data-p="${p}" class="primary">● Go live</button> <button data-act="closePop">Cancel</button></p>`);
+    },
+    async liveGo(el) {
+      const url = $('#lvUrl').value.trim(), key = $('#lvKey').value.trim(), p = el.dataset.p;
+      if (!/^rtmps?:\/\//i.test(url)) return U.toast('Paste the server URL from your platform; it starts with rtmp:// or rtmps://.', true);
+      if (!key) return U.toast('Paste your stream key first.', true);
+      const body = { op: 'liveStart', platform: p, url, key, camera: $('#lvCam').checked, mic: $('#lvMic').checked, remember: $('#lvRem').checked };
+      closePop();
+      U.liveOn = true; livePill('Connecting…', true);
+      const r = await S.plug.ask(body);
+      if (!r || r.error) { U.liveOn = false; livePill(); return U.toast((r && r.error) || 'Could not go live.', true); }
+      U.toast(`You are live on ${LIVE[p].name}. Press the red LIVE button to end.`);
+      clearInterval(U.liveT);
+      U.liveT = setInterval(async () => {
+        const st = await S.plug.ask({ op: 'liveStatus' });
+        if (!st || st.state !== 'live') { clearInterval(U.liveT); U.liveOn = false; livePill(); if (st && st.message) U.toast(st.message, true); return; }
+        const s = Math.floor(st.seconds);
+        livePill(`● LIVE ${Math.floor(s / 3600) ? Math.floor(s / 3600) + ':' : ''}${String(Math.floor(s / 60) % 60).padStart(Math.floor(s / 3600) ? 2 : 1, '0')}:${String(s % 60).padStart(2, '0')}`);
+        $('#livePill').title = `End the stream · ${Math.round(st.kbps)} kbps · sound: ${st.audio}${st.camera ? ' · camera on' : ''}${st.message ? ' · ' + st.message : ''}`;
+      }, 1000);
+    },
+    liveEnd() { showPop(`<h3>End the live stream?</h3><p><button data-act="liveStop" class="primary">End stream</button> <button data-act="closePop">Keep streaming</button></p>`); },
+    async liveStop() {
+      closePop();
+      clearInterval(U.liveT);
+      await S.plug.ask({ op: 'liveStop' });
+      U.liveOn = false; livePill();
+      U.toast('Stream ended.');
     },
     shareGo(el) {
       const title = ($('#shTitle').value || '').trim() || 'Untitled', artist = ($('#shArtist').value || '').trim();

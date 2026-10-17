@@ -115,6 +115,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
         if CommandLine.arguments.contains("--wave-test") { waveTest() }
         if CommandLine.arguments.contains("--pump-test") { pumpTest() }
         if CommandLine.arguments.contains("--tune-test") { tuneTest() }
+        if CommandLine.arguments.contains("--skin-test") { skinTest() }
+        if let i = CommandLine.arguments.firstIndex(of: "--live-test") { liveTest(CommandLine.arguments[i + 1], CommandLine.arguments[i + 2]) }
         if let i = CommandLine.arguments.firstIndex(of: "--manual-shots") { manualShots(URL(fileURLWithPath: CommandLine.arguments[i + 1])) }
         if let i = CommandLine.arguments.firstIndex(of: "--manual-pdf") { manualPDF(URL(fileURLWithPath: CommandLine.arguments[i + 1]), URL(fileURLWithPath: CommandLine.arguments[i + 2])) }
         if let i = CommandLine.arguments.firstIndex(of: "--import-test") { importTest(Array(CommandLine.arguments[(i + 1)...])) }
@@ -280,6 +282,47 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
     }
 
     // Share check: renders the demo song's first 12 seconds to the branded video and audio file, then reports what was made.
+    /// Switches through every Comfort Skin while the beat plays: the project and playback must carry over unchanged.
+    private func skinTest() {
+        let js = """
+        const snap = () => JSON.stringify(S.proj);
+        const t = S.proj.tracks[0]; t.clips[Object.keys(t.clips)[0]].notes.push({ t: 1, d: 0.25, p: 36, v: 0.9 });   // an edit made in the first skin
+        const before = snap(); S.engine.play(0); const out = [];
+        for (const k of ['session', 'arrange', 'mixedit', 'pattern', 'arrange']) {
+          S.ui.setSkin(k); await new Promise((r) => setTimeout(r, 400));
+          out.push(`${k}: same beat ${snap() === before}, still playing ${S.engine.playing}, tracks ${S.proj.tracks.length}`);
+        }
+        S.engine.stop(); return out.join(' | ');
+        """
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            self.web.callAsyncJavaScript(js, arguments: [:], in: nil, in: .page) { r in print("SKINTEST\n" + ((try? r.get()) as? String ?? "failed: \(r)")); exit(0) }
+        }
+    }
+
+    /// Streams the window for six seconds to a test RTMP server (no camera, microphone or system sound) and prints the status.
+    private func liveTest(_ url: String, _ key: String) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            LiveSession.systemSound = false
+            let s = LiveSession(web: self.web)
+            self.live = s
+            s.start(url: url, key: key, camera: false, mic: false) { err in
+                print("LIVETEST start", err ?? "ok")
+                let grad = CIFilter(name: "CILinearGradient", parameters: ["inputPoint0": CIVector(x: 0, y: 0), "inputPoint1": CIVector(x: 1280, y: 720),
+                                                                           "inputColor0": CIColor(red: 0.2, green: 0.5, blue: 0.9), "inputColor1": CIColor(red: 0.9, green: 0.3, blue: 0.6)])!
+                s.testCamera(grad.outputImage!.cropped(to: CGRect(x: 0, y: 0, width: 1280, height: 720)))
+                if err != nil { exit(1) }
+                // The Share window's Go live buttons and the YouTube form.
+                let js = "S.ui.act('share'); const b = [...document.querySelectorAll('[data-act=live]')].map((x) => x.textContent); document.querySelector('[data-act=live][data-p=youtube]').click(); await new Promise((r) => setTimeout(r, 500)); const out = b.join(', ') + ' | ' + document.querySelector('#lvUrl').value + ' | ' + document.querySelector('#lvKey').type; document.querySelector('[data-act=closePop]').click(); return out;"
+                self.web.callAsyncJavaScript(js, arguments: [:], in: nil, in: .page) { r in print("LIVETEST ui", (try? r.get()) ?? "failed: \(r)") }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 6) {
+                    print("LIVETEST status", s.status)
+                    s.stop()
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1) { exit(0) }
+                }
+            }
+        }
+    }
+
     private func shareTest() {
         let js = """
         await new Promise((res) => { S.ui.shareDone = (ok, msg) => res([ok, msg]); S.io.share('save', 'Since I Been Away', 'Slade', 12); }).then((r) => window.__shared = r);
@@ -747,6 +790,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
         }
     }
 
+    // MARK: go live
+
+    private var live: LiveSession?
+    private func liveOp(_ op: String, _ body: [String: Any]) {
+        switch op {
+        case "liveStart":
+            live?.stop()
+            let url = (body["url"] as? String ?? "").trimmingCharacters(in: .whitespacesAndNewlines), key = (body["key"] as? String ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+            let platform = body["platform"] as? String ?? "custom"
+            if body["remember"] as? Bool ?? false { LiveSession.saveKey(platform, url: url, key: key) }
+            let s = LiveSession(web: web)
+            live = s
+            s.start(url: url, key: key, camera: body["camera"] as? Bool ?? false, mic: body["mic"] as? Bool ?? false) { err in
+                if err != nil { self.live = nil }
+                self.reply(body, err.map { ["error": $0] } ?? ["ok": true])
+            }
+        case "liveStop": live?.stop(); live = nil; reply(body, ["ok": true])
+        case "liveStatus": reply(body, live?.status ?? ["state": "idle"])
+        case "liveKey": reply(body, LiveSession.loadKey(body["platform"] as? String ?? "") ?? [:])
+        default: break
+        }
+    }
+
     // MARK: sharing
 
     private var lastShare: (key: String, out: ShareRenderer.Output)?
@@ -1002,6 +1068,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
         if op.hasPrefix("au") || op.hasPrefix("lib") { return pluginOp(op, body) }
         if op == "share" { share(body) }
         if op.hasPrefix("cap") { return captureOp(op, body) }
+        if op.hasPrefix("live") { return liveOp(op, body) }
         if op == "manual", let url = Bundle.main.url(forResource: "STRATUM Owner's Manual", withExtension: "pdf") { NSWorkspace.shared.open(url) }
         if op == "prefSet", let key = body["key"] as? String {
             var p = UserDefaults.standard.dictionary(forKey: "stratumPrefs") ?? [:]

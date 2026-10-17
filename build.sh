@@ -13,7 +13,7 @@ for arch in arm64 x86_64; do
   clang -O2 -c -target "$arch-apple-macos12.0" -I "$ORT/include" shell/stems.c -o "build/stems-$arch.o"
   ./build-vst3.sh "$arch"
   ./build-airwin.sh "$arch"
-  swiftc -O -target "$arch-apple-macos12.0" -import-objc-header shell/bridge.h -I vendor/vst3sdk shell/main.swift shell/plugins.swift shell/share.swift shell/capture.swift "build/stems-$arch.o" "build/libv3-$arch.a" "build/libaw-$arch.a" -Xlinker -lc++ -o "build/stratum-$arch"
+  swiftc -O -target "$arch-apple-macos12.0" -import-objc-header shell/bridge.h -I vendor/vst3sdk shell/main.swift shell/plugins.swift shell/share.swift shell/capture.swift shell/rtmp.swift shell/live.swift "build/stems-$arch.o" "build/libv3-$arch.a" "build/libaw-$arch.a" -Xlinker -lc++ -o "build/stratum-$arch"
 done
 lipo -create build/stratum-arm64 build/stratum-x86_64 -output "$APP/Contents/MacOS/STRATUM"
 
@@ -61,6 +61,7 @@ cat > "$APP/Contents/Info.plist" <<EOF
   <key>LSMinimumSystemVersion</key><string>12.0</string>
   <key>LSApplicationCategoryType</key><string>public.app-category.music</string>
   <key>NSPhotoLibraryAddUsageDescription</key><string>STRATUM saves your shared track videos to Photos so you can post them from your phone, for example as an Instagram Story.</string>
+  <key>NSCameraUsageDescription</key><string>STRATUM shows your camera in a small box on your live stream when you turn the camera on.</string>
   <key>NSMicrophoneUsageDescription</key><string>STRATUM records audio from your microphone or audio interface onto the tracks you arm.</string>
   <key>NSHighResolutionCapable</key><true/>
   <key>NSPrincipalClass</key><string>NSApplication</string>

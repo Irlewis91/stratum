@@ -659,7 +659,7 @@
           `<p class="hint">Or get a sign-in code by email:</p><label>Email <input id="syEmail" type="email" autocomplete="email" placeholder="you@example.com"></label>` +
           `<p><button data-act="syncSend">Email me a code</button> <button data-act="closePop">Cancel</button></p>`);
       }
-      const u = SY.user(), when = (t) => new Date(t).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }), mb = (n) => (n / 1048576).toFixed(1) + ' MB';
+      const u = SY.user(), when = (t) => new Date(t).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }), mb = (n) => (n < 102400 ? Math.max(1, Math.round(n / 1024)) + ' KB' : (n / 1048576).toFixed(1) + ' MB');
       showPop(`<h3>Your synced beats</h3><p class="hint">Signed in as ${esc(u.email || (u.user_metadata && u.user_metadata.full_name) || 'you')} on this ${esc(SY.device)}. Changes sync automatically.</p><div class="plist" id="syList"><span class="hint">Loading…</span></div>` +
         `<p><button data-act="syncNow">Sync now</button> <button data-act="syncOut">Sign out</button> <button data-act="closePop">Close</button></p>`);
       try {

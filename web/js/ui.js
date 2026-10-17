@@ -45,7 +45,7 @@
   const opts = (list, cur) => list.map((o) => { const [v, l] = Array.isArray(o) ? o : [o, o]; return `<option value="${esc(v)}" ${String(v) === String(cur) ? 'selected' : ''}>${esc(l)}</option>`; }).join('');
 
   // ---------- layout ----------
-  const PHONE = matchMedia('(max-width: 700px)'), TOUCH = matchMedia('(pointer: coarse)');
+  const PHONE = matchMedia('(max-width: 700px)'), TOUCH = matchMedia('(pointer: coarse)'), MAC = /Mac/.test(navigator.platform) && navigator.maxTouchPoints < 2;
   const PANEL_NAMES = { rack: 'Rack', editor: 'Piano roll', timeline: 'Song', mixer: 'Mixer', devices: 'Devices', session: 'Clips', inspector: 'Track' };
   PHONE.addEventListener('change', () => render());
   function layout() {
@@ -513,7 +513,7 @@
       `<label>Session player <select data-chg="player">${opts([['', 'None (manual)'], ['drums', 'Drummer'], ['bass', 'Bass'], ['chords', 'Chords'], ['arp', 'Arpeggio']], t.player || '')}</select></label>` +
       (t.player ? `<button data-act="regen">Regenerate</button>` : '')) +
       (synth ? `<label><input type="checkbox" data-chg="scaleLock" ${U.scaleLock ? 'checked' : ''}> Scale lock</label>` : '') +
-      (n ? `<span class="nsel">Note ${S.noteName(n.p)} ${ctl('hslider', { k: 'vel' }, n.v == null ? 0.8 : n.v, 'Velocity')}` + (synth ? `<label>Cents <input type="number" data-chg="cents" value="${n.c || 0}" min="-50" max="50" step="5"></label><label><input type="checkbox" data-chg="glide" ${n.g ? 'checked' : ''}> Glide</label>` : '') + `<button data-act="delNote">Delete</button></span>` : `<span class="hint">${TOUCH.matches ? 'Tap to add · drag to move · drag the right edge to resize · tap a note, then Delete' : 'Click to add · drag to move · drag right edge to resize · Option-click to delete'}</span>`) + '</div>';
+      (n ? `<span class="nsel">Note ${S.noteName(n.p)} ${ctl('hslider', { k: 'vel' }, n.v == null ? 0.8 : n.v, 'Velocity')}` + (synth ? `<label>Cents <input type="number" data-chg="cents" value="${n.c || 0}" min="-50" max="50" step="5"></label><label><input type="checkbox" data-chg="glide" ${n.g ? 'checked' : ''}> Glide</label>` : '') + `<button data-act="delNote">Delete</button></span>` : `<span class="hint">${TOUCH.matches ? 'Tap to add · drag to move · drag the right edge to resize · tap a note, then Delete' : `Click to add · drag to move · drag right edge to resize · ${MAC ? 'Option' : 'Alt'}-click to delete`}</span>`) + '</div>';
     h += `<div class="scroll" id="prScroll"><div class="pr" style="width:${60 + steps * CW}px;height:${rows.length * RH}px"><div class="prkeys">` +
       rows.map((p) => { const black = synth && [1, 3, 6, 8, 10].includes(p % 12); return `<div class="${black ? 'bk' : ''}" data-act="key" data-p="${p}">${synth ? (p % 12 === 0 || p % 12 === P().root ? S.noteName(p) : '') : esc((S.drumRows(curTrack()).find((d) => d.p === p) || { n: '' }).n)}</div>`; }).join('') +
       `</div><div class="prgrid" id="prGrid" style="width:${steps * CW}px">` +
@@ -862,7 +862,7 @@
     tour() { closePop(); S.tour.start(); },
     manual() { closePop(); if (IO.native()) IO.native().postMessage({ op: 'manual' }); else window.open('manual.pdf'); },
     help() {
-      const row = ([k, , l]) => `<tr><td><kbd>${esc(k.replace('Meta', '⌘').replace('Alt', '⌥').replace('Shift', '⇧').replace(/\+/g, ' '))}</kbd></td><td>${esc(l)}</td></tr>`;
+      const row = ([k, , l]) => `<tr><td><kbd>${esc((MAC ? k.replace('Meta', '⌘').replace('Alt', '⌥').replace('Shift', '⇧') : k.replace('Meta', 'Ctrl')).replace(/\+/g, ' '))}</kbd></td><td>${esc(l)}</td></tr>`;
       showPop(`<h3>Shortcuts — ${esc(SKIN_NAMES[U.skin])}</h3><table class="keys">${[...KEYMAP.common, ...KEYMAP[U.skin]].map(row).join('')}</table><p><button data-act="tour">Take the tour</button> <button data-act="manual">Open the Owner’s Manual</button></p><p class="hint">Switching the Comfort Skin changes both the layout and this key map. With “Keys” on, letter keys play notes instead.</p><button data-act="closePop">Close</button>`);
     },
     closePop,

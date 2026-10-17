@@ -60,7 +60,7 @@
     if (p.tourAsked || p.testing) return;
     prefs.set('tourAsked', true);
     const pop = $('#pop');
-    pop.innerHTML = `<div class="popbox tour-welcome"><img src="logo.png" alt="" width="56" height="56"><h3>Welcome to STRATUM</h3><p>Would you like a quick tour? It points out where everything is and lets you try a few things as you go. It takes about two minutes.</p><div class="tour-btns"><button id="tourNo">Not now</button><span></span><button id="tourYes" class="primary">Take the tour</button></div><p class="hint">You can take it later from Help › Take the Tour.</p></div>`;
+    pop.innerHTML = `<div class="popbox tour-welcome"><img src="logo.png" alt="" width="56" height="56"><h3>Welcome to STRATUM</h3><p>Would you like a quick tour? It points out where everything is and lets you try a few things as you go. It takes about two minutes.</p><div class="tour-btns"><button id="tourNo">Not now</button><span></span><button id="tourYes" class="primary">Take the tour</button></div><p class="hint">You can take it later from ${S.io.platform === 'mac' ? 'Help › Take the Tour' : 'the ? button › Take the tour'}.</p></div>`;
     pop.hidden = false;
     $('#tourYes').onclick = () => { pop.hidden = true; T.start(); };
     $('#tourNo').onclick = () => { pop.hidden = true; };

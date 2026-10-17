@@ -250,6 +250,9 @@
     return out.filter((f) => f.data);
   };
   IO.native = native;
+  // Which version is running: the Mac app, the Windows app, or the web app (phones, tablets and browsers).
+  IO.platform = native() ? 'mac' : window.STRATUM_PLATFORM === 'windows' ? 'windows' : 'web';
+  IO.macOnly = (what) => `${what} is in the STRATUM Mac app. It isn't in the ${IO.platform === 'windows' ? 'Windows' : 'web and mobile'} version yet.`;
   // AI stem separation runs in the Mac shell. Resolves with four AudioBuffers: drums, bass, other, vocals.
   IO.separate = async (buf, onProgress) => {
     if (!native()) throw new Error('Stem separation needs the STRATUM Mac app');
@@ -279,6 +282,43 @@
       S.buffers[id] = { id, name: 'Recording', buf, bpm: S.proj.bpm };
       S.ui.recorded(S.buffers[id], inputLatency || 0);
     } catch (e) { S.ui.toast('The recording could not be read: ' + (e.message || e), true); }
+  };
+
+  // Recording without the Mac app: the browser's own microphone access (Windows, phones, tablets, browsers).
+  IO.webRec = {
+    async start(monitor) {
+      const ctx = E.ensure();
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+        const src = ctx.createMediaStreamSource(stream), proc = ctx.createScriptProcessor(4096, 2, 2), sink = ctx.createGain(), L = [], R = [];
+        sink.gain.value = 0;
+        proc.onaudioprocess = (e) => {
+          const a = e.inputBuffer;
+          L.push(new Float32Array(a.getChannelData(0)));
+          R.push(new Float32Array(a.getChannelData(Math.min(1, a.numberOfChannels - 1))));
+        };
+        src.connect(proc); proc.connect(sink); sink.connect(ctx.destination);
+        if (monitor) src.connect(ctx.destination);
+        IO.webRec.cur = { stream, src, proc, sink, L, R };
+        S.ui.recStarted();
+      } catch (e) {
+        S.ui.recFailed(e && e.name === 'NotAllowedError' ? 'microphone access was not allowed. Allow it in your browser or system settings and try again' : 'no microphone was found (' + (e.message || e) + ')');
+      }
+    },
+    stop() {
+      const r = IO.webRec.cur; if (!r) return;
+      IO.webRec.cur = null;
+      r.stream.getTracks().forEach((t) => t.stop());
+      try { r.src.disconnect(); r.proc.disconnect(); r.sink.disconnect(); } catch (e) {}
+      const ctx = E.ensure(), n = r.L.reduce((a, b) => a + b.length, 0);
+      if (!n) return S.ui.toast('Nothing was recorded.', true);
+      const buf = ctx.createBuffer(2, n, ctx.sampleRate);
+      let o = 0;
+      for (let i = 0; i < r.L.length; i++) { buf.getChannelData(0).set(r.L[i], o); buf.getChannelData(1).set(r.R[i], o); o += r.L[i].length; }
+      const id = S.uid();
+      S.buffers[id] = { id, name: 'Recording', buf, bpm: S.proj.bpm };
+      S.ui.recorded(S.buffers[id], (ctx.baseLatency || 0) + (ctx.outputLatency || 0));
+    },
   };
 
   IO.wav = (buf) => {
@@ -850,11 +890,19 @@ ${lanes}    </Lanes>
     const bins = 96, peaks = [], L = buf.getChannelData(0), R = buf.getChannelData(1);
     for (let b = 0; b < bins; b++) { let m = 0; for (let i = Math.floor((b * n) / bins), e = Math.floor(((b + 1) * n) / bins); i < e; i += 4) m = Math.max(m, Math.abs(L[i]), Math.abs(R[i])); peaks.push(m); }
     const top = Math.max(1e-6, ...peaks);
+    if (!native()) return { buf, peaks: peaks.map((p) => p / top) };
     native().postMessage({ op: 'share', target, title, artist, peaks: peaks.map((p) => +(p / top).toFixed(3)), b64: b64(IO.wav(buf)) });
   };
   // ---- built-in sound library (CC0 sounds bundled with the Mac app) ----
-  IO.libList = async () => IO._lib || (IO._lib = native() ? JSON.parse((await S.plug.ask({ op: 'libList' })) || '[]') : []);
-  IO.libRead = async (path) => { const b = await S.plug.ask({ op: 'libRead', path }); return b ? unb64(b).buffer : null; };
+  // The sound library: the Mac app reads it from inside the app; Windows, phones, tablets and browsers fetch it from the
+  // library folder next to the page.
+  const libURL = (path) => 'library/' + path.split('/').map(encodeURIComponent).join('/');
+  IO.libList = async () => IO._lib || (IO._lib = native() ? JSON.parse((await S.plug.ask({ op: 'libList' })) || '[]')
+    : await fetch('library/library.json').then((r) => (r.ok ? r.json() : [])).catch(() => []));
+  IO.libRead = async (path) => {
+    if (!native()) return fetch(libURL(path)).then((r) => (r.ok ? r.arrayBuffer() : null)).catch(() => null);
+    const b = await S.plug.ask({ op: 'libRead', path }); return b ? unb64(b).buffer : null;
+  };
   IO.exportAs = async (kind) => {
     const proj = S.proj, base = proj.name || 'Untitled';
     if (kind === 'mid') return IO.saveFile(base + '.mid', IO.midiOut(proj));

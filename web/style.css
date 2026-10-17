@@ -263,3 +263,28 @@ body.manual .dev.wavedev, body.manual .dev.pads { flex:1 1 100%; }
 .liveplat button.on { background:var(--acc); color:#111; border-color:var(--acc); }
 .livechecks label { display:inline-flex; gap:6px; align-items:center; margin-right:14px; }
 .livechecks input { width:auto; }
+
+/* Phones: a sideways-scrolling toolbar, one panel at a time, and a tab bar for switching panels */
+#phoneTabs { display:flex; gap:4px; padding:6px 6px calc(6px + env(safe-area-inset-bottom)); background:var(--panel2); border-top:1px solid var(--line); overflow-x:auto; }
+#phoneTabs[hidden] { display:none; }
+#phoneTabs button { flex:1 0 auto; padding:10px 12px; font-size:14px; }
+#phoneTabs button.on { background:var(--acc); color:#111; border-color:var(--acc); }
+body.phone #hdr { flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; }
+body.phone #hdr::-webkit-scrollbar { display:none; }
+body.phone #hdr .grp { flex-wrap:nowrap; flex:0 0 auto; }
+#phoneTransport { display:flex; overflow-x:auto; padding:calc(6px + env(safe-area-inset-top)) 8px 4px; background:var(--panel2); scrollbar-width:none; }
+#phoneTransport::-webkit-scrollbar { display:none; }
+#phoneTransport .grp { flex-wrap:nowrap; flex:0 0 auto; }
+#phoneTransport button, #phoneTransport select, #phoneTransport input { min-height:38px; }
+body.phone #hdr { padding-top:4px; }
+body.phone #hdr .logo span { display:none; }
+body.phone #hdr button, body.phone #hdr select { white-space:nowrap; min-height:36px; }
+body.phone .popbox { width:calc(100vw - 16px); max-height:calc(100vh - 40px); }
+/* Touch screens: bigger targets, no text selection while dragging notes */
+@media (pointer: coarse) {
+  button, select { min-height:34px; }
+  #main { touch-action:manipulation; }
+  body { -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
+  input, textarea { -webkit-user-select:text; user-select:text; }
+}
+body.phone .rkh { width:118px; }

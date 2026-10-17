@@ -1,0 +1,21 @@
+# Builds STRATUM.exe on a Windows machine. The download zip is STRATUM.exe plus the web app (see package-windows.sh).
+name: Windows build
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build STRATUM.exe
+        shell: cmd
+        run: |
+          for /f "usebackq tokens=*" %%i in (`"%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath`) do set VS=%%i
+          call "%VS%\VC\Auxiliary\Build\vcvars64.bat"
+          windows\build.bat
+      - uses: actions/upload-artifact@v4
+        with:
+          name: STRATUM-exe
+          path: windows/out/STRATUM.exe

@@ -1,8 +1,8 @@
 # STRATUM
 
-A digital audio workstation for macOS. Alpha software: expect rough edges.
+A digital audio workstation for Mac, Windows, phones and tablets. Alpha software: expect rough edges.
 
-STRATUM is a native Mac app with one project model and four switchable layouts ("Comfort Skins"): Pattern, Session, Arrange and Mix / Edit. Switching skin changes the screen layout and the keyboard map without stopping playback.
+STRATUM has one project model and four switchable layouts ("Comfort Skins"): Pattern, Session, Arrange and Mix / Edit. Switching skin changes the screen layout and the keyboard map without stopping playback.
 
 ## Install
 
@@ -12,6 +12,30 @@ STRATUM is a native Mac app with one project model and four switchable layouts (
    - run `xattr -dr com.apple.quarantine /Applications/STRATUM.app` in Terminal.
 
 Requires macOS 12 or later. Runs on Apple silicon and Intel; AI stem separation is Apple silicon only.
+
+### Windows
+
+Download `STRATUM-Windows.zip` from the Releases page, unzip it, and double-click `STRATUM.exe` (keep it next to the `app` folder). Windows 10 or 11, 64-bit. STRATUM is not code-signed yet, so Windows SmartScreen may warn: choose **More info › Run anyway**. The Windows version has not been tested on a Windows PC yet.
+
+### iPhone, iPad, Android phones and tablets
+
+Open **https://irlewis91.github.io/stratum/** in Safari (iPhone/iPad) or Chrome (Android), then:
+- iPhone / iPad: tap **Share › Add to Home Screen**.
+- Android: tap **Install app** (or the browser menu › **Install app**).
+
+It then opens full screen from its icon and works offline. On phones, a tab bar along the bottom switches between the Rack, Piano roll, Mixer and Devices. On iPhone, turn the ringer on: iOS mutes web audio while the phone is on silent.
+
+### What's in each version
+
+| | Mac | Windows | Phones, tablets, browsers |
+|---|---|---|---|
+| Beat making, piano roll, mixer, skins, built-in sounds and effects | ✓ | ✓ | ✓ |
+| Sound library (791 CC0 sounds, 99 MIDI kits) | ✓ | ✓ | ✓ (sounds download as you use them) |
+| Import FL Studio, Ableton, Reason, Logic, MIDI, DAWproject | ✓ | ✓ | ✓ |
+| Recording from a microphone or interface | ✓ | ✓ | ✓ |
+| Branded share videos | ✓ | ✓ | ✓ (via the share sheet) |
+| Audio Unit / VST3 / VST2 plugins, STRATUM Wave, STRATUM Tune, Airwindows | ✓ | — | — |
+| Stem separation, Record from another app, Go live | ✓ | — | — |
 
 ## What it does
 

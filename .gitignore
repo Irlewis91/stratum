@@ -3,3 +3,7 @@ dist/
 vendor/
 .DS_Store
 build-cache/
+dist-web/
+windows/pkgs/
+windows/out/
+dist-win/

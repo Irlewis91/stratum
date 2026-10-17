@@ -45,6 +45,9 @@
   const opts = (list, cur) => list.map((o) => { const [v, l] = Array.isArray(o) ? o : [o, o]; return `<option value="${esc(v)}" ${String(v) === String(cur) ? 'selected' : ''}>${esc(l)}</option>`; }).join('');
 
   // ---------- layout ----------
+  const PHONE = matchMedia('(max-width: 700px)'), TOUCH = matchMedia('(pointer: coarse)');
+  const PANEL_NAMES = { rack: 'Rack', editor: 'Piano roll', timeline: 'Song', mixer: 'Mixer', devices: 'Devices', session: 'Clips', inspector: 'Track' };
+  PHONE.addEventListener('change', () => render());
   function layout() {
     const b = U.bottom[U.skin], f = 'minmax(0,1fr)';
     let L;
@@ -52,6 +55,20 @@
     else if (U.skin === 'session') L = { cols: f, rows: `${f} ${f} ${f}`, cells: { [U.sessionTop === 'timeline' ? 'timeline' : 'session']: '1/1', mixer: '2/1', [b === 'editor' ? 'editor' : 'devices']: '3/1' } };
     else if (U.skin === 'arrange') L = { cols: `230px ${f}`, rows: `minmax(0,1.15fr) ${f}`, cells: { inspector: '1/1/3/2', timeline: '1/2', [b]: '2/2' } };
     else L = { cols: f, rows: `minmax(0,1.35fr) ${f}`, cells: U.ptWin === 'mix' ? { mixer: '1/1', devices: '2/1' } : { timeline: '1/1', editor: '2/1' } };
+    // Phones: one panel at a time, chosen from a tab bar along the bottom.
+    const phone = PHONE.matches, tabs = $('#phoneTabs');
+    document.body.classList.toggle('phone', phone);
+    // On phones the transport gets its own row above the (sideways-scrolling) toolbar.
+    const tp = document.querySelector('#hdr .transport, #phoneTransport .transport'), hdr = $('#hdr');
+    if (phone && tp.parentElement === hdr) { const bar = document.createElement('div'); bar.id = 'phoneTransport'; hdr.before(bar); bar.append(tp); }
+    if (!phone && tp.parentElement.id === 'phoneTransport') { const bar = tp.parentElement; hdr.insertBefore(tp, hdr.children[2] || null); bar.remove(); }
+    if (phone) {
+      const names = Object.keys(L.cells);
+      if (!names.includes(U.phonePanel)) U.phonePanel = names[0];
+      tabs.innerHTML = names.map((k) => `<button class="${k === U.phonePanel ? 'on' : ''}" data-act="phonePanel" data-p="${k}">${PANEL_NAMES[k] || k}</button>`).join('');
+      L = { cols: f, rows: f, cells: { [U.phonePanel]: '1/1' } };
+    }
+    tabs.hidden = !phone;
     const m = $('#main');
     m.style.gridTemplateColumns = L.cols; m.style.gridTemplateRows = L.rows;
     for (const el of m.children) { el.hidden = !(el.id in L.cells); el.style.gridArea = L.cells[el.id] || ''; }
@@ -116,6 +133,20 @@
   U.libSearch = (v) => { U.libQuery = v; clearTimeout(U.libT); U.libT = setTimeout(() => A.sounds(), 250); };
   U.shareProgress = (f) => U.toast(`Making your STRATUM video… ${Math.round(f * 100)}%`);
   U.shareDone = (ok, msg) => U.toast(msg, !ok);
+  async function webShare(target, label, title, artist, clip) {
+    showPop(`<h3>Making your ${esc(label)} video…</h3><p class="hint">The video is recorded as the track plays through once (silently), so it takes as long as the track. Keep STRATUM open.</p><p class="caprec"><span id="wsPct">0%</span></p>`);
+    const mix = await IO.share(target, title, artist, clip);
+    const r = await IO.webShareRender(target, title, artist, mix.buf, mix.peaks, (p) => { const el = $('#wsPct'); if (el) el.textContent = Math.round(p * 100) + '%'; });
+    U.webShared = { ...r, title, target };
+    const page = IO.webSharePage(target), mb = (f) => (f.size / 1048576).toFixed(1) + ' MB';
+    showPop(`<h3>Your ${esc(label)} video is ready</h3>` +
+      (r.video ? `<p>${esc(r.video.name)} · ${mb(r.video)}</p><p><button data-act="webShareSend" class="primary">Share video…</button> <button data-act="webShareSave">Save video</button></p>`
+        : `<p class="hint">This browser can't record video, so here is the audio file.</p>`) +
+      `<p><button data-act="webShareSend" data-what="audio">Share audio…</button> <button data-act="webShareSave" data-what="audio">Save audio (WAV)</button></p>` +
+      (page ? `<p class="hint">On a phone, Share opens the share sheet, where you can pick ${esc(label.replace(/ \(.*\)/, ''))} or Messages. On a computer, save the video, then <button data-act="webSharePage">open the upload page</button> and drag it in.</p>` : '') +
+      (r.video && /webm$/.test(r.video.name) ? '<p class="hint">This browser saves WebM video. Instagram and TikTok want MP4, so for those, share from a phone or the Mac app.</p>' : '') +
+      `<button data-act="closePop">Done</button>`);
+  }
   const LIVE = {
     twitch: { name: 'Twitch', url: 'rtmp://live.twitch.tv/app', how: 'Find your stream key in Twitch: Creator Dashboard › Settings › Stream.' },
     youtube: { name: 'YouTube', url: 'rtmps://a.rtmps.youtube.com/live2', how: 'In YouTube Studio choose Create › Go live › Stream, then copy the stream key. (The first time, YouTube can take up to 24 hours to enable live streaming.)' },
@@ -482,7 +513,7 @@
       `<label>Session player <select data-chg="player">${opts([['', 'None (manual)'], ['drums', 'Drummer'], ['bass', 'Bass'], ['chords', 'Chords'], ['arp', 'Arpeggio']], t.player || '')}</select></label>` +
       (t.player ? `<button data-act="regen">Regenerate</button>` : '')) +
       (synth ? `<label><input type="checkbox" data-chg="scaleLock" ${U.scaleLock ? 'checked' : ''}> Scale lock</label>` : '') +
-      (n ? `<span class="nsel">Note ${S.noteName(n.p)} ${ctl('hslider', { k: 'vel' }, n.v == null ? 0.8 : n.v, 'Velocity')}` + (synth ? `<label>Cents <input type="number" data-chg="cents" value="${n.c || 0}" min="-50" max="50" step="5"></label><label><input type="checkbox" data-chg="glide" ${n.g ? 'checked' : ''}> Glide</label>` : '') + `<button data-act="delNote">Delete</button></span>` : `<span class="hint">Click to add · drag to move · drag right edge to resize · Option-click to delete</span>`) + '</div>';
+      (n ? `<span class="nsel">Note ${S.noteName(n.p)} ${ctl('hslider', { k: 'vel' }, n.v == null ? 0.8 : n.v, 'Velocity')}` + (synth ? `<label>Cents <input type="number" data-chg="cents" value="${n.c || 0}" min="-50" max="50" step="5"></label><label><input type="checkbox" data-chg="glide" ${n.g ? 'checked' : ''}> Glide</label>` : '') + `<button data-act="delNote">Delete</button></span>` : `<span class="hint">${TOUCH.matches ? 'Tap to add · drag to move · drag the right edge to resize · tap a note, then Delete' : 'Click to add · drag to move · drag right edge to resize · Option-click to delete'}</span>`) + '</div>';
     h += `<div class="scroll" id="prScroll"><div class="pr" style="width:${60 + steps * CW}px;height:${rows.length * RH}px"><div class="prkeys">` +
       rows.map((p) => { const black = synth && [1, 3, 6, 8, 10].includes(p % 12); return `<div class="${black ? 'bk' : ''}" data-act="key" data-p="${p}">${synth ? (p % 12 === 0 || p % 12 === P().root ? S.noteName(p) : '') : esc((S.drumRows(curTrack()).find((d) => d.p === p) || { n: '' }).n)}</div>`; }).join('') +
       `</div><div class="prgrid" id="prGrid" style="width:${steps * CW}px">` +
@@ -615,7 +646,10 @@
 
   // ---------- actions ----------
   const structural = (fn) => { S.snap(); fn(); changed(true); };
+  U.showPop = (html) => showPop(html);
   const A = {
+    install() { if (U.install) U.install(); },
+    phonePanel(el) { U.phonePanel = el.dataset.p; render(); },
     play() {
       if (E.playing) return A.pause();
       E.mode = $('#modeSel').value; E.sceneId = curScene().id;
@@ -627,12 +661,11 @@
       }
       E.play(from); syncHeader();
     },
-    pause() { const was = U.recording; E.stop(); E.noLoop = false; if (was && !was.pending && IO.native()) IO.native().postMessage({ op: 'recStop' }); syncHeader(); },
+    pause() { const was = U.recording; E.stop(); E.noLoop = false; if (was && !was.pending) { if (IO.native()) IO.native().postMessage({ op: 'recStop' }); else IO.webRec.stop(); } syncHeader(); },
     stop() { A.pause(); U.playFrom = 0; if (U.visible.timeline) renderTimeline(); },
     // Recording runs in the Mac shell (Core Audio input); the web layer plays the song alongside it.
     rec() {
       if (U.recording) return A.pause();
-      if (!IO.native()) return U.toast('Recording needs the STRATUM Mac app, which captures the Mac’s audio input.', true);
       let t = P().tracks.find((x) => x.arm && x.type === 'audio');
       if (!t) {
         t = curTrack().type === 'audio' ? curTrack() : null;
@@ -641,7 +674,7 @@
       }
       E.ensure();
       U.track = t.id; U.recording = { tid: t.id, start: U.playFrom || 0, pending: true };
-      IO.native().postMessage({ op: 'recStart', monitor: !!U.monitor });
+      if (IO.native()) IO.native().postMessage({ op: 'recStart', monitor: !!U.monitor }); else IO.webRec.start(!!U.monitor);
       syncHeader();
     },
     arm(el) { const t = tr(el.dataset.t); t.arm = !t.arm; if (t.arm) for (const o of P().tracks) if (o !== t) o.arm = false; render(); },
@@ -672,7 +705,6 @@
     // Sounds browser: built-in CC0 sounds by category, with search, preview, and a button that puts the sound where it fits
     // the selected track (a drum pad, the sampler, an audio clip, or for MIDI files the notes themselves).
     async sounds(el) {
-      if (!IO.native()) return U.toast('The sound library comes with the STRATUM Mac app.', true);
       const all = await IO.libList(), cats = [...new Set(all.map((x) => x.category))].sort(), t = curTrack();
       U.libCat = (el && el.dataset && el.dataset.cat) || U.libCat || cats[0];
       const q = (U.libQuery || '').toLowerCase(), list = all.filter((x) => (q ? (x.name + ' ' + x.category).toLowerCase().includes(q) : x.category === U.libCat)).slice(0, 300);
@@ -688,7 +720,7 @@
     // Record from another app: the sound one running app makes (a browser, a music player…) becomes an audio clip, the
     // sampler's sound or a drum pad.
     async capture() {
-      if (!IO.native()) return U.toast('Recording from another app needs the STRATUM Mac app.', true);
+      if (!IO.native()) return U.toast(IO.macOnly('Recording from another app'), true);
       const res = await S.plug.ask({ op: 'capApps' });
       if (!res || res.error) return U.toast((res && res.error) || 'Could not list apps.', true);
       const t = curTrack(), dest = [['new', 'A new audio track']];
@@ -746,20 +778,20 @@
       U.openDone();
     },
     share() {
-      const p = P(), go = (t, label) => `<button data-act="shareGo" data-target="${t}">${label}</button>`;
-      showPop(`<h3>Share your track</h3><p class="hint">STRATUM makes a branded vertical video (for TikTok, Reels, Shorts and X) and an audio file, and saves both in your Movies › STRATUM folder.</p>` +
+      const p = P(), go = (t, label) => `<button data-act="shareGo" data-target="${t}">${label}</button>`, mac = IO.platform === 'mac';
+      showPop(`<h3>Share your track</h3><p class="hint">STRATUM makes a branded video (vertical for TikTok, Reels and Shorts) and an audio file${mac ? ', and saves both in your Movies › STRATUM folder' : ''}.</p>` +
         `<label>Title <input id="shTitle" value="${esc(p.name || 'Untitled')}"></label><label>Artist <input id="shArtist" value="${esc(p.artist || '')}" placeholder="Your artist name"></label>` +
         `<label>Length <select id="shClip">${opts([['', 'Whole track'], ['60', 'First 60 seconds'], ['30', 'First 30 seconds'], ['15', 'First 15 seconds']], '')}</select></label>` +
-        `<div class="stock"><b>Send</b> ${go('messages', 'Text (Messages)')}${go('mail', 'Email')}${go('airdrop', 'AirDrop')}${go('more', 'More…')}</div>` +
+        (mac ? `<div class="stock"><b>Send</b> ${go('messages', 'Text (Messages)')}${go('mail', 'Email')}${go('airdrop', 'AirDrop')}${go('more', 'More…')}</div>` : `<div class="stock"><b>Send</b> ${go('more', 'Text, email or another app…')}</div>`) +
         `<div class="stock"><b>Post</b> ${go('ig_story', 'Instagram Story')}${go('ig_reel', 'Instagram Reel')}${go('ig_post', 'Instagram Post')}${go('facebook', 'Facebook')}${go('tiktok', 'TikTok')}${go('x', 'X (Twitter)')}${go('threads', 'Threads')}${go('youtube', 'YouTube Shorts')}</div>` +
-        `<p class="hint">Each gets the right shape: 9:16 for Stories, Reels, TikTok and Shorts, 4:5 for Instagram, Facebook and Threads posts, square for X. STRATUM opens the upload page and shows the video in Finder, ready to drag in. Instagram Stories can only be posted from the phone app, so that video is saved to Photos.</p>` +
-        `<div class="stock"><b>Go live</b> <button data-act="live" data-p="twitch">Twitch</button><button data-act="live" data-p="youtube">YouTube</button><button data-act="live" data-p="instagram">Instagram</button><button data-act="live" data-p="tiktok">TikTok</button><button data-act="live" data-p="custom">Other (RTMP)</button></div>` +
+        `<p class="hint">Each gets the right shape: 9:16 for Stories, Reels, TikTok and Shorts, 4:5 for Instagram, Facebook and Threads posts, square for X. ${mac ? 'STRATUM opens the upload page and shows the video in Finder, ready to drag in. Instagram Stories can only be posted from the phone app, so that video is saved to Photos.' : 'The video is recorded as the track plays once, so it takes as long as the clip. Then share it to the app, or save it.'}</p>` +
+        (!mac ? '' : `<div class="stock"><b>Go live</b> <button data-act="live" data-p="twitch">Twitch</button><button data-act="live" data-p="youtube">YouTube</button><button data-act="live" data-p="instagram">Instagram</button><button data-act="live" data-p="tiktok">TikTok</button><button data-act="live" data-p="custom">Other (RTMP)</button></div>`) +
         `${go('save', 'Just save the files')} <button data-act="closePop">Cancel</button>`);
     },
     // Go live: the STRATUM window (and the producer's camera, if they allow it) streams to Twitch, YouTube, Instagram or
     // TikTok using the server address and stream key each platform gives out.
     async live(el) {
-      if (!IO.native()) return U.toast('Going live needs the STRATUM Mac app.', true);
+      if (!IO.native()) return U.toast(IO.macOnly('Going live'), true);
       if (U.liveOn) return U.toast('You are already live. Press the red LIVE button to end the stream first.', true);
       const p = el.dataset.p, L = LIVE[p], saved = (await S.plug.ask({ op: 'liveKey', platform: p })) || {};
       showPop(`<h3>Go live on ${L.name}</h3><p class="hint">Viewers see the STRATUM window as you work and hear what your Mac plays. ${L.how}</p>` +
@@ -804,9 +836,20 @@
       if (clip !== chosen) U.toast(`${el.textContent} allows ${limit} seconds, so the first ${limit} seconds will be used.`);
       P().artist = artist;
       closePop();
-      if (!IO.native()) return U.toast('Sharing needs the STRATUM Mac app. Use Export to save a WAV file instead.', true);
+      if (!IO.native()) return webShare(el.dataset.target, el.textContent, title, artist, clip).catch((e) => { closePop(); U.toast('Could not share: ' + (e.message || e), true); });
       IO.share(el.dataset.target, title, artist, clip).catch((e) => U.toast('Could not share: ' + (e.message || e), true));
     },
+    // Web, Windows, phones and tablets: hand the finished files to the system share sheet, or save them.
+    async webShareSend(el) {
+      const r = U.webShared; if (!r) return;
+      const files = el.dataset.what === 'audio' || !r.video ? [r.audio] : [r.video];
+      try {
+        if (navigator.canShare && navigator.canShare({ files })) await navigator.share({ files, title: r.title, text: `“${r.title}” — made with STRATUM. https://github.com/Irlewis91/stratum` });
+        else { for (const f of files) IO.saveFile(f.name, new Uint8Array(await f.arrayBuffer())); U.toast('This device has no share menu here, so the file was saved instead.'); }
+      } catch (e) { if (e.name !== 'AbortError') U.toast('Could not share: ' + (e.message || e), true); }
+    },
+    async webShareSave(el) { const r = U.webShared; if (!r) return; const f = el.dataset.what === 'audio' || !r.video ? r.audio : r.video; IO.saveFile(f.name, new Uint8Array(await f.arrayBuffer())); },
+    webSharePage() { const u = U.webShared && IO.webSharePage(U.webShared.target); if (u) window.open(u, '_blank', 'noopener'); },
     clearAuto() { structural(() => { delete curTrack().auto; delete P().master.auto; }); },
     wanted() {
       const w = P().wanted || [];
@@ -934,7 +977,7 @@
     instLoad() { U.pendingSample = { t: curTrack().id }; IO.open(); },
     // Plugins: pick an installed Audio Unit as this track's instrument or as an effect after it.
     async plugPick(el) {
-      if (!S.plug.available()) return U.toast('Plugins need the STRATUM Mac app.', true);
+      if (!S.plug.available()) return U.toast(IO.macOnly('Plugin hosting'), true);
       const kind = el.dataset.kind, list = (await S.plug.list()).filter((p) => p.kind === kind);
       showPop(`<h3>${kind === 'inst' ? 'Choose an instrument plugin' : 'Add a plugin effect'} · ${esc(curTrack().name)}</h3><input placeholder="Type to filter" oninput="const q=this.value.toLowerCase();this.parentNode.querySelectorAll('.plist button').forEach(b=>b.hidden=!b.textContent.toLowerCase().includes(q))">` +
         `<p class="hint">${list.length} Audio Unit and VST3 ${kind === 'inst' ? 'instruments' : 'effects'} installed on this Mac.</p><div class="plist">` +
@@ -1130,7 +1173,7 @@
       const t = curTrack(), k = el.value;
       if (k === 'plugin') { render(); return A.plugPick({ dataset: { kind: 'inst' } }); }
       if (k === 'wave') {
-        if (!S.plug.available()) { render(); return U.toast('STRATUM Wave runs in the STRATUM Mac app.', true); }
+        if (!S.plug.available()) { render(); return U.toast(IO.macOnly('STRATUM Wave'), true); }
         return structural(() => { t.type = t.type === 'audio' ? 'synth' : t.type; t.plugin = { id: 'stratum|wave', name: 'STRATUM Wave', maker: 'STRATUM', state: '', fx: (t.plugin && t.plugin.fx) || t.pfx || [] }; delete t.pfx; });
       }
       structural(() => {

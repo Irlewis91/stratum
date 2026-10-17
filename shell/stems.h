@@ -2,6 +2,9 @@
 #ifndef STRATUM_STEMS_H
 #define STRATUM_STEMS_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 typedef void (*stratum_progress)(float fraction, void *ctx);
 
 // Splits a 44.1 kHz stereo mix of n frames into four stems (drums, bass, other, vocals).

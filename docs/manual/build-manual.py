@@ -302,8 +302,11 @@ add("""<section><h1><span>19</span>Windows, phones and tablets</h1><p>STRATUM al
 <h3>Moving a beat between devices</h3><p>A beat is one <code>.stratum</code> file, so it opens anywhere STRATUM runs. On the Mac, save it in iCloud Drive or AirDrop it. On Windows, <b>Save</b> offers <b>Save to a folder…</b> (pick your OneDrive, Google Drive or Dropbox folder) and <b>Share…</b>. On a phone or tablet, <b>Save</b> opens the share sheet (AirDrop, Save to Files, iCloud Drive, Google Drive, email). Then press <b>Open / Import</b> on the other device and choose the file. There is no automatic syncing yet.</p>"""
     + table(["", "Mac", "Windows", "Phones, tablets, browsers"], [
         ["Beat making, piano roll, mixer, skins, built-in sounds and effects", "✓", "✓", "✓"], ["Sound library", "✓", "✓", "✓ (sounds download as you use them)"],
-        ["Importing projects from other software", "✓", "✓", "✓"], ["Recording from a microphone", "✓", "✓", "✓"], ["Branded share videos", "✓", "✓", "✓ through the share sheet"],
-        ["Plugins, STRATUM Wave, STRATUM Tune, Airwindows", "✓", "—", "—"], ["Stems, Record from another app, Go live", "✓", "—", "—"]])
+        ["Importing projects from other software", "✓", "✓", "✓"], ["Recording from a microphone", "✓", "✓", "✓"], ["Branded share videos and Visuals", "✓", "✓", "✓ through the share sheet"],
+        ["VST3 and VST2 plugins", "✓", "✓", "—"], ["Audio Unit plugins", "✓", "— (Mac only)", "—"], ["STRATUM Wave, STRATUM Tune, Airwindows", "✓", "✓", "—"],
+        ["Stem separation", "✓ (Apple silicon)", "✓", "—"], ["Record from another app", "✓", "✓ (one app on Windows 11, the whole PC on Windows 10)", "—"],
+        ["Go live", "✓", "✓", "—"], ["Syncing beats between devices", "✓", "✓", "✓"]])
+    + "<p>On Windows, VST3 plugins are found in <b>C:\\Program Files\\Common Files\\VST3</b> and VST2 plugins in the usual VST folders; their editors open in their own windows. Plugin settings travel with a project between the Mac and Windows versions. Share videos and Go live recordings are saved in <b>Videos › STRATUM</b>, and saved stream keys go in Windows Credential Manager.</p>"
     + "<p>Share videos on Windows, phones and tablets are recorded as the track plays once, so a 60-second clip takes about a minute to make.</p></section>")
 
 # 20

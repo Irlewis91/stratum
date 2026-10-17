@@ -19,7 +19,7 @@ Requires macOS 12 or later. Runs on Apple silicon and Intel; AI stem separation 
 
 ### Windows
 
-Download `STRATUM-Windows.zip` from the Releases page, unzip it, and double-click `STRATUM.exe` (keep it next to the `app` folder). Windows 10 or 11, 64-bit. STRATUM is not code-signed yet, so Windows SmartScreen may warn: choose **More info › Run anyway**. The Windows version has not been tested on a Windows PC yet.
+Download `STRATUM-Windows.zip` from the Releases page, unzip it, and double-click `STRATUM.exe` (keep it next to the `app` folder). Windows 10 or 11, 64-bit. STRATUM is not code-signed yet, so Windows SmartScreen may warn: choose **More info › Run anyway**. It is built and checked automatically on Windows 11 machines on GitHub (plugins, Wave, Tune, Airwindows, Go live, stems, recording and sharing), but not yet on a producer's own PC.
 
 ### iPhone, iPad, Android phones and tablets
 
@@ -50,9 +50,17 @@ Then press **Open / Import** on the other device and pick the file.
 | Sound library (791 CC0 sounds, 99 MIDI kits) | ✓ | ✓ | ✓ (sounds download as you use them) |
 | Import FL Studio, Ableton, Reason, Logic, MIDI, DAWproject | ✓ | ✓ | ✓ |
 | Recording from a microphone or interface | ✓ | ✓ | ✓ |
-| Branded share videos | ✓ | ✓ | ✓ (via the share sheet) |
-| Audio Unit / VST3 / VST2 plugins, STRATUM Wave, STRATUM Tune, Airwindows | ✓ | — | — |
-| Stem separation, Record from another app, Go live | ✓ | — | — |
+| Branded share videos and Visuals | ✓ | ✓ | ✓ (via the share sheet) |
+| VST3 and VST2 plugins, with their own windows | ✓ | ✓ | — |
+| Audio Unit plugins | ✓ | — (a Mac-only format) | — |
+| STRATUM Wave, STRATUM Tune, 508 Airwindows effects | ✓ | ✓ | — |
+| Stem separation | ✓ (Apple silicon) | ✓ | — |
+| Record from another app | ✓ | ✓ (one app on Windows 11; the whole PC's sound on Windows 10) | — |
+| Go live (Twitch, YouTube, Instagram, TikTok) | ✓ | ✓ | — |
+| Finding a project's missing samples automatically | ✓ | ✓ | — |
+| Syncing beats between devices | ✓ | ✓ | ✓ |
+
+Plugin settings travel with a project between the Mac and Windows versions.
 
 ## What it does
 

@@ -98,7 +98,7 @@
     if (key === PL._key) return PL.mix();
     PL._key = key;
     const failed = await ask({ op: 'auSync', tracks });
-    if (failed && failed.length) S.ui.toast('Some plugins on this project are not installed on this Mac and were skipped.', true);
+    if (failed && failed.length) S.ui.toast(`Some plugins on this project are not installed on this ${IO.platform === 'windows' ? 'PC' : 'Mac'} and were skipped.`, true);
   };
   PL.mix = () => { if (native() && S.proj) native().postMessage({ op: 'auMix', tracks: mixOf(S.proj), master: S.proj.master.vol }); };
   PL.note = (t, p, v, delay, dur) => native().postMessage({ op: 'auNote', t: t.id, p, v: v == null ? 0.8 : v, delay: Math.max(0, delay), d: dur });

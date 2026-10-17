@@ -45,6 +45,7 @@
   const opts = (list, cur) => list.map((o) => { const [v, l] = Array.isArray(o) ? o : [o, o]; return `<option value="${esc(v)}" ${String(v) === String(cur) ? 'selected' : ''}>${esc(l)}</option>`; }).join('');
 
   // ---------- layout ----------
+  const DEV = IO.platform === 'windows' ? 'PC' : 'Mac';
   const PHONE = matchMedia('(max-width: 700px)'), TOUCH = matchMedia('(pointer: coarse)'), MAC = /Mac/.test(navigator.platform) && navigator.maxTouchPoints < 2;
   const PANEL_NAMES = { rack: 'Rack', editor: 'Piano roll', timeline: 'Song', mixer: 'Mixer', devices: 'Devices', session: 'Clips', inspector: 'Track' };
   PHONE.addEventListener('change', () => render());
@@ -354,7 +355,7 @@
     if (back) {
       h += P().lfos.map((l, i) => `<div class="dev lfo"><h4>LFO ${i + 1} · CV source</h4><div class="krow">${ctl('knob', { k: 'lfo', i, key: 'rate' }, l.rate, 'Rate')}${ctl('knob', { k: 'lfo', i, key: 'depth' }, l.depth, 'Depth')}</div><select data-chg="lfoShape" data-i="${i}">${opts(['sine', 'triangle', 'square', 'sawtooth'], l.shape)}</select><div class="jackw"><i class="jack out ${U.arm === i ? 'armed' : ''}" data-act="jackOut" data-i="${i}"></i><span>CV out</span></div></div>`).join('');
     }
-    const kindSel = t.type === 'audio' ? '' : `<label class="ikind">Instrument <select data-chg="instKind">${opts([['synth', 'Built-in synth'], ['wave', 'Wavetable synth (STRATUM Wave)'], ['sample', 'My own sample…'], ['drums', 'Drum kit / pads'], ['plugin', 'Plugin (Audio Unit / VST3 / VST2)…']], t.plugin ? (t.plugin.id === 'stratum|wave' ? 'wave' : 'plugin') : t.type === 'drums' ? 'drums' : t.inst && t.inst.sample ? 'sample' : 'synth')}</select></label>`;
+    const kindSel = t.type === 'audio' ? '' : `<label class="ikind">Instrument <select data-chg="instKind">${opts([['synth', 'Built-in synth'], ['wave', 'Wavetable synth (STRATUM Wave)'], ['sample', 'My own sample…'], ['drums', 'Drum kit / pads'], ['plugin', IO.platform === 'windows' ? 'Plugin (VST3 / VST2)…' : 'Plugin (Audio Unit / VST3 / VST2)…']], t.plugin ? (t.plugin.id === 'stratum|wave' ? 'wave' : 'plugin') : t.type === 'drums' ? 'drums' : t.inst && t.inst.sample ? 'sample' : 'synth')}</select></label>`;
     if (t.plugin && t.type !== 'audio') {
       const pl = t.plugin, ok = S.plug.available();
       const wave = pl.id === 'stratum|wave';
@@ -363,9 +364,9 @@
           `<div class="wavebox"><canvas id="waveA" width="240" height="70"></canvas><button data-act="waveLoad" data-osc="0">Load wavetable A…</button></div>` +
           `<div class="wavebox"><canvas id="waveB" width="240" height="70"></canvas><button data-act="waveLoad" data-osc="1">Load wavetable B…</button></div></div>` +
           `<div class="pctl grouped" data-slot="-1"><span class="hint">Loading controls…</span></div>` : '') +
-        (ok && !wave ? `<div class="krow"><button data-act="plugOpen" data-slot="-1">Open plugin window</button><button data-act="plugPick" data-kind="inst">Change plugin…</button></div>` : '') + (ok ? '' : `<p class="hint">Plugins run in the STRATUM Mac app; here the track plays the built-in sound.</p>`) +
+        (ok && !wave ? `<div class="krow"><button data-act="plugOpen" data-slot="-1">Open plugin window</button><button data-act="plugPick" data-kind="inst">Change plugin…</button></div>` : '') + (ok ? '' : `<p class="hint">Plugins run in the STRATUM Mac and Windows apps; here the track plays the built-in sound.</p>`) +
         `<div class="hint">Plugin effects</div>` + (pl.fx || []).map((f, fi) => fxRow(t, f, fi)).join('') +
-        `<div class="krow"><button data-act="plugPick" data-kind="fx">+ Plugin effect…</button></div><p class="hint">Plugin tracks go straight to the Mac's audio output, so the STRATUM effects and master section do not process them.</p></div>`;
+        `<div class="krow"><button data-act="plugPick" data-kind="fx">+ Plugin effect…</button></div><p class="hint">Plugin tracks go straight to the ${DEV}'s audio output, so the STRATUM effects and master section do not process them.</p></div>`;
     } else if (t.type === 'synth') {
       const i = t.inst, waves = ['sine', 'triangle', 'sawtooth', 'square'], smp = i.sample;
       const src = smp ? `<div class="krow"><span class="smp" title="${esc(smp.name)}">Sample: ${esc(smp.name)}</span><label>Root note <input type="number" min="12" max="108" value="${smp.root}" data-chg="instRoot" style="width:52px"> ${S.noteName(smp.root)}</label><label><input type="checkbox" data-chg="instLoop" ${smp.loop ? 'checked' : ''}> Loop</label><button data-act="instLoad">Replace…</button><button data-act="instClear">Use oscillators</button></div><div class="krow">` +
@@ -385,7 +386,7 @@
       const pf = t.pfx || [];
       h += `<div class="dev inst plug"><h4>Plugin effects</h4>` + pf.map((f, fi) => fxRow(t, f, fi)).join('') +
         `<div class="krow"><button data-act="plugPick" data-kind="fx">+ Plugin effect…</button></div>` +
-        (pf.length ? `<p class="hint">With a plugin effect on it, this track plays through the Mac's audio output directly, so the STRATUM effects on this track and the master section do not process it${t.type === 'synth' && !t.inst.sample ? ', and CV cables to its filter have no effect' : ''}.</p>` : `<p class="hint">Audio Unit, VST3 or VST2 effects on this track's audio.</p>`) + `</div>`;
+        (pf.length ? `<p class="hint">With a plugin effect on it, this track plays through the ${DEV}'s audio output directly, so the STRATUM effects on this track and the master section do not process it${t.type === 'synth' && !t.inst.sample ? ', and CV cables to its filter have no effect' : ''}.</p>` : `<p class="hint">Audio Unit, VST3 or VST2 effects on this track's audio.</p>`) + `</div>`;
     }
     t.fx.forEach((f, fi) => {
       h += `<div class="dev fx"><h4>${esc(f.name)} <button class="x" data-act="rmFx" data-i="${fi}" title="Remove">✕</button></h4>${f.prompt ? `<p class="hint">“${esc(f.prompt)}”</p>` : ''}<div class="krow">`;
@@ -507,7 +508,7 @@
       h += `<div class="scroll aud">` + (rec ? `<canvas id="wave" width="1000" height="110"></canvas><div class="tools"><b>${esc(rec.name)}</b><span>${rec.buf.duration.toFixed(1)} s</span>` +
         `<label>Source BPM <input type="number" data-chg="srcBpm" value="${rec.bpm || ''}" min="40" max="240"></label><label><input type="checkbox" data-chg="warp" ${c.warp ? 'checked' : ''}> Warp to project tempo</label>` +
         `<label>Loop length (bars) <input type="number" data-chg="clipBars" value="${c.bars}" min="1" max="999"></label><button data-act="stems">Separate stems (AI)</button><button data-act="split">Band split into 4 tracks</button><button data-act="loadAudio" data-t="${t.id}">${rg ? 'Add audio…' : 'Replace audio…'}</button></div>` +
-        `<p class="hint">Warping time-stretches the file to the project tempo without changing its pitch. Separate stems runs a neural network (HT-Demucs) on this Mac to split a mix into vocals, drums, bass and other; it can take about as long as the audio itself. Band split is a quick frequency and mid/side filter.</p>`
+        `<p class="hint">Warping time-stretches the file to the project tempo without changing its pitch. Separate stems runs a neural network (HT-Demucs) on this ${DEV} to split a mix into vocals, drums, bass and other; it can take about as long as the audio itself. Band split is a quick frequency and mid/side filter.</p>`
         : `<p class="pad">No audio in “${esc(sc.name)}”. <button data-act="loadAudio" data-t="${t.id}">Load audio…</button></p>`) + '</div>';
       setHTML('editor', h);
       if (rec) drawWave($('#wave'), rec.buf);
@@ -910,7 +911,7 @@
     clearAuto() { structural(() => { delete curTrack().auto; delete P().master.auto; }); },
     wanted() {
       const w = P().wanted || [];
-      showPop(`<h3>Missing samples</h3><p class="hint">This project uses these sound files, but they are not on this Mac where the project says they are. Choose them (you can pick several at once); files are matched by name.</p><div class="plist">` +
+      showPop(`<h3>Missing samples</h3><p class="hint">This project uses these sound files, but they are not on this ${DEV} where the project says they are. Choose them (you can pick several at once); files are matched by name.</p><div class="plist">` +
         w.map((x) => `<div title="${esc(x.path)}">${esc(x.file)}</div>`).join('') + `</div><button data-act="wantedPick">Choose sample files…</button> <button data-act="closePop">Close</button>`);
     },
     wantedPick() { closePop(); U.pendingAudio = null; U.pendingSample = null; U.locating = true; U.located = 0; IO.open(true); },
@@ -1040,7 +1041,7 @@
       if (!S.plug.available()) return U.toast(IO.macOnly('Plugin hosting'), true);
       const kind = el.dataset.kind, list = (await S.plug.list()).filter((p) => p.kind === kind);
       showPop(`<h3>${kind === 'inst' ? 'Choose an instrument plugin' : 'Add a plugin effect'} · ${esc(curTrack().name)}</h3><input placeholder="Type to filter" oninput="const q=this.value.toLowerCase();this.parentNode.querySelectorAll('.plist button').forEach(b=>b.hidden=!b.textContent.toLowerCase().includes(q))">` +
-        `<p class="hint">${list.length} Audio Unit and VST3 ${kind === 'inst' ? 'instruments' : 'effects'} installed on this Mac.</p><div class="plist">` +
+        `<p class="hint">${list.length} ${IO.platform === 'windows' ? 'VST3, VST2 and built-in' : 'Audio Unit, VST3, VST2 and built-in'} ${kind === 'inst' ? 'instruments' : 'effects'} on this ${DEV}.</p><div class="plist">` +
         list.sort((a, b) => (/Recommended/.test(b.collections || '') ? 1 : 0) - (/Recommended/.test(a.collections || '') ? 1 : 0)).map((p) => `<button data-act="plugSet" data-kind="${kind}" data-id="${esc(p.id)}" data-name="${esc(p.name)}" data-maker="${esc(p.maker)}" title="${esc(p.what || '')}">${esc(p.name)} <small>${esc(p.maker)}${p.category ? ' · ' + esc(p.category) : ''}${/Recommended/.test(p.collections || '') ? ' · recommended' : ''}</small></button>`).join('') + `</div><button data-act="closePop">Cancel</button>`);
     },
     plugSet(el) {

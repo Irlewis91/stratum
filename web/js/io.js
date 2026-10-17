@@ -85,7 +85,7 @@
     IO.foundDone = () => { try { S.ui.wantedDone(n); } catch (e) { S.ui.toast('Samples: ' + (e.message || e), true); } res(n); };
     IO.host().postMessage({ op: 'findFiles', paths: [...new Set(w.map((x) => x.path))], near: IO.lastPath || '' });
   });
-  // VST instruments an imported project used: put the same plugin on the track when it is installed on this Mac.
+  // VST instruments an imported project used: put the same plugin on the track when it is installed on this computer.
   IO.matchPlugins = async () => {
     const proj = S.proj, want = proj.wantPlugins || [];
     if (!want.length || !S.plug.available()) return;
@@ -96,7 +96,7 @@
     }
     proj.wantPlugins = want.filter((w) => missing.includes(w.name));
     S.engine.rebuild(); S.ui.refresh();
-    S.ui.followUp((found.length ? `Loaded the installed plugin for: ${[...new Set(found)].join(', ')} (with its default sound; the settings saved in the original project are not transferred). ` : '') + (missing.length ? `Not installed on this Mac, so playing on a built-in sound: ${[...new Set(missing)].join(', ')}.` : ''), !found.length);
+    S.ui.followUp((found.length ? `Loaded the installed plugin for: ${[...new Set(found)].join(', ')} (with its default sound; the settings saved in the original project are not transferred). ` : '') + (missing.length ? `Not installed on this ${IO.platform === 'windows' ? 'PC' : 'Mac'}, so playing on a built-in sound: ${[...new Set(missing)].join(', ')}.` : ''), !found.length);
   };
   // ---- Apple binary property lists (used by Logic's MetaData.plist) ----
   IO.bplist = (ab) => {

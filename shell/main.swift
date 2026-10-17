@@ -794,20 +794,36 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKScript
     private func openFile(many: Bool = false) {
         let panel = NSOpenPanel()
         panel.allowsMultipleSelection = many
+        panel.treatsFilePackagesAsDirectories = false
         panel.canChooseDirectories = false
-        panel.message = many ? "Choose one or more sound files" : "Open a STRATUM project, or import MIDI, Ableton .als, FL Studio .flp or zipped loop package, a Reason song or an audio file"
+        panel.message = many ? "Choose one or more sound files" : "Open a STRATUM project, or import MIDI, Ableton .als, FL Studio .flp or zipped loop package, a Logic Pro project, a Reason song or an audio file"
         panel.beginSheetModal(for: window) { [weak self] result in
             guard let self = self else { return }
             var queue = result == .OK ? panel.urls : []
             func next() {
                 guard !queue.isEmpty else { self.web.evaluateJavaScript("S.ui.openDone()", completionHandler: nil); return }
                 let url = queue.removeFirst()
+                if url.pathExtension.lowercased() == "logicx" { return self.openLogic(url) { next() } }
                 guard let data = try? Data(contentsOf: url) else { self.alert("Could not read \(url.lastPathComponent)."); return next() }
                 if data.count > 400_000_000 { self.alert("That file is too large to import (limit 400 MB)."); return next() }
                 self.web.callAsyncJavaScript("await S.io.nativeOpen(name, b64, path);", arguments: ["name": url.lastPathComponent, "b64": data.base64EncodedString(), "path": url.path], in: nil, in: .page) { _ in next() }
             }
             next()
         }
+    }
+
+    /// A Logic Pro project is a folder: send STRATUM the project data, its settings and the sound files inside it.
+    private func openLogic(_ url: URL, done: @escaping () -> Void) {
+        var files: [String: String] = [:]
+        let fm = FileManager.default
+        if let walker = fm.enumerator(at: url, includingPropertiesForKeys: [.fileSizeKey]) {
+            for case let f as URL in walker {
+                let rel = String(f.path.dropFirst(url.path.count + 1))
+                guard rel.hasSuffix("/ProjectData") || rel.hasSuffix("/MetaData.plist") || rel.hasPrefix("Media/") else { continue }
+                if let d = try? Data(contentsOf: f), d.count < 400_000_000 { files[rel] = d.base64EncodedString() }
+            }
+        }
+        web.callAsyncJavaScript("await S.io.nativeLogic(name, files);", arguments: ["name": url.lastPathComponent, "files": files], in: nil, in: .page) { _ in done() }
     }
 
     private func saveFile(name: String, base64: String) {

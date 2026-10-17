@@ -21,6 +21,13 @@
     if (native()) native().postMessage({ op: 'open', many: !!many });
     else { inp.multiple = !!many; inp.click(); }
   };
+  // A .logicx package opened from the Mac app: the shell sends the files inside it.
+  IO.nativeLogic = async (name, files) => {
+    const map = {};
+    for (const k in files) map[k] = unb64(files[k]).buffer;
+    try { const res = await IO.logicIn(map, name.replace(/\.logicx$/i, '')); S.ui.imported(res); if (res.proj.wantPlugins && res.proj.wantPlugins.length) await IO.matchPlugins(); }
+    catch (e) { S.ui.toast('Could not open ' + name + ': ' + (e.message || e), true); }
+  };
   IO.nativeOpen = (name, data, path) => { IO.lastPath = path || ''; return IO.importBytes(name, unb64(data).buffer); };
 
   // ---- samples a project refers to but does not contain (FL Studio projects point at files on disk) ----
@@ -63,7 +70,156 @@
     }
     proj.wantPlugins = want.filter((w) => missing.includes(w.name));
     S.engine.rebuild(); S.ui.refresh();
-    S.ui.followUp((found.length ? `Loaded the installed plugin for: ${found.join(', ')} (with its default sound; the settings saved in the FL project are not transferred). ` : '') + (missing.length ? `Not installed on this Mac, so playing on a built-in sound: ${missing.join(', ')}.` : ''), !found.length);
+    S.ui.followUp((found.length ? `Loaded the installed plugin for: ${[...new Set(found)].join(', ')} (with its default sound; the settings saved in the original project are not transferred). ` : '') + (missing.length ? `Not installed on this Mac, so playing on a built-in sound: ${[...new Set(missing)].join(', ')}.` : ''), !found.length);
+  };
+  // ---- Apple binary property lists (used by Logic's MetaData.plist) ----
+  IO.bplist = (ab) => {
+    const v = new DataView(ab), u8 = new Uint8Array(ab), n = u8.length;
+    if (String.fromCharCode(...u8.subarray(0, 8)) !== 'bplist00') return null;
+    const offSize = u8[n - 26], refSize = u8[n - 25], count = Number(v.getBigUint64(n - 24)), top = Number(v.getBigUint64(n - 16)), table = Number(v.getBigUint64(n - 8));
+    const int = (o, size) => { let x = 0; for (let i = 0; i < size; i++) x = x * 256 + u8[o + i]; return x; };
+    const offs = []; for (let i = 0; i < count; i++) offs.push(int(table + i * offSize, offSize));
+    const obj = (k, depth) => {
+      if (depth > 32) return null;
+      let o = offs[k]; const m = u8[o], hi = m >> 4;
+      let len = m & 15; o++;
+      if ((hi === 5 || hi === 6 || hi === 10 || hi === 13 || hi === 4) && len === 15) { const im = u8[o], sz = 1 << (im & 15); len = int(o + 1, sz); o += 1 + sz; }
+      switch (hi) {
+        case 0: return m === 9 ? true : m === 8 ? false : null;
+        case 1: return int(o, 1 << (m & 15));
+        case 2: return (m & 15) === 3 ? v.getFloat64(o) : v.getFloat32(o);
+        case 5: return String.fromCharCode(...u8.subarray(o, o + len));
+        case 6: { let t = ''; for (let i = 0; i < len; i++) t += String.fromCharCode(v.getUint16(o + 2 * i)); return t; }
+        case 10: { const a = []; for (let i = 0; i < len; i++) a.push(obj(int(o + i * refSize, refSize), depth + 1)); return a; }
+        case 13: { const d = {}; for (let i = 0; i < len; i++) d[obj(int(o + i * refSize, refSize), depth + 1)] = obj(int(o + (len + i) * refSize, refSize), depth + 1); return d; }
+        default: return null;
+      }
+    };
+    return obj(top, 0);
+  };
+
+  // ---- Logic Pro project (.logicx package, or a zip of one) ----
+  // ProjectData is a chain of chunks: a reversed four-letter tag, a 36-byte header (the chunk's id at byte 10, its length
+  // at byte 28) and the body. MSeq chunks are regions and folders (name, length); EvSq chunks hold their events in
+  // 16-byte records; Envi chunks are channel strips (track names); AuCU chunks are plugin settings, including the sample
+  // each Quick Sampler plays. The song's arrangement is the event list whose records place regions: position, channel
+  // strip, row and the region whose notes play. Positions are in ticks, 960 to the quarter note; inside a region the
+  // first beat is tick 38400, and on the arrangement bar 1 is tick 34560.
+  IO.logicIn = async (files, name) => {
+    const key = Object.keys(files).find((k) => /(^|\/)ProjectData$/.test(k));
+    if (!key) throw new Error('No ProjectData found in this Logic project');
+    const ab = files[key], v = new DataView(ab), u8 = new Uint8Array(ab), TPQ = 960, REGION0 = 38400, SONG0 = 34560;
+    const ascii = (o, n) => String.fromCharCode(...u8.subarray(o, o + n));
+    const chunks = [];
+    for (let o = 24; o + 36 <= u8.length;) {
+      const n = Number(v.getBigUint64(o + 28, true));
+      chunks.push({ tag: ascii(o, 4).split('').reverse().join(''), id: v.getUint32(o + 10, true), b: o + 36, n });
+      if (n > u8.length) break;
+      o += 36 + n;
+    }
+    const meta = files[key.replace(/ProjectData$/, 'MetaData.plist')], md = (meta && IO.bplist(meta)) || {};
+    const text = (o, end) => { const n = v.getUint16(o, true); return o + 2 + n <= end ? new TextDecoder().decode(u8.subarray(o + 2, o + 2 + n)).replace(/\0+$/, '') : ''; };
+    const strips = {}, seqs = {}, events = {}, samples = [], plugins = [];
+    for (const c of chunks) {
+      const end = c.b + c.n;
+      if (c.tag === 'Envi') { const m = ascii(c.b, Math.min(c.n, 400)).match(/[\x20-\x7e]{3,}/); strips[c.id] = m ? m[0] : ''; }
+      if (c.tag === 'MSeq' && c.n > 80) {
+        const nm = text(c.b + 16, end), at = c.b + 18 + nm.length + (nm.length & 1) + 60;
+        seqs[c.id] = { name: nm, len: at + 4 <= end ? v.getUint32(at, true) : 0 };
+      }
+      if (c.tag === 'EvSq') (events[c.id] = events[c.id] || []).push(c);
+      if (c.tag === 'AuCU' && c.n >= 8) {
+        const kind = v.getUint32(c.b - 18, true);
+        const s = ascii(c.b, Math.min(c.n, 260)).match(/[\x20-\x7e]{3,}/g) || [];
+        if (kind === 6 && s[0]) samples.push(s[0]);
+        if (kind === 2 && s[0] && s[0] !== '#default.pst') plugins.push(s[0]); else if (kind === 2 && s[1]) plugins.push(s[1]);
+      }
+    }
+    // Notes of a region: groups of 16-byte records; a note's first record has status 0x9n and the next record 0x89 at byte 7.
+    const notesOf = (id) => {
+      const out = [];
+      for (const c of events[id] || []) for (let o = c.b; o + 32 <= c.b + c.n; o += 16) {
+        if ((u8[o] & 0xf0) !== 0x90 || u8[o + 13] || u8[o + 14] || u8[o + 23] !== 0x89) continue;
+        const vel = u8[o + 11], pitch = u8[o + 12];
+        if (pitch > 127 || vel < 1 || vel > 127) continue;
+        out.push({ t: (v.getUint32(o + 4, true) - REGION0) / TPQ, d: Math.max(0.05, v.getUint32(o + 28, true) / TPQ), p: pitch, v: vel / 127 });
+      }
+      return out;
+    };
+    // The arrangement: 80-byte records of type 0x20 (MIDI region) or 0x24 (audio region).
+    const placed = [];
+    for (const id in events) for (const c of events[id]) for (let o = c.b; o + 48 <= c.b + c.n; o += 16) {
+      if ((u8[o] !== 0x20 && u8[o] !== 0x24) || u8[o + 1] || u8[o + 23] !== 0x89 || v.getUint32(o + 28, true) !== 0x3fffffff) continue;
+      placed.push({ audio: u8[o] === 0x24, pos: v.getUint32(o + 4, true), strip: v.getUint32(o + 16, true), row: v.getUint16(o + 20, true), seq: v.getUint32(o + 32, true) });
+    }
+    if (!placed.length) throw new Error('No arrangement found in this Logic project');
+    const bpm = md.BeatsPerMinute || 120, p = S.blankProject();
+    p.name = name; p.bpm = Math.min(300, Math.max(30, bpm));
+    const keyIdx = S.NOTES ? S.NOTES.indexOf(md.SongKey) : -1;
+    if (keyIdx >= 0) p.root = keyIdx;
+    if (md.SongGenderKey) p.scale = md.SongGenderKey === 'minor' ? 'Minor' : 'Major';
+    if (!p.scenes.length) S.newScene(p, 'Scene 1', 1);
+    S.migrate(p);
+    // Sound files bundled with the project.
+    const media = Object.keys(files).filter((k) => /\.(wav|aif|aiff|caf|mp3|m4a)$/i.test(k));
+    const stem = (k) => k.split('/').pop().replace(/\.[^.]+$/, '');
+    const sampleFiles = media.filter((k) => /\/Samples\//.test(k) || /^Samples\//.test(k));
+    const usedFiles = new Set(), ctx = E.ensure();
+    const load = async (k) => { usedFiles.add(k); const buf = await ctx.decodeAudioData(files[k].slice(0)); const id = S.uid(); S.buffers[id] = { id, name: stem(k), buf, bpm: 0 }; return S.buffers[id]; };
+    const rows = [...new Set(placed.map((r) => r.strip))].sort((a, b) => Math.min(...placed.filter((r) => r.strip === a).map((r) => r.row)) - Math.min(...placed.filter((r) => r.strip === b).map((r) => r.row)));
+    const tracks = {}, report = { midi: 0, notes: 0, audio: 0, samplers: 0, missing: [] };
+    for (const sid of rows) {
+      const nm = strips[sid] || 'Track', mine = placed.filter((r) => r.strip === sid), audio = mine.some((r) => r.audio);
+      const t = S.newTrack(p, audio ? 'audio' : 'synth', nm);
+      tracks[sid] = t;
+      if (!audio && samples.includes(nm)) t.wantSample = nm;
+      for (const r of mine) {
+        const start = (r.pos - SONG0) / TPQ;
+        if (audio !== r.audio) continue;
+        if (r.audio) {
+          const f = media.find((k) => stem(k) === nm) || media.find((k) => stem(k).startsWith(nm));
+          if (!f) { report.missing.push(nm); continue; }
+          const rec = S.buffers[t.audioId] || (await load(f)); t.audioId = rec.id;
+          const beats = (rec.buf.duration * p.bpm) / 60;
+          t.regions.push({ id: S.uid(), start, len: beats, off: 0, clip: { audio: rec.id, warp: false, bars: Math.max(1, Math.ceil(beats / 4)), gain: 1 } });
+          report.audio++;
+          continue;
+        }
+        const notes = notesOf(r.seq), sq = seqs[r.seq] || {};
+        const len = sq.len > 0 ? sq.len / TPQ : Math.max(4, Math.ceil(Math.max(0, ...notes.map((n) => n.t + n.d)) / 4) * 4);
+        const inside = notes.filter((n) => n.t >= 0 && n.t < len);
+        if (!inside.length) continue;
+        t.regions.push({ id: S.uid(), start, len, off: 0, clip: { bars: Math.max(1, Math.ceil(len / 4)), notes: inside } });
+        report.midi++; report.notes += inside.length;
+      }
+    }
+    // Quick Sampler tracks play their sample; a sample file whose name differs from its sampler goes to the one left over.
+    const free = sampleFiles.filter((k) => !samples.includes(stem(k)));
+    for (const t of Object.values(tracks)) {
+      if (!t.wantSample) continue;
+      const f = sampleFiles.find((k) => stem(k) === t.wantSample) || free.shift();
+      delete t.wantSample;
+      if (!f) { report.missing.push(t.name); continue; }
+      const rec = await load(f);
+      t.inst.sample = { audio: rec.id, name: rec.name, root: 60, loop: false };
+      report.samplers++;
+    }
+    // A track Logic bounced in place ("<name>_bip") already carries the real sound, so its MIDI original is muted.
+    const bounced = [];
+    for (const t of Object.values(tracks)) if (t.type === 'synth' && !t.inst.sample && Object.values(tracks).some((o) => o.type === 'audio' && o.regions.length && o.name.startsWith(t.name + '_b'))) { t.mute = true; bounced.push(t.name); }
+    p.tracks = p.tracks.filter((t) => t.regions.length);
+    const synthLeft = p.tracks.filter((t) => t.type === 'synth' && !t.inst.sample).map((t) => t.name);
+    const others = [...new Set(plugins.filter((x) => x && x !== 'Q-Sampler' && x !== 'Klopfgeist'))];
+    if (others.length && synthLeft.length) p.wantPlugins = synthLeft.map((n) => ({ t: p.tracks.find((t) => t.name === n).id, name: others[0], maker: '' }));
+    S.migrate(p);
+    return {
+      proj: p,
+      report: `Logic Pro project: ${p.tracks.length} tracks, ${report.midi} MIDI regions with ${report.notes} notes, ${report.audio} audio regions, tempo ${+p.bpm.toFixed(2)}` + (md.SongKey ? `, key ${md.SongKey} ${md.SongGenderKey || ''}` : '') + '. ' +
+        (report.samplers ? `${report.samplers} Quick Sampler tracks play their own samples. ` : '') +
+        (bounced.length ? `${bounced.join(', ')} ${bounced.length > 1 ? 'were' : 'was'} bounced to audio in Logic, so the MIDI ${bounced.length > 1 ? 'tracks are' : 'track is'} muted and the bounce plays. ` : '') +
+        (others.length ? `Logic plugins (${others.join(', ')}) are not recreated. ` : '') + (report.missing.length ? `Missing sound files: ${report.missing.join(', ')}. ` : '') +
+        'Mixer levels, effects and automation are not read.',
+    };
   };
   // Minimal zip reader (stored and deflated entries) for FL Studio "zipped loop packages".
   IO.unzip = async (ab) => {
@@ -709,7 +865,15 @@ ${lanes}    </Lanes>
       else if (ext === 'zip') {
         // FL Studio zipped loop package: the project plus the samples it uses.
         const files = await IO.unzip(ab), flp = files.find((f) => /\.flp$/i.test(f.name));
-        if (!flp) throw new Error('No FL Studio project found inside this zip');
+        if (!flp && files.some((f) => /\.logicx\//i.test(f.name))) {
+          const map = {}, nm = (files.find((f) => /\.logicx\//i.test(f.name)).name.match(/([^/]+)\.logicx\//i) || [])[1] || base;
+          for (const f of files) { const m = f.name.match(/\.logicx\/(.*)$/i); if (m && m[1] && !/(^|\/)\._/.test(m[1])) map[m[1]] = f.data; }
+          res = await IO.logicIn(map, nm);
+          S.ui.imported(res);
+          if (res.proj.wantPlugins && res.proj.wantPlugins.length) await IO.matchPlugins();
+          return;
+        }
+        if (!flp) throw new Error('No FL Studio or Logic Pro project found inside this zip');
         res = IO.flpIn(flp.data, flp.name.split('/').pop().replace(/\.flp$/i, ''));
         S.ui.imported(res);
         let n = 0;
@@ -718,7 +882,7 @@ ${lanes}    </Lanes>
         return IO.matchPlugins();
       }
       else if (ext === 'reason') res = IO.reasonIn(ab, base);
-      else if (['rns', 'ptx', 'ptf', 'logicx', 'omf', 'aaf', 'dawproject'].includes(ext)) throw new Error('.' + ext + ' files cannot be opened in this version');
+      else if (['rns', 'ptx', 'ptf', 'omf', 'aaf', 'dawproject'].includes(ext)) throw new Error('.' + ext + ' files cannot be opened in this version');
       else if (S.ui.pendingWave && !['stratum', 'json', 'mid', 'midi', 'als', 'flp', 'zip', 'reason'].includes(ext)) {
         // Audio becomes a wavetable for STRATUM Wave: up to 64 single cycles of 2048 samples, evenly spaced through the file.
         const w = S.ui.pendingWave, buf = await E.ensure().decodeAudioData(ab), n = buf.length, mono = new Float32Array(n);

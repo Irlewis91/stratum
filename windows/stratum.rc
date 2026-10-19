@@ -13,8 +13,8 @@ BEGIN
       VALUE "CompanyName", "STRATUM"
       VALUE "FileDescription", "STRATUM"
       VALUE "ProductName", "STRATUM"
-      VALUE "FileVersion", "0.1.0-alpha.10.5"
-      VALUE "ProductVersion", "0.1.0-alpha.10.5"
+      VALUE "FileVersion", "0.1.0-alpha.10.75"
+      VALUE "ProductVersion", "0.1.0-alpha.10.75"
       VALUE "OriginalFilename", "STRATUM.exe"
     END
   END

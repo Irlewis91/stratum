@@ -42,10 +42,13 @@
   };
   IO.downloadPending = async () => { const f = IO._pending; if (!f) return; IO._sharing = true; IO.saveFile(f.name, new Uint8Array(await f.arrayBuffer())); IO._sharing = false; };
   // `many` lets the picker return several files (used to load a set of drum sounds at once).
-  IO.open = (many) => {
+  // `folder`: choose a folder instead, and get every sound file inside it (for adding a sample pack to My Sounds).
+  IO.open = (many, folder) => {
     const inp = document.getElementById('file');
-    if (IO.host()) IO.host().postMessage({ op: 'open', many: !!many });
-    else { inp.multiple = !!many; inp.click(); }
+    if (IO.host()) return IO.host().postMessage({ op: 'open', many: !!many, folder: !!folder });
+    inp.multiple = !!many;
+    if (folder) inp.setAttribute('webkitdirectory', ''); else inp.removeAttribute('webkitdirectory');
+    inp.click();
   };
   // A .logicx package opened from the Mac app: the shell sends the files inside it.
   IO.nativeLogic = async (name, files) => {
@@ -77,10 +80,14 @@
     return true;
   };
   // After an import, ask the Mac or Windows app to look for the missing files where the project says they are and beside the project file.
-  IO.seek = () => new Promise((res) => {
-    const w = (S.proj && S.proj.wanted) || [];
-    if (!w.length || !IO.host()) return res(0);
+  IO.seek = () => new Promise(async (res) => {
     let n = 0;
+    // A missing sample that is in My Sounds is used from there.
+    for (const m of await IO.mine.list()) {
+      if (((S.proj && S.proj.wanted) || []).some((w) => w.file.toLowerCase() === m.file.toLowerCase())) { const ab = await IO.mine.read(m.id); if (ab && (await IO.offer(m.file, ab))) n++; }
+    }
+    const w = (S.proj && S.proj.wanted) || [];
+    if (!w.length || !IO.host()) { if (n) S.ui.wantedDone(n); return res(n); }
     IO.found = async (name, data) => { if (await IO.offer(name, unb64(data).buffer)) n++; };
     IO.foundDone = () => { try { S.ui.wantedDone(n); } catch (e) { S.ui.toast('Samples: ' + (e.message || e), true); } res(n); };
     IO.host().postMessage({ op: 'findFiles', paths: [...new Set(w.map((x) => x.path))], near: IO.lastPath || '' });
@@ -746,12 +753,53 @@
     let rs = null;
     for (let o = body ? body.o : song.length; body && o < body.o + 1024; o++) if (ascii(song, o, 4) === 'CAT ' && ascii(song, o + 8, 4) === 'RS10') { rs = kids(o, body.end)[0]; break; }
     if (!rs) throw new Error('No song data found in this Reason file');
+    // Length-prefixed strings inside a chunk, in order.
+    const strings = (o, end) => {
+      const out = [];
+      for (let i = o; i + 5 <= end; i++) {
+        const n = sv.getUint32(i);
+        if (n < 2 || n > 1024 || i + 4 + n > end) continue;
+        const b = song.subarray(i + 4, i + 4 + n);
+        if (b.every((c) => c >= 32 && c < 127)) { out.push(new TextDecoder().decode(b)); i += 3 + n; }
+      }
+      return out;
+    };
+    // The samples a device's patch uses: file name, where it was on the producer's computer, and whether it comes from
+    // one of Reason's own sound banks (those are locked inside Reason and cannot be read).
+    const sampleRefs = (dv) => {
+      const pt = child(dv, 'PTCH'), list = pt && child(pt, 'BSTS');
+      return list ? all(list, 'BSTA').map((a) => {
+        const ss = strings(a.o, a.end), file = ss.find((x) => /\.(wav|aiff?|mp3|flac|ogg|m4a|drum|rx2|rex|rcy|sxt|smp)$/i.test(x)) || '';
+        let url = ss.find((x) => /^file:/i.test(x)) || '', path = '';
+        if (url) {
+          try { path = decodeURIComponent(url.replace(/^file:\/\/(localhost)?/i, '')); } catch (e) { path = url; }
+          if (/^\/[A-Za-z]:/.test(path)) path = path.slice(1);
+          if (file && /[\\/]$/.test(path)) path += file;
+        }
+        const factory = ss.some((x) => /Factory Sound Bank|Orkester|\.rfl$/i.test(x)) || /Projects Content\/Reason Factory/i.test(path) || /\.(drum|sxt|rx2)$/i.test(file);
+        return { file, path: path || file, factory };
+      }).filter((r) => r.file) : [];
+    };
     const devices = {};
     for (const dv of all(rs, 'DEVI')) {
       const ds = child(dv, 'DESC');
       if (!ds || ds.end - ds.o < 14) continue;
-      const nm = text(ds.o + 10, ds.end);
-      devices[sv.getUint32(ds.o + 6)] = { name: nm.s, kind: text(nm.next + 9, ds.end).s };
+      const nm = text(ds.o + 10, ds.end), kind = text(nm.next + 9, ds.end).s, d = { name: nm.s, kind, refs: sampleRefs(dv) };
+      // Kong: 16 drums, each with its sample, and 16 pads (notes 36-51) that each play one of the drums.
+      if (/Kong/i.test(kind)) {
+        const body = child(child(dv, 'PTCH') || { o: 0, end: 0 }, 'BODY'), rp = body && kids(body.o, body.end)[0];
+        const rdli = rp && child(rp, 'RDLI'), prpv = rp && child(rp, 'PrpV');
+        d.drums = [];
+        for (let o = rdli ? rdli.o : 0; rdli && o + 14 < rdli.end; o++) {
+          const n = sv.getUint32(o);
+          if (n > 0 && n < 256 && o + 4 + n + 8 <= rdli.end && ascii(song, o + 4 + n + 5, 4) === 'DRUM') { d.drums.push(new TextDecoder().decode(song.subarray(o + 4, o + 4 + n)).trim()); o += 3 + n; }
+        }
+        d.pads = [];
+        for (let o = prpv ? prpv.o : 0; prpv && o + 26 < prpv.end; o++) {
+          if (song[o + 4] === 19 && sv.getUint16(o) === 4 && ascii(song, o + 5, 19) === 'Assigned Drum Layer') d.pads[sv.getUint16(o + 2)] = sv.getUint16(o + 24);
+        }
+      }
+      devices[sv.getUint32(ds.o + 6)] = d;
     }
     const seq = child(rs, 'SQCT'), head = seq && child(seq, 'TRDC');
     let bpm = head && head.end - head.o >= 29 ? sv.getUint32(head.o + 23) / 1000 : 0;
@@ -763,6 +811,14 @@
     S.migrate(p);
     const ctx = E.ensure(), used = [];
     let nClips = 0, nNotes = 0, nAudio = 0, nMuted = 0, nLost = 0;
+    // A sample from the producer's own folders is looked for on this computer; one locked in a Reason sound bank is
+    // replaced by a similar built-in STRATUM sound.
+    p.wanted = []; p.libWant = [];
+    const want = (t, kind, r, pitch) => {
+      if (r.factory) return p.libWant.push({ t: t.id, pitch, file: r.file });
+      const file = r.file.split(/[\\/]/).pop();
+      if (!p.wanted.some((w) => w.t === t.id && w.file === file && w.pitch === pitch)) p.wanted.push({ t: t.id, kind, path: r.path, file, pitch });
+    };
     for (const tk of seq ? all(seq, 'TRFM') : []) {
       const td = child(tk, 'TRDC'), clips = all(tk, 'SNIF');
       if (!td || td.end - td.o < 14 || !clips.length) continue;
@@ -778,10 +834,24 @@
           rec = S.buffers[id] = { id, name: text(ri.o + 29, ri.end).s || dev.name || 'Audio', buf, bpm: own >= 20 && own <= 999 ? own : p.bpm };
         } else nLost++;
       }
-      const drums = !ri && /kong|redrum|drum/i.test(dev.kind);
+      const drums = !ri && /kong|redrum|drum/i.test(dev.kind), refs = (!ri && dev.refs) || [];
       const t = S.newTrack(p, ri ? 'audio' : drums ? 'drums' : 'synth', dev.name || (ri ? 'Audio' : dev.kind) || 'Track');
       t.mute = sv.getUint8(td.o + 13) === 1;
-      if (!ri && dev.kind) used.push(dev.kind);
+      // Which sample each note plays. Kong: pad (note 36-51) → drum → its sample. Redrum: channel n plays note 36+n.
+      // Other samplers: the first sample, across the keys.
+      const padRef = {};
+      if (drums && dev.drums) {
+        for (let pad = 0; pad < 16; pad++) {
+          const dn = dev.drums[dev.pads && dev.pads[pad] != null ? dev.pads[pad] : pad];
+          const r = dn && refs.find((x) => x.file.replace(/\.[^.]+$/, '').trim().toLowerCase() === dn.toLowerCase());
+          if (r) padRef[36 + pad] = r;
+        }
+      } else if (drums) refs.forEach((r, i) => { padRef[36 + i] = r; });
+      const keep = drums && Object.keys(padRef).length > 0;
+      if (!ri && dev.kind && !refs.length) used.push(dev.kind);
+      const sampler = !ri && !drums && refs.length ? refs[0] : null;
+      if (sampler) want(t, 'inst', sampler, 60);
+      const pitchesUsed = new Set();
       for (const cl of clips) {
         const ic = child(cl, 'SNIC');
         if (!ic || ic.end - ic.o < 26) continue;
@@ -808,23 +878,26 @@
           const pitch = song[o++], vel = song[o++], dur = vlq();
           o++;
           const tb = at / TPQ;
-          if (tb >= 0 && tb < len) notes.push({ t: tb, d: Math.max(0.05, Math.min(dur / TPQ, len - tb)), p: drums ? S.drumMap(pitch) : pitch, v: Math.max(0.05, vel / 127) });
+          if (tb >= 0 && tb < len) { notes.push({ t: tb, d: Math.max(0.05, Math.min(dur / TPQ, len - tb)), p: drums && !keep ? S.drumMap(pitch) : pitch, v: Math.max(0.05, vel / 127) }); pitchesUsed.add(pitch); }
         }
         if (!notes.length) continue;
         notes.sort((a, b) => a.t - b.t);
         t.regions.push({ id: S.uid(), start, len, off: 0, clip: { bars: Math.max(1, Math.ceil(len / 4)), notes } });
         nClips++; nNotes += notes.length;
       }
+      if (keep) for (const pitch of pitchesUsed) { if (padRef[pitch]) want(t, 'inst', padRef[pitch], pitch); else p.libWant.push({ t: t.id, pitch, like: S.drumMap(pitch) }); }
     }
     if (!p.tracks.length) throw new Error('No sequencer tracks with clips found in this Reason song');
-    const kinds = [...new Set(used)];
+    const kinds = [...new Set(used)], own = p.wanted.length, locked = [...new Set(p.libWant.filter((w) => w.file).map((w) => w.file))];
     return {
       proj: p,
       report: `Reason song: ${p.tracks.length} tracks, ${nClips} clips (${nAudio} audio), ${nNotes} notes, ` + (tempoRead ? `tempo ${+p.bpm.toFixed(2)}. ` : 'tempo not found, set to 120. ') +
         'Audio recordings came in with their clip positions and are stretched to the song tempo. ' +
-        (kinds.length ? `Reason devices are not recreated: ${kinds.join(', ')} tracks play on STRATUM's built-in sounds. ` : '') +
+        (own ? `Kong, Redrum and sampler tracks use ${own} of your own sample files; STRATUM looks for them on this computer, and “Missing samples” lets you choose any it cannot find. ` : '') +
+        (locked.length ? `${locked.length} sounds come from Reason's own sound banks, which only Reason can open, so similar built-in STRATUM sounds play instead (${locked.slice(0, 6).join(', ')}${locked.length > 6 ? '…' : ''}). ` : '') +
+        (kinds.length ? `Reason synths are not recreated: ${kinds.join(', ')} tracks play on STRATUM's built-in sounds. ` : '') +
         (nMuted ? `${nMuted} muted clips were left out. ` : '') + (nLost ? `${nLost} audio tracks had no readable recording. ` : '') +
-        'Mixer levels, effects, automation and samples inside devices are not read. To bring a device\'s real sound across, bounce its track to audio in Reason and save the song again: audio tracks come in as recorded.',
+        'Mixer levels and effects are not read. To bring any sound across exactly, bounce its track to audio in Reason and save the song again: audio tracks come in as recorded.',
     };
   };
 
@@ -929,12 +1002,52 @@ ${lanes}    </Lanes>
   // The sound library: the Mac app reads it from inside the app; Windows, phones, tablets and browsers fetch it from the
   // library folder next to the page.
   const libURL = (path) => 'library/' + path.split('/').map(encodeURIComponent).join('/');
-  IO.libList = async () => IO._lib || (IO._lib = native() ? JSON.parse((await S.plug.ask({ op: 'libList' })) || '[]')
+  const builtIn = async () => IO._lib || (IO._lib = native() ? JSON.parse((await S.plug.ask({ op: 'libList' })) || '[]')
     : await fetch('library/library.json').then((r) => (r.ok ? r.json() : [])).catch(() => []));
+  // The built-in sounds followed by the producer's own (My Sounds).
+  IO.libList = async () => {
+    if (IO._all) return IO._all;
+    const mine = (await IO.mine.list()).map((m) => ({ path: 'mine:' + m.id, name: m.name, file: m.file, category: 'My Sounds', kind: m.kind, collection: m.from || 'My Sounds', mine: true, id: m.id }));
+    return IO._all || (IO._all = [...(await builtIn()), ...mine]);
+  };
   IO.libRead = async (path) => {
+    if (path.startsWith('mine:')) return IO.mine.read(path.slice(5));
     if (!native()) return fetch(libURL(path)).then((r) => (r.ok ? r.arrayBuffer() : null)).catch(() => null);
     const b = await S.plug.ask({ op: 'libRead', path }); return b ? unb64(b).buffer : null;
   };
+  // My Sounds: sound files the producer adds, kept on this device (in the browser's storage, inside the app) so they are
+  // there for every project. The list and the sound data are stored apart so listing stays quick.
+  IO.mine = (() => {
+    let dbp = null, cache = null;
+    const db = () => dbp || (dbp = new Promise((res, rej) => {
+      const r = indexedDB.open('stratum-sounds', 1);
+      r.onupgradeneeded = () => { r.result.createObjectStore('meta', { keyPath: 'id' }); r.result.createObjectStore('data'); };
+      r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+    }));
+    const tx = async (stores, mode, fn) => { const d = await db(), t = d.transaction(stores, mode), out = fn(t); return new Promise((res, rej) => { t.oncomplete = () => res(out); t.onerror = t.onabort = () => rej(t.error); }); };
+    const req = (r) => new Promise((res, rej) => { r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
+    return {
+      async list() {
+        if (cache) return cache;
+        try { const d = await db(); cache = (await req(d.transaction('meta').objectStore('meta').getAll())).sort((a, b) => a.name.localeCompare(b.name)); }
+        catch (e) { cache = []; }
+        return cache;
+      },
+      async read(id) { try { const d = await db(); return (await req(d.transaction('data').objectStore('data').get(id))) || null; } catch (e) { return null; } },
+      // Adds one file; returns false when it is not a sound STRATUM can play, or is already in My Sounds.
+      async add(file, ab, where) {
+        try { await E.ensure().decodeAudioData(ab.slice(0)); } catch (e) { return false; }
+        const name = file.replace(/\.[^.]+$/, ''), from = (where || '').split(/[\\/]/).slice(-2, -1)[0] || '';
+        if ((await this.list()).some((m) => m.file === file && m.size === ab.byteLength)) return false;
+        const m = { id: S.uid(), name, file, from, size: ab.byteLength, added: Date.now(), kind: IO.libCategory((where || '') + ' ' + name) || 'Other' };
+        await tx(['meta', 'data'], 'readwrite', (t) => { t.objectStore('meta').put(m); t.objectStore('data').put(ab, m.id); });
+        cache = null; IO._all = null;
+        return true;
+      },
+      async remove(id) { await tx(['meta', 'data'], 'readwrite', (t) => { t.objectStore('meta').delete(id); t.objectStore('data').delete(id); }); cache = null; IO._all = null; },
+      async usage() { const l = await this.list(); return l.reduce((a, m) => a + m.size, 0); },
+    };
+  })();
   IO.exportAs = async (kind) => {
     const proj = S.proj, base = proj.name || 'Untitled';
     if (kind === 'mid') return IO.saveFile(base + '.mid', IO.midiOut(proj));
@@ -946,9 +1059,46 @@ ${lanes}    </Lanes>
     }
   };
 
+  // Drum pads whose sample is locked in another program's sound bank (or not found yet) get the closest built-in sound:
+  // a Reason "Bd_BoofKick" becomes one of STRATUM's kicks. A real sample found later replaces it.
+  IO.libCategory = (name) => {
+    const w = (re) => new RegExp('(^|[^a-z])(' + re + ')', 'i').test(name);
+    return w('kick|bd|bass ?drum|808') ? 'Kicks' : w('snare|sd|snr|rim') ? 'Snares' : w('clap|clp|snap') ? 'Claps' : w('hi-?hats?|hats?|hh|oh|ch') ? 'Hats'
+      : w('toms?|tm') ? 'Toms' : w('cym|crash|ride|splash|china') ? 'Cymbals' : w('shk|shaker|cng|conga|bongo|cbs|cabasa|cowbell|perc|tamb|clave|wood') ? 'Percussion' : '';
+  };
+  IO.fillPads = async (proj) => {
+    const lib = (await IO.libList()).filter((x) => !x.mine), byP = { 36: 'Kicks', 38: 'Snares', 39: 'Claps', 42: 'Hats', 46: 'Hats', 45: 'Toms', 37: 'Snares', 56: 'Percussion' };
+    const jobs = [...(proj.libWant || []), ...(proj.wanted || []).filter((w) => w.kind === 'inst' && w.pitch !== 60).map((w) => ({ t: w.t, pitch: w.pitch, file: w.file }))];
+    let n = 0;
+    for (const j of jobs) {
+      const t = proj.tracks.find((x) => x.id === j.t);
+      if (!t || t.type !== 'drums' || (t.pads && t.pads[j.pitch])) continue;
+      const cat = (j.file && IO.libCategory(j.file)) || byP[j.like || S.drumMap(j.pitch)] || 'Percussion', open = /(^|[^a-z])(oh|open)/i.test(j.file || '') || j.like === 46;
+      const pool = lib.filter((x) => x.category === cat && (cat !== 'Hats' || /open/i.test(x.name) === open));
+      const pick = (pool.length ? pool : lib.filter((x) => x.category === cat))[[...(j.file || String(j.pitch))].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7) % Math.max(1, pool.length || 1)];
+      const ab = pick && (await IO.libRead(pick.path));
+      if (!ab) continue;
+      try {
+        const rec = await IO.addAudio(pick.name + '.flac', ab);
+        t.pads = t.pads || {};
+        t.pads[j.pitch] = { audio: rec.id, name: (j.file || pick.name).replace(/\.[^.]+$/, ''), tune: 0, gain: 1, standIn: pick.name };
+        n++;
+      } catch (e) {}
+    }
+    delete proj.libWant;
+    return n;
+  };
+
   // Returns {proj, report} for session formats, or {audio: rec} for audio files.
-  IO.importBytes = async (fname, ab) => {
+  IO.importBytes = async (fname, ab, where) => {
     const ext = (fname.split('.').pop() || '').toLowerCase(), base = fname.replace(/\.[^.]+$/, '');
+    const adding = S.ui.addingSounds;
+    if (adding) {
+      if (!/^(wav|wave|aif|aiff|aifc|mp3|m4a|aac|flac|ogg|oga|opus|caf|webm)$/.test(ext) || fname.startsWith('._')) { adding.skipped++; return; }
+      try { if (await IO.mine.add(fname, ab, where || IO.lastPath)) adding.added++; else adding.skipped++; }
+      catch (e) { adding.failed = e.message || String(e); }
+      return;
+    }
     try {
       let res;
       if (ext === 'stratum' || ext === 'json') res = { proj: await IO.loadProject(new TextDecoder().decode(ab)), report: 'Project opened.' };
@@ -974,7 +1124,7 @@ ${lanes}    </Lanes>
         S.ui.wantedDone(n);
         return IO.matchPlugins();
       }
-      else if (ext === 'reason') res = IO.reasonIn(ab, base);
+      else if (ext === 'reason') { res = IO.reasonIn(ab, base); await IO.fillPads(res.proj); }
       else if (['rns', 'ptx', 'ptf', 'omf', 'aaf', 'dawproject'].includes(ext)) throw new Error('.' + ext + ' files cannot be opened in this version');
       else if (S.ui.pendingWave && !['stratum', 'json', 'mid', 'midi', 'als', 'flp', 'zip', 'reason'].includes(ext)) {
         // Audio becomes a wavetable for STRATUM Wave: up to 64 single cycles of 2048 samples, evenly spaced through the file.

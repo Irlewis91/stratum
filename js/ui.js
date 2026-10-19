@@ -377,7 +377,7 @@
     } else if (t.type === 'drums') {
       const pads = t.pads || {};
       h += `<div class="dev inst pads"><h4>Drum Sampler <span><button data-act="padKit" title="Pick several sound files; kicks, snares, claps and hats go to matching pads">Load sounds…</button></span></h4>${kindSel}<p class="hint">Load your own one-shots onto any pad. Pads without a sample play the built-in sound.</p><div class="padgrid">` +
-        S.drumRows(t).map((d) => { const pd = pads[d.p]; return `<div class="padc ${pd ? 'on' : ''}"><b data-act="padPlay" data-p="${d.p}" title="Click to hear">${esc(d.n)}</b><small>${pd ? (d.base ? esc(d.base) + ' pad' : 'Extra pad') : 'Built-in'}</small>` +
+        S.drumRows(t).map((d) => { const pd = pads[d.p]; return `<div class="padc ${pd ? 'on' : ''}"><b data-act="padPlay" data-p="${d.p}" title="Click to hear">${esc(d.n)}</b><small${pd && pd.standIn ? ` title="The original sample is not on this computer, so the built-in ${esc(pd.standIn)} plays. Load your own sound to replace it."` : ''}>${pd && pd.standIn ? 'Stand-in sound' : pd ? (d.base ? esc(d.base) + ' pad' : 'Extra pad') : 'Built-in'}</small>` +
           (pd ? `<div class="krow">${ctl('hslider', { k: 'pad', t: t.id, p: d.p, key: 'tune' }, ((pd.tune || 0) + 12) / 24, 'Tune')}${ctl('hslider', { k: 'pad', t: t.id, p: d.p, key: 'gain' }, (pd.gain == null ? 1 : pd.gain) / 2, 'Level')}</div>` : '') +
           `<div class="krow"><button data-act="padLoad" data-p="${d.p}">${pd ? 'Replace…' : 'Load…'}</button>${pd ? `<button data-act="padClear" data-p="${d.p}">${d.extra ? 'Remove' : 'Built-in'}</button>` : ''}</div></div>`; }).join('') +
         `<div class="padc add" data-act="padAdd"><b>+ Add pads</b><small>Pick one or more sounds</small></div></div></div>`;
@@ -757,16 +757,18 @@
     // Sounds browser: built-in CC0 sounds by category, with search, preview, and a button that puts the sound where it fits
     // the selected track (a drum pad, the sampler, an audio clip, or for MIDI files the notes themselves).
     async sounds(el) {
-      const all = await IO.libList(), cats = [...new Set(all.map((x) => x.category))].sort(), t = curTrack();
-      U.libCat = (el && el.dataset && el.dataset.cat) || U.libCat || cats[0];
-      const q = (U.libQuery || '').toLowerCase(), list = all.filter((x) => (q ? (x.name + ' ' + x.category).toLowerCase().includes(q) : x.category === U.libCat)).slice(0, 300);
+      const all = await IO.libList(), cats = ['My Sounds', ...[...new Set(all.filter((x) => !x.mine).map((x) => x.category))].sort()], t = curTrack();
+      U.libCat = (el && el.dataset && el.dataset.cat) || U.libCat || cats[1] || cats[0];
+      const q = (U.libQuery || '').toLowerCase(), list = all.filter((x) => (q ? (x.name + ' ' + x.category + ' ' + (x.kind || '')).toLowerCase().includes(q) : x.category === U.libCat)).slice(0, 300);
+      const mineView = !q && U.libCat === 'My Sounds', nMine = all.filter((x) => x.mine).length;
       const verb = (x) => (/\.mid$/i.test(x.path) ? (t.type === 'audio' ? '' : 'Add notes') : t.type === 'drums' ? 'Add to pad' : t.type === 'synth' ? 'Use as sample' : 'Add as clip');
       const pretty = (x) => x.name.replace(/^(VPFX|DVS|DVSV2|PP|HPR) - /, '');
-      showPop(`<p style="float:right;margin:0"><button data-act="capture">● Record from another app…</button></p><h3>Sounds <span class="hint">· ${all.length} free sounds (public domain, CC0) · adding to “${esc(t.name)}”</span></h3>` +
+      showPop(`<p style="float:right;margin:0"><button data-act="capture">● Record from another app…</button></p><h3>Sounds <span class="hint">· ${all.length - nMine} free sounds (public domain, CC0)${nMine ? ` and ${nMine} of yours` : ''} · adding to “${esc(t.name)}”</span></h3>` +
         `<input id="libQ" placeholder="Search all sounds" value="${esc(U.libQuery || '')}" oninput="S.ui.libSearch(this.value)">` +
         `<div class="stock">${cats.map((c) => `<button data-act="sounds" data-cat="${esc(c)}" class="${!q && c === U.libCat ? 'on' : ''}">${esc(c)} <small>${all.filter((x) => x.category === c).length}</small></button>`).join('')}</div>` +
-        `<div class="plist lib">${list.map((x, i) => `<div class="lrow">${/\.mid$/i.test(x.path) ? '<span class="hint">MIDI</span>' : `<button data-act="libPlay" data-i="${all.indexOf(x)}" title="Preview">▶</button>`}<span title="${esc(x.collection)}">${esc(pretty(x))}</span>${verb(x) ? `<button data-act="libUse" data-i="${all.indexOf(x)}">${verb(x)}</button>` : ''}</div>`).join('') || '<span class="hint">No sounds match.</span>'}</div>` +
-        `<p class="hint">Sounds from the Stargate sample pack and Producer Space, released as public domain (CC0): free to use in anything, no credit needed.</p><button data-act="closePop">Close</button>`);
+        (mineView ? `<p class="mine"><button data-act="addMine" class="primary">+ Add your sounds…</button> <button data-act="addMine" data-folder="1">+ Add a folder…</button> <span class="hint">WAV, AIFF, MP3, FLAC and more. They stay on this ${IO.platform === 'web' ? 'device' : IO.platform === 'windows' ? 'PC' : 'Mac'} for every project; a project that needs one of them (from another app, too) finds it here.</span></p>` : '') +
+        `<div class="plist lib">${list.map((x, i) => `<div class="lrow">${/\.mid$/i.test(x.path) ? '<span class="hint">MIDI</span>' : `<button data-act="libPlay" data-i="${all.indexOf(x)}" title="Preview">▶</button>`}<span title="${esc(x.collection)}">${esc(pretty(x))}${x.mine ? ` <small class="hint">${esc(x.kind === 'Other' ? x.collection : x.kind)}</small>` : ''}</span>${verb(x) ? `<button data-act="libUse" data-i="${all.indexOf(x)}">${verb(x)}</button>` : ''}${x.mine ? `<button data-act="delMine" data-id="${esc(x.id)}" title="Remove from My Sounds">✕</button>` : ''}</div>`).join('') || `<span class="hint">${mineView ? 'No sounds of your own yet. Add single files, or a whole sample pack folder.' : 'No sounds match.'}</span>`}</div>` +
+        `<p class="hint">${mineView ? 'Your sounds are kept only on this device. To use them on another device, add them there too.' : 'Sounds from the Stargate sample pack and Producer Space, released as public domain (CC0): free to use in anything, no credit needed.'}</p><button data-act="closePop">Close</button>`);
       const box = $('#libQ'); if (box && U.libQuery) { box.focus(); box.setSelectionRange(box.value.length, box.value.length); }
     },
     // Record from another app: the sound one running app makes (a browser, a music player…) becomes an audio clip, the
@@ -805,6 +807,12 @@
       await IO.importBytes(r.name, u.buffer);
       U.openDone();
     },
+    addMine(el) {
+      U.pendingSample = null; U.pendingAudio = null; U.pendingWave = null;
+      U.addingSounds = { added: 0, skipped: 0 };
+      IO.open(true, !!(el && el.dataset && el.dataset.folder));
+    },
+    async delMine(el) { await IO.mine.remove(el.dataset.id); A.sounds(); },
     async libPlay(el) {
       const x = (await IO.libList())[+el.dataset.i], ab = x && (await IO.libRead(x.path));
       if (!ab) return;
@@ -815,7 +823,7 @@
     async libUse(el) {
       const x = (await IO.libList())[+el.dataset.i], t = curTrack(), ab = x && (await IO.libRead(x.path));
       if (!ab) return U.toast('That sound could not be read.', true);
-      const file = x.name + (/\.mid$/i.test(x.path) ? '.mid' : '.flac');
+      const file = x.file || x.name + (/\.mid$/i.test(x.path) ? '.mid' : '.flac');
       if (/\.mid$/i.test(x.path)) {
         // Notes from the MIDI file become a new region on the selected track at the play position.
         const src = IO.midiIn(ab, x.name).proj, notes = [];
@@ -1145,6 +1153,14 @@
   // Called when a file-picker batch has finished (or was cancelled), so a later plain Open is not treated as a sample load.
   U.openDone = () => {
     U.pendingSample = null; U.pendingAudio = null; U.pendingWave = null;
+    const ad = U.addingSounds;
+    if (ad) {
+      U.addingSounds = null; U.libCat = 'My Sounds'; U.libQuery = '';
+      if (ad.failed) U.toast('Could not keep the sounds on this device: ' + ad.failed, true);
+      else if (ad.added) U.toast(`Added ${ad.added} sound${ad.added === 1 ? '' : 's'} to My Sounds.` + (ad.skipped ? ` ${ad.skipped} file${ad.skipped === 1 ? ' was' : 's were'} skipped (not a sound file, or already added).` : ''));
+      else if (ad.skipped) U.toast('No new sounds were added: those files are not sound files, or are already in My Sounds.', true);
+      if (ad.added || ad.skipped) A.sounds();
+    }
     if (U.locating) { U.locating = false; U.wantedDone(U.located); }
   };
   // Samples the project points at: refresh the header button and say what was found.
@@ -1297,7 +1313,7 @@
   $('#file').addEventListener('change', async (e) => {
     const files = [...e.target.files];
     e.target.value = '';
-    for (const f of files) await IO.importBytes(f.name, await f.arrayBuffer());
+    for (const f of files) await IO.importBytes(f.name, await f.arrayBuffer(), f.webkitRelativePath || '');
     U.openDone();
   });
   window.addEventListener('resize', drawCables);

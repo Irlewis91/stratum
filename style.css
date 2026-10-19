@@ -224,9 +224,11 @@ kbd { background:var(--cell); border:1px solid var(--line); border-radius:4px; p
 .prm .pv { color:var(--dim); text-align:right; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
 .plist.lib { max-height:52vh; }
+p.mine { display:flex; flex-wrap:wrap; gap:6px 8px; align-items:center; margin:8px 0; }
+p.mine .hint { flex-basis:100%; }
 .lrow { display:flex; align-items:center; gap:8px; padding:2px 0; }
 .lrow span[title] { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.stock button.on { border-color:var(--acc); color:var(--acc); }
+.stock button.on { background:var(--acc); border-color:var(--acc); color:#111; }
 
 .wavedev { max-width:none; }
 .wavebox { display:flex; flex-direction:column; gap:4px; }

@@ -359,13 +359,36 @@ std::wstring baseName(const std::wstring &p) { size_t k = p.find_last_of(L"\\/")
 void openNext() {
     if (openQueue.empty()) { runJs(L"S.ui.openDone()"); return; }
     Pending p = openQueue.front(); openQueue.erase(openQueue.begin());
+    if (p.b64.empty()) {   // folder contents are read one at a time, as the page asks for them
+        std::vector<unsigned char> d;
+        if (!readAll(wide(p.path), d)) return openNext();
+        p.b64 = b64encode(d.data(), d.size());
+    }
     runJs(L"S.io.nativeOpen(" + jsString(p.name) + L", '" + wide(p.b64) + L"', " + jsString(p.path) + L").catch((e) => S.ui.toast('Could not open ' + " + jsString(p.name) + L" + ': ' + (e.message || e), true)).then(() => window.chrome.webview.postMessage({ op: 'openNext' }))");
 }
-void openDialog(bool many) {
+// Every sound file inside a folder and its subfolders (a sample pack going into My Sounds), in name order.
+void soundFilesIn(const std::wstring &dir, std::vector<std::wstring> &out) {
+    static const wchar_t *exts[] = {L".wav", L".wave", L".aif", L".aiff", L".aifc", L".mp3", L".m4a", L".aac", L".flac", L".ogg", L".oga", L".opus", L".caf"};
+    WIN32_FIND_DATAW fd; HANDLE h = FindFirstFileW((dir + L"\\*").c_str(), &fd);
+    if (h == INVALID_HANDLE_VALUE) return;
+    std::vector<std::wstring> subs;
+    do {
+        std::wstring n = fd.cFileName;
+        if (n == L"." || n == L".." || (fd.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN)) continue;
+        if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) { subs.push_back(dir + L"\\" + n); continue; }
+        size_t dot = n.find_last_of(L'.');
+        std::wstring e = dot == std::wstring::npos ? L"" : n.substr(dot);
+        for (auto &c : e) c = towlower(c);
+        for (auto x : exts) if (e == x) { out.push_back(dir + L"\\" + n); break; }
+    } while (FindNextFileW(h, &fd) && out.size() < 3000);
+    FindClose(h);
+    for (auto &d : subs) if (out.size() < 3000) soundFilesIn(d, out);
+}
+void openDialog(bool many, bool folder) {
     IFileOpenDialog *dlg = nullptr;
     if (FAILED(CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&dlg)))) return;
-    FILEOPENDIALOGOPTIONS o = 0; dlg->GetOptions(&o); dlg->SetOptions(o | FOS_FILEMUSTEXIST | FOS_FORCEFILESYSTEM | (many ? FOS_ALLOWMULTISELECT : 0));
-    dlg->SetTitle(many ? L"Choose one or more sound files" : L"Open a STRATUM project, or import MIDI, Ableton .als, FL Studio .flp, a zipped project or loop package, a Reason song or an audio file");
+    FILEOPENDIALOGOPTIONS o = 0; dlg->GetOptions(&o); dlg->SetOptions(o | FOS_FILEMUSTEXIST | FOS_FORCEFILESYSTEM | (many ? FOS_ALLOWMULTISELECT : 0) | (folder ? FOS_PICKFOLDERS : 0));
+    dlg->SetTitle(folder ? L"Choose a folder of sounds, such as a sample pack" : many ? L"Choose one or more sound files" : L"Open a STRATUM project, or import MIDI, Ableton .als, FL Studio .flp, a zipped project or loop package, a Reason song or an audio file");
     openQueue.clear();
     if (SUCCEEDED(dlg->Show(mainWnd))) {
         IShellItemArray *items = nullptr;
@@ -374,9 +397,14 @@ void openDialog(bool many) {
             for (DWORD i = 0; i < n; i++) {
                 IShellItem *it = nullptr; PWSTR path = nullptr;
                 if (SUCCEEDED(items->GetItemAt(i, &it)) && SUCCEEDED(it->GetDisplayName(SIGDN_FILESYSPATH, &path))) {
-                    std::vector<unsigned char> d;
-                    if (readAll(path, d)) openQueue.push_back({utf8(baseName(path)), b64encode(d.data(), d.size()), utf8(path)});
-                    else runJs(L"S.ui.toast(" + jsString("Could not read " + utf8(baseName(path)) + " (files over 400 MB can't be imported).") + L", true)");
+                    std::vector<std::wstring> files;
+                    if (folder) soundFilesIn(path, files); else files.push_back(path);
+                    for (auto &f : files) {
+                        std::vector<unsigned char> d;
+                        if (folder) openQueue.push_back({utf8(baseName(f)), "", utf8(f)});
+                        else if (readAll(f, d)) openQueue.push_back({utf8(baseName(f)), b64encode(d.data(), d.size()), utf8(f)});
+                        else runJs(L"S.ui.toast(" + jsString("Could not read " + utf8(baseName(f)) + " (files over 400 MB can't be imported).") + L", true)");
+                    }
                     CoTaskMemFree(path);
                 }
                 if (it) it->Release();
@@ -406,6 +434,11 @@ void findFiles(const Json &paths, const std::string &nearUtf8) {
         std::wstring fl = p; size_t at = fl.find(L"%FLStudioUserData%");
         if (at != std::wstring::npos) fl.replace(at, 18, std::wstring(prof) + L"\\Documents\\Image-Line\\FL Studio");
         tries.push_back(fl);
+        // Made on another computer or user account: the same place inside this user's folder (Desktop\\My Drumz\\…).
+        std::wstring q = p; for (auto &c : q) if (c == L'/') c = L'\\';
+        std::wstring low = q; for (auto &c : low) c = towlower(c);
+        size_t u = low.find(L"\\users\\");
+        if (u != std::wstring::npos) { size_t nameEnd = q.find(L'\\', u + 7); if (nameEnd != std::wstring::npos) tries.push_back(std::wstring(prof) + q.substr(nameEnd)); }
         if (!dir.empty()) { tries.push_back(dir + L"\\" + name); tries.push_back(dir + L"\\Samples\\" + name); tries.push_back(dir + L"\\" + stem + L"\\Samples\\" + name); tries.push_back(dir + L"\\" + stem + L"\\" + name); }
         for (auto &t : tries) {
             DWORD a = GetFileAttributesW(t.c_str());
@@ -442,7 +475,7 @@ bool op(const std::string &name, const Json &b) {
         reply(b, o); return true;
     }
     if (name == "shareFiles") { shareFiles(b); return true; }
-    if (name == "open") { openDialog(b["many"].truthy()); return true; }
+    if (name == "open") { openDialog(b["many"].truthy(), b["folder"].truthy()); return true; }
     if (name == "openNext") { openNext(); return true; }
     if (name == "findFiles") { findFiles(b["paths"], b["near"].str()); return true; }
     if (name == "foundNext") { foundNext(); return true; }

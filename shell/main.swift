@@ -128,6 +128,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKNaviga
         if let i = CommandLine.arguments.firstIndex(of: "--manual-shots") { manualShots(URL(fileURLWithPath: CommandLine.arguments[i + 1])) }
         if let i = CommandLine.arguments.firstIndex(of: "--manual-pdf") { manualPDF(URL(fileURLWithPath: CommandLine.arguments[i + 1]), URL(fileURLWithPath: CommandLine.arguments[i + 2])) }
         if let i = CommandLine.arguments.firstIndex(of: "--import-test") { importTest(Array(CommandLine.arguments[(i + 1)...])) }
+        if CommandLine.arguments.contains("--sounds-test") { soundsTest() }
     }
 
     // Sampler check: loads tone files through the same path as the file picker, then measures the pitch of what plays.
@@ -692,6 +693,32 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKNaviga
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) { next() }
     }
 
+    // My Sounds check: adds two sounds the first time; run it again to see they are still there after a restart.
+    private func soundsTest() {
+        let js = """
+        const before = (await S.io.mine.list()).filter((m) => /^Test (Kick|Hat)$/.test(m.name)).map((m) => m.name);
+        if (!before.length) {
+          const ctx = S.engine.ensure(), mk = (hz) => { const b = ctx.createBuffer(1, 8820, 44100), d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.sin(i * hz / 44100 * 6.283) * Math.exp(-i / 2000); return S.io.wav(b); };
+          const b64 = (u) => { let s = ''; for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000)); return btoa(s); };
+          S.ui.addingSounds = { added: 0, skipped: 0 };
+          await S.io.nativeOpen('Test Kick.wav', b64(mk(60)), '/Packs/Test Pack/Kicks/Test Kick.wav');
+          await S.io.nativeOpen('notes.txt', btoa('hello'), '/Packs/Test Pack/notes.txt');
+          await S.io.nativeOpen('Test Hat.wav', b64(mk(8000)), '/Packs/Test Pack/Hats/Test Hat.wav');
+          S.ui.openDone();
+        }
+        const after = (await S.io.mine.list()).filter((m) => /^Test (Kick|Hat)$/.test(m.name)), first = after[0] && await S.io.mine.read(after[0].id);
+        const out = JSON.stringify({ before, after: after.map((m) => [m.name, m.kind, m.from]), bytes: first ? first.byteLength : 0, inSounds: (await S.io.libList()).filter((x) => /^Test (Kick|Hat)$/.test(x.name)).length });
+        if (before.length) for (const m of after) await S.io.mine.remove(m.id);   // second run: tidy up
+        return out;
+        """
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            self.web.callAsyncJavaScript(js, arguments: [:], in: nil, in: .page) { r in
+                if case .success(let v) = r { print("SOUNDS", v) } else if case .failure(let e) = r { print("SOUNDS error", e) }
+                NSApp.terminate(nil)
+            }
+        }
+    }
+
     // Stem check: separates the demo song and compares each stem with the solo renders of the drum and bass tracks.
     private func stemTest() {
         let code = """
@@ -841,6 +868,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKNaviga
         for p in paths {
             let name = (p.replacingOccurrences(of: "\\", with: "/") as NSString).lastPathComponent
             var tries = [p.replacingOccurrences(of: "%FLStudioUserData%", with: home + "/Documents/Image-Line/FL Studio")]
+            // Made on another computer or user account: the same place inside this user's home folder (Desktop/My Drumz/…).
+            let parts = p.replacingOccurrences(of: "\\", with: "/").split(separator: "/").map(String.init)
+            if let u = parts.firstIndex(where: { $0.lowercased() == "users" }), parts.count > u + 2 { tries.append(home + "/" + parts[(u + 2)...].joined(separator: "/")) }
             if let d = dir { tries += [d.appendingPathComponent(name).path, d.appendingPathComponent("Samples/" + name).path, d.appendingPathComponent(stem + "/Samples/" + name).path, d.appendingPathComponent(stem + "/" + name).path] }
             if let hit = tries.first(where: { var isDir: ObjCBool = false; return fm.fileExists(atPath: $0, isDirectory: &isDir) && !isDir.boolValue }) { queue.append((p, URL(fileURLWithPath: hit))) }
         }
@@ -1079,15 +1109,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKNaviga
 
     // MARK: files
 
-    private func openFile(many: Bool = false) {
+    // `folder`: pick folders, and send every sound file inside them (a sample pack going into My Sounds).
+    private func openFile(many: Bool = false, folder: Bool = false) {
         let panel = NSOpenPanel()
         panel.allowsMultipleSelection = many
         panel.treatsFilePackagesAsDirectories = false
-        panel.canChooseDirectories = false
-        panel.message = many ? "Choose one or more sound files" : "Open a STRATUM project, or import MIDI, Ableton .als, FL Studio .flp or zipped loop package, a Logic Pro project, a Reason song or an audio file"
+        panel.canChooseDirectories = folder
+        panel.canChooseFiles = !folder
+        panel.message = folder ? "Choose a folder of sounds, such as a sample pack" : many ? "Choose one or more sound files" : "Open a STRATUM project, or import MIDI, Ableton .als, FL Studio .flp or zipped loop package, a Logic Pro project, a Reason song or an audio file"
         panel.beginSheetModal(for: window) { [weak self] result in
             guard let self = self else { return }
             var queue = result == .OK ? panel.urls : []
+            if folder {
+                let sound: Set<String> = ["wav", "wave", "aif", "aiff", "aifc", "mp3", "m4a", "aac", "flac", "ogg", "oga", "opus", "caf"]
+                queue = queue.flatMap { dir -> [URL] in
+                    let walk = FileManager.default.enumerator(at: dir, includingPropertiesForKeys: nil, options: [.skipsHiddenFiles, .skipsPackageDescendants])
+                    return (walk?.allObjects as? [URL] ?? []).filter { sound.contains($0.pathExtension.lowercased()) }
+                }.sorted { $0.path < $1.path }
+                if queue.count > 3000 { self.alert("That folder has \(queue.count) sound files. The first 3,000 are added; add the rest from their own folders."); queue = Array(queue.prefix(3000)) }
+            }
             func next() {
                 guard !queue.isEmpty else { self.web.evaluateJavaScript("S.ui.openDone()", completionHandler: nil); return }
                 let url = queue.removeFirst()
@@ -1202,7 +1242,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKNaviga
 
     func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {
         guard let body = message.body as? [String: Any], let op = body["op"] as? String else { return }
-        if op == "open" { openFile(many: body["many"] as? Bool ?? false) }
+        if op == "open" { openFile(many: body["many"] as? Bool ?? false, folder: body["folder"] as? Bool ?? false) }
         if op.hasPrefix("au") || op.hasPrefix("lib") { return pluginOp(op, body) }
         if op == "share" { share(body) }
         if op == "shareFiles" { shareFiles(body) }

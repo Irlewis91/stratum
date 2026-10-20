@@ -319,8 +319,18 @@ bool writeAll(const std::wstring &path, const std::vector<unsigned char> &d) {
 }
 
 // A share video made in the page: saved in Videos › STRATUM, then sent on like the Mac app does.
+// The video arrives in pieces (sharePart) before shareFiles, as a full-quality video is too big for one message.
+std::map<std::string, std::vector<unsigned char>> shareParts;
+void sharePart(const Json &b) {
+    auto &buf = shareParts[b["which"].str("video")];
+    if (b["first"].truthy()) buf.clear();
+    auto d = b64decode(b["b64"].str());
+    buf.insert(buf.end(), d.begin(), d.end());
+}
 void shareFiles(const Json &b) {
-    auto video = b64decode(b["video"].str()), audio = b64decode(b["audio"].str());
+    bool parts = b["parts"].truthy();
+    auto video = parts ? shareParts["video"] : b64decode(b["video"].str()), audio = parts ? shareParts["audio"] : b64decode(b["audio"].str());
+    if (parts) shareParts.clear();
     std::string title = b["title"].str("Untitled"), artist = b["artist"].str(), target = b["target"].str("save"), ext;
     for (char c : b["ext"].str("mp4")) if (isalnum((unsigned char)c)) ext += c;
     std::string safe;
@@ -474,6 +484,7 @@ bool op(const std::string &name, const Json &b) {
         else { o["name"] = (capture.appName.empty() ? std::string("Recording") : capture.appName) + " recording.wav"; o["b64"] = b64encode(w.data(), w.size()); }
         reply(b, o); return true;
     }
+    if (name == "sharePart") { sharePart(b); return true; }
     if (name == "shareFiles") { shareFiles(b); return true; }
     if (name == "open") { openDialog(b["many"].truthy(), b["folder"].truthy()); return true; }
     if (name == "openNext") { openNext(); return true; }

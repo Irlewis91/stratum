@@ -129,6 +129,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKNaviga
         if let i = CommandLine.arguments.firstIndex(of: "--manual-pdf") { manualPDF(URL(fileURLWithPath: CommandLine.arguments[i + 1]), URL(fileURLWithPath: CommandLine.arguments[i + 2])) }
         if let i = CommandLine.arguments.firstIndex(of: "--import-test") { importTest(Array(CommandLine.arguments[(i + 1)...])) }
         if CommandLine.arguments.contains("--sounds-test") { soundsTest() }
+        if let i = CommandLine.arguments.firstIndex(of: "--js-test") { jsTest(URL(fileURLWithPath: CommandLine.arguments[i + 1])) }
     }
 
     // Sampler check: loads tone files through the same path as the file picker, then measures the pitch of what plays.
@@ -693,6 +694,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKNaviga
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) { next() }
     }
 
+    // Runs a script file in the page (an async function body) and prints what it returns, then quits. For self-checks.
+    private func jsTest(_ file: URL) {
+        let js = (try? String(contentsOf: file, encoding: .utf8)) ?? "return 'unreadable script'"
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            self.web.callAsyncJavaScript(js, arguments: [:], in: nil, in: .page) { r in
+                switch r { case .success(let v): print("JS", v) case .failure(let e): print("JS error", e) }
+                NSApp.terminate(nil)
+            }
+        }
+    }
+
     // My Sounds check: adds two sounds the first time; run it again to see they are still there after a restart.
     private func soundsTest() {
         let js = """
@@ -994,8 +1006,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKNaviga
     }
 
     /// A share video made in the page (STRATUM Visuals looks): saved in Movies › STRATUM, then sent on like any other.
+    // A share video made in the page arrives in pieces (sharePart), then shareFiles says what to do with it.
+    private var shareParts: [String: Data] = [:]
+    private func sharePart(_ body: [String: Any]) {
+        let which = body["which"] as? String ?? "video"
+        if body["first"] as? Bool ?? false { shareParts[which] = Data() }
+        if let d = Data(base64Encoded: body["b64"] as? String ?? "") { shareParts[which, default: Data()].append(d) }
+    }
     private func shareFiles(_ body: [String: Any]) {
-        guard let video = Data(base64Encoded: body["video"] as? String ?? ""), let audio = Data(base64Encoded: body["audio"] as? String ?? "") else { return shareDone(false, "The video could not be read.") }
+        let fromParts = body["parts"] as? Bool ?? false
+        defer { if fromParts { shareParts = [:] } }
+        guard let video = fromParts ? shareParts["video"] : Data(base64Encoded: body["video"] as? String ?? ""), let audio = fromParts ? shareParts["audio"] : Data(base64Encoded: body["audio"] as? String ?? ""), !video.isEmpty else { return shareDone(false, "The video could not be read.") }
+        if CommandLine.arguments.contains("--js-test") { print("SHAREFILES video \(video.count) audio \(audio.count) mp4 \(video.prefix(12).suffix(4) == Data("ftyp".utf8))"); return }   // self-check: nothing saved
         let title = body["title"] as? String ?? "Untitled", artist = body["artist"] as? String ?? "", target = body["target"] as? String ?? "save"
         let ext = (body["ext"] as? String ?? "mp4").filter { $0.isLetter || $0.isNumber }
         let dir = FileManager.default.urls(for: .moviesDirectory, in: .userDomainMask)[0].appendingPathComponent("STRATUM")
@@ -1245,6 +1267,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKNaviga
         if op == "open" { openFile(many: body["many"] as? Bool ?? false, folder: body["folder"] as? Bool ?? false) }
         if op.hasPrefix("au") || op.hasPrefix("lib") { return pluginOp(op, body) }
         if op == "share" { share(body) }
+        if op == "sharePart" { sharePart(body) }
         if op == "shareFiles" { shareFiles(body) }
         if op.hasPrefix("cap") { return captureOp(op, body) }
         if op.hasPrefix("live") { return liveOp(op, body) }

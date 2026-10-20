@@ -135,14 +135,25 @@
   U.shareProgress = (f) => U.toast(`Making your STRATUM video… ${Math.round(f * 100)}%`);
   U.shareDone = (ok, msg) => U.toast(msg, !ok);
   async function webShare(target, label, title, artist, clip, look) {
-    showPop(`<h3>Making your ${esc(label)} video…</h3><p class="hint">The video is recorded as the track plays through once (silently), so it takes as long as the track. Keep STRATUM open.</p><p class="caprec"><span id="wsPct">0%</span></p>`);
+    showPop(`<h3>Making your ${esc(label)} video…</h3><p class="hint">STRATUM draws the video frame by frame at full size, which usually takes less time than the track lasts. Keep STRATUM open.</p><p class="caprec"><span id="wsPct">0%</span></p>`);
     const mix = await IO.share(target, title, artist, clip, true);
     const r = await IO.webShareRender(target, title, artist, mix.buf, mix.peaks, (p) => { const el = $('#wsPct'); if (el) el.textContent = Math.round(p * 100) + '%'; }, look);
     if (IO.host() && r.video) {
       // The Mac or Windows app takes it from here: the share sheet, Mail, Photos or the upload page, as with every share.
       closePop();
-      const b64 = async (f) => { const u = new Uint8Array(await f.arrayBuffer()); let s = ''; for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000)); return btoa(s); };
-      IO.host().postMessage({ op: 'shareFiles', target, title, artist, ext: r.video.name.split('.').pop(), video: await b64(r.video), audio: await b64(r.audio), seconds: mix.buf.duration });
+      // Sent in pieces of 6 MB: a full-quality video can be hundreds of MB, too much for one message.
+      const send = async (which, f) => {
+        const u = new Uint8Array(await f.arrayBuffer()), step = 6 * 1048576;
+        for (let at = 0; at < u.length || at === 0; at += step) {
+          const part = u.subarray(at, Math.min(u.length, at + step));
+          let s = ''; for (let i = 0; i < part.length; i += 0x8000) s += String.fromCharCode.apply(null, part.subarray(i, i + 0x8000));
+          IO.host().postMessage({ op: 'sharePart', which, first: at === 0, b64: btoa(s) });
+          await new Promise((res) => setTimeout(res, 0));
+          if (!u.length) break;
+        }
+      };
+      await send('video', r.video); await send('audio', r.audio);
+      IO.host().postMessage({ op: 'shareFiles', target, title, artist, ext: r.video.name.split('.').pop(), parts: true, seconds: mix.buf.duration });
       return;
     }
     U.webShared = { ...r, title, target };

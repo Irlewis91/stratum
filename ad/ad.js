@@ -1,26 +1,26 @@
 // STRATUM motion ad: 30 seconds, 1080x1920, drawn frame by frame inside STRATUM and encoded by its own video maker.
 // Run with: STRATUM --js-test ad/build/ad-run.js (made by ad/make.py, which embeds the screenshots).
-const IMG = window.AD_IMAGES, W = 1080, H = 1920, BPM = S.proj.bpm, SPB = 60 / BPM, BAR = SPB * 4, DROP = BAR * 4;
+// The beat (ad/trap.js or ad/pop.js) sets the tempo, where each scene starts, the colours and the Visuals looks.
+const BEAT = window.AD_BEAT, IMG = window.AD_IMAGES, W = 1080, H = 1920, BPM = BEAT.bpm, SPB = 60 / BPM, BAR = SPB * 4, DROP = BAR * 4;
+const AT = Object.fromEntries(Object.entries(BEAT.at).map(([k, v]) => [k, v * BAR])), LIVE = BEAT.liveBeats * SPB;
 const CTA = window.AD_CTA || 'discord.gg/PtpChEj8Gc';
-const INK = '#07080d', CREAM = '#f2ede2', AMBER = '#ffa62b', EMBER = '#ff6a3d', TEAL = '#5ce1c6', DIM = 'rgba(242,237,226,.6)';
+const INK = BEAT.theme.ink, CREAM = '#f2ede2', AMBER = BEAT.theme.a, EMBER = BEAT.theme.b, TEAL = BEAT.theme.c, DIM = 'rgba(242,237,226,.6)', GLOW = BEAT.theme.glow;
 const FONT = (w, s) => `${w} ${s}px -apple-system, "SF Pro Display", "Helvetica Neue", sans-serif`;
 const clamp = (x) => Math.max(0, Math.min(1, x)), prog = (t, a, d) => clamp((t - a) / d);
 const eo = (x) => 1 - Math.pow(1 - clamp(x), 3), eio = (x) => (x = clamp(x), x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
 const back = (x) => { x = clamp(x); const c = 1.70158; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); };
 
-// ---- soundtrack: the demo song (made in STRATUM), then its groove again, 30 seconds with a fade
-const proj = S.proj, groove = proj.scenes[1] || proj.scenes[0];
-const a1 = await E.render(proj, 'song', proj.scenes[0].id, 48), a2 = await E.render(proj, 'scene', groove.id, 8);
+// ---- soundtrack: "Night Shift", a trap beat made in STRATUM (ad/trap.js), 30 seconds with a fade
+const proj = await BEAT.make();
+const a1 = await E.render(proj, 'song', proj.scenes[0].id, Math.ceil(30 / SPB) + 2);
 const SR = a1.sampleRate, N = Math.round(30 * SR), buf = E.ensure().createBuffer(2, N, SR);
 for (let c = 0; c < 2; c++) {
-  const o = buf.getChannelData(c), x = a1.getChannelData(Math.min(c, a1.numberOfChannels - 1)), y = a2.getChannelData(Math.min(c, a2.numberOfChannels - 1));
-  const n1 = Math.min(x.length, Math.round(48 * SPB * SR));
-  o.set(x.subarray(0, n1));
-  // the scene render starts again from its top, so carry on seamlessly
-  for (let i = n1, k = 0; i < N; i++, k++) o[i] = k < y.length ? y[k] : 0;
+  const o = buf.getChannelData(c), x = a1.getChannelData(Math.min(c, a1.numberOfChannels - 1));
+  o.set(x.subarray(0, Math.min(N, x.length)));
   const fade = Math.round(1.6 * SR);
   for (let i = N - fade; i < N; i++) o[i] *= (N - i) / fade;
 }
+if (window.AD_SAVE_BEAT) { const keep = S.proj; S.proj = proj; window.AD_BEAT_JSON = await IO.projectJSON(); S.proj = keep; }
 // mix level: bring the demo up to a healthy loudness
 let pk = 0; for (let c = 0; c < 2; c++) for (const v of buf.getChannelData(c)) pk = Math.max(pk, Math.abs(v));
 const gain = pk > 0 ? Math.min(4, 0.89 / pk) : 1; for (let c = 0; c < 2; c++) { const d = buf.getChannelData(c); for (let i = 0; i < d.length; i++) d[i] *= gain; }
@@ -36,7 +36,7 @@ const an = new IO.BufferAnalyser(buf), spec = new Uint8Array(512);
 const vcv = document.createElement('canvas'); vcv.width = W; vcv.height = H;
 const vr = new S.vis.Renderer(vcv), va = new S.vis.Analyzer(an);
 const look = (name) => [{ P: JSON.parse(JSON.stringify(S.vis.FACTORY[name])), st: {} }];
-const LOOK_F = look('Prism'), LOOK_G = look('Hyperdrive'), LOOK_H = look('Liquid Glow');
+const LOOK_F = look(BEAT.looks[0]), LOOK_G = look(BEAT.looks[1]), LOOK_H = look(BEAT.looks[2]);
 
 // ---- drawing helpers
 function text(g, s, x, y, size, o = {}) {
@@ -52,7 +52,7 @@ function cover(g, img, x, y, w, h, fx = 0.5, fy = 0.5, zoom = 1) {
 }
 function frameShot(g, img, x, y, w, h, r, o = {}) {
   g.save(); g.globalAlpha = o.a == null ? 1 : o.a;
-  g.shadowColor = o.glow || 'rgba(255,138,61,.45)'; g.shadowBlur = 70; g.fillStyle = '#000'; rr(g, x, y, w, h, r); g.fill(); g.shadowBlur = 0;
+  g.shadowColor = o.glow || GLOW; g.shadowBlur = 70; g.fillStyle = '#000'; rr(g, x, y, w, h, r); g.fill(); g.shadowBlur = 0;
   rr(g, x, y, w, h, r); g.clip(); cover(g, img, x, y, w, h, o.fx == null ? 0.5 : o.fx, o.fy == null ? 0.5 : o.fy, o.zoom || 1);
   g.restore();
   g.save(); g.globalAlpha = (o.a == null ? 1 : o.a) * 0.9; g.strokeStyle = 'rgba(255,255,255,.14)'; g.lineWidth = 3; rr(g, x, y, w, h, r); g.stroke(); g.restore();
@@ -60,7 +60,7 @@ function frameShot(g, img, x, y, w, h, r, o = {}) {
 function bg(g, t, hue = 0) {
   g.fillStyle = INK; g.fillRect(0, 0, W, H);
   const lvl = va.f.level || 0, gx = W * (0.5 + 0.25 * Math.sin(t * 0.4)), gy = H * (0.3 + 0.1 * Math.cos(t * 0.3));
-  let gr = g.createRadialGradient(gx, gy, 0, gx, gy, 1100); gr.addColorStop(0, `rgba(255,${120 + hue},50,${0.20 + lvl * 0.25})`); gr.addColorStop(1, 'rgba(0,0,0,0)');
+  let gr = g.createRadialGradient(gx, gy, 0, gx, gy, 1100); gr.addColorStop(0, BEAT.theme.wash(hue, 0.20 + lvl * 0.25)); gr.addColorStop(1, 'rgba(0,0,0,0)');
   g.fillStyle = gr; g.fillRect(0, 0, W, H);
   gr = g.createRadialGradient(W * 0.1, H * 0.95, 0, W * 0.1, H * 0.95, 900); gr.addColorStop(0, 'rgba(92,225,198,.10)'); gr.addColorStop(1, 'rgba(0,0,0,0)');
   g.fillStyle = gr; g.fillRect(0, 0, W, H);
@@ -95,11 +95,11 @@ function sceneA(g, t) {           // 0 - 4.29: the problem
   const sk = eio(prog(t, 2.2, 0.45));
   if (sk > 0) { g.save(); g.strokeStyle = EMBER; g.lineWidth = 14; g.lineCap = 'round'; g.beginPath(); g.moveTo(180, 1016); g.lineTo(180 + 720 * sk, 1016); g.stroke(); g.restore(); }
   const k2 = back(prog(t, 2.95, 0.5));
-  text(g, 'Your music doesn’t.', W / 2, 1300, 96 * (0.6 + 0.4 * k2), { a: clamp(k2), c: AMBER, glow: 'rgba(255,140,40,.6)' });
+  text(g, 'Your music doesn’t.', W / 2, 1300, 96 * (0.6 + 0.4 * k2), { a: clamp(k2), c: AMBER, glow: GLOW });
   eq(g, H - 80, 140, 0.8);
 }
 function sceneB(g, t) {           // 4.29 - 8.57: every device
-  const t0 = BAR * 2, u = t - t0; bg(g, t, -20);
+  const t0 = AT.B, u = t - t0; bg(g, t, -20);
   text(g, 'One studio.', W / 2, 270, 104, { a: eo(prog(u, 0, 0.4)) });
   text(g, 'Every device.', W / 2, 390, 104, { a: eo(prog(u, 0.3, 0.4)), c: AMBER });
   const words = ['Mac', 'Windows', 'iPhone', 'iPad', 'Android', 'Browser'];
@@ -123,15 +123,15 @@ function sceneC(g, t) {           // 8.57 - 9.64: the drop, the name
   const u = t - DROP; bg(g, t, 10);
   const k = back(prog(u, 0, 0.35)), s = 2.2 - 1.2 * clamp(k);
   // shockwave rings on the beat
-  for (let r = 0; r < 3; r++) { const rk = prog(u, r * SPB * 0.5, 0.9); if (rk > 0 && rk < 1) { g.save(); g.strokeStyle = `rgba(255,166,43,${(1 - rk) * 0.7})`; g.lineWidth = 10 * (1 - rk) + 2; g.beginPath(); g.arc(W / 2, H / 2, 120 + rk * 900, 0, 7); g.stroke(); g.restore(); } }
+  for (let r = 0; r < 3; r++) { const rk = prog(u, r * SPB * 0.5, 0.9); if (rk > 0 && rk < 1) { g.save(); g.strokeStyle = BEAT.theme.ring((1 - rk) * 0.7); g.lineWidth = 10 * (1 - rk) + 2; g.beginPath(); g.arc(W / 2, H / 2, 120 + rk * 900, 0, 7); g.stroke(); g.restore(); } }
   const mw = 860 * s, mh = (mw * mark.height) / mark.width;
-  g.save(); g.globalAlpha = clamp(k * 1.5); g.shadowColor = 'rgba(255,150,40,.7)'; g.shadowBlur = 60; g.drawImage(mark, (W - mw) / 2, H / 2 - mh / 2, mw, mh); g.restore();
+  g.save(); g.globalAlpha = clamp(k * 1.5); g.shadowColor = GLOW; g.shadowBlur = 60; g.drawImage(mark, (W - mw) / 2, H / 2 - mh / 2, mw, mh); g.restore();
   text(g, 'The studio that goes where you go.', W / 2, H / 2 + 230, 50, { a: eo(prog(u, 0.45, 0.4)), w: 600, c: DIM });
   eq(g, H - 80, 220, 1);
   flash(g, t, DROP, 0.4);
 }
 function sceneD(g, t) {           // 9.64 - 12.86: bring your old projects
-  const t0 = DROP + SPB * 2, u = t - t0; bg(g, t, 0);
+  const t0 = AT.D, u = t - t0; bg(g, t, 0);
   text(g, 'Open the projects', W / 2, 270, 92, { a: eo(prog(u, 0, 0.35)) });
   text(g, 'you already made.', W / 2, 380, 92, { a: eo(prog(u, 0.15, 0.35)), c: AMBER });
   const files = [['beat.flp', 'FL Studio', '#ff8c2b'], ['set.als', 'Ableton Live', '#9fa6b8'], ['song.logicx', 'Logic Pro', '#5aa9ff'], ['track.reason', 'Reason', '#e2524f']];
@@ -146,32 +146,32 @@ function sceneD(g, t) {           // 9.64 - 12.86: bring your old projects
   eq(g, H - 80, 140, 0.7);
 }
 function sceneE(g, t) {           // 12.86 - 17.14: five layouts
-  const t0 = DROP + SPB * 8, u = t - t0; bg(g, t, 20);
+  const t0 = AT.E, u = t - t0; bg(g, t, 20);
   const skins = [['pattern', 'Pattern'], ['session', 'Session'], ['arrange', 'Arrange'], ['mixedit', 'Mix / Edit']];
-  const i = Math.min(3, Math.floor(u / SPB));
-  if (u < SPB * 4) {
+  const i = Math.min(3, Math.floor(u / (SPB * 2)));
+  if (u < SPB * 8) {
     text(g, 'Work the way you think.', W / 2, 270, 82, { a: eo(prog(u, 0, 0.3)) });
-    const [k, name] = skins[i], kk = eo(prog(u, i * SPB, 0.18)), zz = 1 + 0.04 * prog(u, i * SPB, SPB);
+    const [k, name] = skins[i], kk = eo(prog(u, i * SPB * 2, 0.18)), zz = 1 + 0.04 * prog(u, i * SPB * 2, SPB * 2);
     frameShot(g, im[k], 40, 560 + (1 - kk) * 30, 1000, 625, 26, { a: 1, zoom: zz });
     frameShot(g, im[k], 40, 1215 + (1 - kk) * 30, 1000, 330, 22, { a: 0.9, fx: 0.2, fy: 0.35, zoom: 2.2 });
-    text(g, name, W / 2, 1700, 110, { a: kk, c: AMBER, glow: 'rgba(255,140,40,.5)' });
+    text(g, name, W / 2, 1700, 110, { a: kk, c: AMBER, glow: GLOW });
     text(g, `${i + 1} of 5 layouts \u00b7 switch without stopping`, W / 2, 1790, 40, { a: 0.8, w: 600, c: DIM });
-    { const fk = prog(t, t0 + i * SPB, 0.12); if (fk > 0 && fk < 1) { g.fillStyle = `rgba(255,240,220,${(1 - fk) * 0.25})`; g.fillRect(0, 0, W, H); } }
+    { const fk = prog(t, t0 + i * SPB * 2, 0.12); if (fk > 0 && fk < 1) { g.fillStyle = `rgba(255,240,220,${(1 - fk) * 0.25})`; g.fillRect(0, 0, W, H); } }
   } else {
-    const v = u - SPB * 4, k = back(prog(v, 0, 0.45));
-    text(g, '+ Strata', W / 2, 300, 120 * (0.7 + 0.3 * clamp(k)), { a: clamp(k), c: AMBER, glow: 'rgba(255,140,40,.6)' });
+    const v = u - SPB * 8, k = back(prog(v, 0, 0.45));
+    text(g, '+ Strata', W / 2, 300, 120 * (0.7 + 0.3 * clamp(k)), { a: clamp(k), c: AMBER, glow: GLOW });
     text(g, 'Only in STRATUM.', W / 2, 400, 64, { a: eo(prog(v, 0.25, 0.4)), w: 700 });
     frameShot(g, im.strata, 40, 520, 1000, 625, 26, { a: eo(prog(v, 0.1, 0.4)) });
     frameShot(g, im.strata, 240, 1200, 600, 560, 26, { a: eo(prog(v, 0.35, 0.4)), fx: 0.97, fy: 0.12, zoom: 2.1, glow: 'rgba(124,255,80,.45)' });
     text(g, 'Your song as layers. A live stage beside it.', W / 2, 1840, 42, { a: eo(prog(v, 0.5, 0.4)), w: 600, c: CREAM });
-    flash(g, t, t0 + SPB * 4, 0.3);
+    flash(g, t, t0 + SPB * 8, 0.3);
   }
 }
 function visFrame(g, t, dt, tiles, x, y, w, h) {
   va.read(t, 1, (t * BPM) / 60); vr.render(va, tiles, [1, 1], {}, dt); g.drawImage(vcv, x, y, w, h);
 }
 function sceneF(g, t, dt) {        // 17.14 - 21.43: visuals and one-click video
-  const t0 = DROP + SPB * 16, u = t - t0;
+  const t0 = AT.F, u = t - t0;
   visFrame(g, t, dt, LOOK_F, 0, 0, W, H);
   const gr = g.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, 'rgba(7,8,13,.7)'); gr.addColorStop(0.3, 'rgba(7,8,13,0)'); gr.addColorStop(0.7, 'rgba(7,8,13,0)'); gr.addColorStop(1, 'rgba(7,8,13,.85)');
   g.fillStyle = gr; g.fillRect(0, 0, W, H);
@@ -182,8 +182,8 @@ function sceneF(g, t, dt) {        // 17.14 - 21.43: visuals and one-click video
   flash(g, t, t0, 0.3);
 }
 function sceneG(g, t, dt) {        // 21.43 - 25.71: go live, then stems
-  const t0 = DROP + SPB * 24, u = t - t0; bg(g, t, -10);
-  if (u < SPB * 4) {
+  const t0 = AT.G, u = t - t0; bg(g, t, -10);
+  if (u < LIVE) {
     text(g, 'Go live', W / 2, 250, 120, { a: eo(prog(u, 0, 0.3)) });
     text(g, 'right from the studio.', W / 2, 350, 64, { a: eo(prog(u, 0.2, 0.3)), c: AMBER });
     const x = 150, y = 430, w = 780, h = 1180;
@@ -193,14 +193,14 @@ function sceneG(g, t, dt) {        // 21.43 - 25.71: go live, then stems
     const pulse = 0.75 + 0.25 * Math.sin(t * 8);
     g.save(); g.fillStyle = `rgba(230,40,60,${pulse})`; rr(g, x + 40, y + 40, 150, 64, 14); g.fill(); g.restore();
     text(g, 'LIVE', x + 115, y + 87, 38, { w: 800 });
-    const viewers = Math.floor(120 + Math.pow(prog(u, 0, SPB * 4), 1.5) * 4800);
+    const viewers = Math.floor(120 + Math.pow(prog(u, 0, LIVE), 1.5) * 4800);
     g.save(); g.fillStyle = 'rgba(0,0,0,.55)'; rr(g, x + 205, y + 40, 230, 64, 14); g.fill(); g.restore();
     text(g, '● ' + viewers.toLocaleString('en-US'), x + 320, y + 87, 34, { w: 700 });
     g.save(); g.fillStyle = 'rgba(15,17,25,.9)'; rr(g, x + w - 250, y + h - 330, 210, 290, 26); g.fill(); g.fillStyle = '#3a3f52'; g.beginPath(); g.arc(x + w - 145, y + h - 230, 52, 0, 7); g.fill(); rr(g, x + w - 225, y + h - 160, 160, 110, 50); g.fill(); g.restore();
     text(g, 'Twitch · YouTube · Instagram · TikTok', W / 2, 1760, 44, { a: eo(prog(u, 0.6, 0.4)), w: 600, c: DIM });
     flash(g, t, t0, 0.25);
   } else {
-    const v = u - SPB * 4;
+    const v = u - LIVE;
     text(g, 'Split any song', W / 2, 260, 100, { a: eo(prog(v, 0, 0.3)) });
     text(g, 'into stems.', W / 2, 370, 100, { a: eo(prog(v, 0.15, 0.3)), c: AMBER });
     const stems = [['Drums', EMBER], ['Bass', '#5aa9ff'], ['Vocals', '#c77dff'], ['Other', TEAL]], sep = eio(prog(v, 0.3, 0.8));
@@ -218,7 +218,7 @@ function sceneG(g, t, dt) {        // 21.43 - 25.71: go live, then stems
   }
 }
 function sceneH(g, t, dt) {        // 25.71 - 30: end card
-  const t0 = DROP + SPB * 32, u = t - t0;
+  const t0 = AT.H, u = t - t0;
   visFrame(g, t, dt, LOOK_H, 0, 0, W, H);
   g.fillStyle = 'rgba(7,8,13,.78)'; g.fillRect(0, 0, W, H);
   const k = back(prog(u, 0, 0.45)), mw = 820 * (0.85 + 0.15 * clamp(k)), mh = (mw * mark.height) / mark.width;
@@ -226,28 +226,31 @@ function sceneH(g, t, dt) {        // 25.71 - 30: end card
   text(g, 'Free during the alpha.', W / 2, 900, 76, { a: eo(prog(u, 0.35, 0.4)) });
   text(g, 'Mac · Windows · iPhone · iPad · Android', W / 2, 990, 44, { a: eo(prog(u, 0.55, 0.4)), w: 600, c: DIM });
   const ck = back(prog(u, 0.9, 0.45));
-  g.save(); g.globalAlpha = clamp(ck); g.shadowColor = 'rgba(255,140,40,.7)'; g.shadowBlur = 50; g.fillStyle = AMBER; const bw = 760 * (0.8 + 0.2 * clamp(ck)); rr(g, (W - bw) / 2, 1140, bw, 140, 70); g.fill(); g.restore();
-  text(g, 'Join the Discord to download', W / 2, 1230, 50, { a: clamp(ck), c: '#140d00', w: 800 });
+  g.save(); g.globalAlpha = clamp(ck); g.shadowColor = GLOW; g.shadowBlur = 50; g.fillStyle = AMBER; const bw = 760 * (0.8 + 0.2 * clamp(ck)); rr(g, (W - bw) / 2, 1140, bw, 140, 70); g.fill(); g.restore();
+  text(g, 'Join the Discord to download', W / 2, 1230, 50, { a: clamp(ck), c: BEAT.theme.ctaText, w: 800 });
   text(g, CTA, W / 2, 1360, 46, { a: eo(prog(u, 1.2, 0.4)), w: 600, c: CREAM });
   eq(g, H - 60, 260, 0.9, 40);
 }
 
-const SCENES = [[0, sceneA], [BAR * 2, sceneB], [DROP, sceneC], [DROP + SPB * 2, sceneD], [DROP + SPB * 8, sceneE], [DROP + SPB * 16, sceneF], [DROP + SPB * 24, sceneG], [DROP + SPB * 32, sceneH]];
+const SCENES = [[0, sceneA], [AT.B, sceneB], [AT.C, sceneC], [AT.D, sceneD], [AT.E, sceneE], [AT.F, sceneF], [AT.G, sceneG], [AT.H, sceneH]];
 const draw = (g, t, dt) => {
-  an.at(t); if (!(t >= DROP + SPB * 16 && t < DROP + SPB * 24) && !(t >= DROP + SPB * 24 && t < DROP + SPB * 28) && t < DROP + SPB * 32) va.read(t, 1, (t * BPM) / 60);
+  an.at(t); if (!(t >= AT.F && t < AT.G + LIVE) && t < AT.H) va.read(t, 1, (t * BPM) / 60);
   let f = SCENES[0][1]; for (const [at, fn] of SCENES) if (t >= at) f = fn;
   f(g, t, dt);
   // film grain, very light
   g.save(); g.globalAlpha = 0.035; for (let i = 0; i < 90; i++) { g.fillStyle = i % 2 ? '#fff' : '#000'; g.fillRect((i * 7919 + t * 1e4) % W, (i * 104729 + t * 7e3) % H, 3, 3); } g.restore();
 };
 
+// level check of the soundtrack, section by section (RMS in dB)
+const rmsDb = (a, b) => { let e = 0, n = 0; for (let c = 0; c < 2; c++) { const d = buf.getChannelData(c); for (let i = Math.round(a * SR); i < Math.min(d.length, Math.round(b * SR)); i += 4) { e += d[i] * d[i]; n++; } } return +(10 * Math.log10(e / Math.max(1, n) + 1e-12)).toFixed(1); };
+const LEVELS = { intro: rmsDb(0, DROP), drop: rmsDb(DROP, DROP + BAR * 4), end: rmsDb(AT.H, 28), peakGain: +gain.toFixed(2) };
 if (window.AD_STILLS) {   // a few stills for checking the layout
   const cv = document.createElement('canvas'); cv.width = W; cv.height = H; const g = cv.getContext('2d'), out = {};
   for (const ts of window.AD_STILLS) { for (let x = Math.max(0, ts - 1); x <= ts; x += 1 / 30) draw(g, x, 1 / 30); out[ts] = cv.toDataURL('image/jpeg', 0.8); }
-  return JSON.stringify(out);
+  out.levels = LEVELS; return JSON.stringify(out);
 }
 const codec = await IO.canRenderOffline(W, H);
 if (!codec) throw new Error('no encoder');
 const t0 = performance.now(), blob = await IO.renderOffline(codec, W, H, buf, draw);
 const u8 = new Uint8Array(await blob.arrayBuffer()); let s = ''; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000));
-return JSON.stringify({ secs: +((performance.now() - t0) / 1000).toFixed(1), mb: +(u8.length / 1048576).toFixed(1), b64: btoa(s) });
+return JSON.stringify({ secs: +((performance.now() - t0) / 1000).toFixed(1), mb: +(u8.length / 1048576).toFixed(1), b64: btoa(s), beat: window.AD_BEAT_JSON || null, levels: LEVELS, wav: (() => { const w = IO.wav(buf); let z = ''; for (let i = 0; i < w.length; i += 0x8000) z += String.fromCharCode.apply(null, w.subarray(i, i + 0x8000)); return btoa(z); })() });

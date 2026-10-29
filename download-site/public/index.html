@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>STRATUM: the studio that goes where you go</title>
+<meta name="description" content="STRATUM is a free music studio for Mac, Windows, phones and tablets. Opens FL Studio, Ableton Live, Logic Pro and Reason projects, makes audio-reactive videos, and streams live.">
+<meta property="og:title" content="STRATUM: the studio that goes where you go">
+<meta property="og:description" content="One beat. Every device. Four ways to work. Free during the alpha.">
+<meta property="og:image" content="/img/arrange.jpg">
+<meta name="theme-color" content="#0b0c12">
+<link rel="icon" href="icon.png">
+<style>
+:root {
+  --bg:#0b0c12; --bg2:#11131b; --panel:#171a24; --line:#262a38; --txt:#efeae0; --dim:#9a978f; --acc:#e8a019; --acc2:#ffcf6b; --discord:#5865f2;
+  --font:-apple-system, "SF Pro Display", "Segoe UI", system-ui, sans-serif; --mono:ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --r:14px; --max:1180px;
+}
+* { box-sizing:border-box; }
+[hidden] { display:none !important; }
+html { scroll-behavior:smooth; }
+body { margin:0; background:var(--bg); color:var(--txt); font:17px/1.55 var(--font); -webkit-font-smoothing:antialiased; overflow-x:hidden; }
+a { color:inherit; }
+img { max-width:100%; display:block; }
+.wrap { max-width:var(--max); margin:0 auto; padding:0 20px; }
+h1, h2, h3 { line-height:1.08; letter-spacing:-.02em; margin:0; }
+h2 { font-size:clamp(30px, 4.6vw, 52px); }
+.eyebrow { font:600 12px/1 var(--mono); letter-spacing:.22em; text-transform:uppercase; color:var(--acc); margin-bottom:16px; }
+.lead { color:var(--dim); font-size:clamp(17px, 1.6vw, 20px); max-width:640px; }
+section { padding:110px 0; }
+
+/* nav */
+nav { position:sticky; top:0; z-index:20; background:rgba(11,12,18,.78); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); border-bottom:1px solid rgba(38,42,56,.6); }
+nav .wrap { display:flex; align-items:center; gap:24px; height:64px; }
+.logo { display:flex; align-items:center; gap:11px; font-weight:600; letter-spacing:.32em; font-size:15px; text-decoration:none; }
+.logo img { width:30px; height:30px; border-radius:7px; }
+nav .links { margin-left:auto; display:flex; gap:22px; align-items:center; font-size:15px; }
+nav .links a { text-decoration:none; color:var(--dim); }
+nav .links a:hover { color:var(--txt); }
+@media (max-width:720px) { nav .links a.hide-s { display:none; } }
+
+/* buttons */
+.btn { display:inline-flex; align-items:center; gap:10px; padding:14px 22px; border-radius:10px; font-weight:650; font-size:16px; text-decoration:none; border:0; cursor:pointer; transition:transform .15s, filter .15s; }
+.btn:hover { transform:translateY(-1px); filter:brightness(1.08); }
+.btn.acc { background:var(--acc); color:#140d00; }
+.btn.discord { background:var(--discord); color:#fff; }
+.btn.ghost { background:transparent; color:var(--txt); border:1px solid var(--line); }
+.btn.small { padding:9px 15px; font-size:14px; }
+.btn svg { width:20px; height:20px; fill:currentColor; flex:none; }
+
+/* hero */
+.hero { padding:90px 0 40px; position:relative; }
+.hero::before { content:""; position:absolute; inset:-200px 0 auto; height:700px; background:radial-gradient(ellipse 60% 50% at 50% 30%, rgba(232,160,25,.18), transparent 70%); pointer-events:none; }
+.hero h1 { font-size:clamp(44px, 8vw, 96px); max-width:12ch; }
+.hero h1 em { font-style:normal; color:var(--acc); }
+.hero .lead { margin:24px 0 34px; font-size:clamp(18px, 2vw, 22px); }
+.cta { display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
+.cta small { color:var(--dim); font-size:14px; width:100%; margin-top:4px; }
+.bars { display:flex; gap:5px; align-items:flex-end; height:46px; margin:40px 0 0; }
+.bars i { display:block; width:6px; border-radius:3px; background:var(--acc); opacity:.85; animation:eq 1.1s ease-in-out infinite alternate; }
+@keyframes eq { from { height:12%; } to { height:100%; } }
+@media (prefers-reduced-motion: reduce) { .bars i { animation:none; height:50%; } }
+.shot { margin-top:60px; position:relative; border-radius:16px; overflow:hidden; border:1px solid var(--line); box-shadow:0 40px 120px -30px rgba(232,160,25,.35), 0 20px 60px rgba(0,0,0,.6); background:var(--bg2); }
+.shot img { width:100%; }
+
+/* import strip */
+.imports { padding:46px 0; border-block:1px solid var(--line); background:var(--bg2); }
+.imports .wrap { display:flex; flex-wrap:wrap; gap:14px 34px; align-items:center; justify-content:center; }
+.imports b { font:600 12px/1 var(--mono); letter-spacing:.2em; color:var(--dim); text-transform:uppercase; }
+.imports span { font-size:clamp(17px, 2vw, 22px); font-weight:600; color:var(--txt); opacity:.9; }
+
+/* skins */
+.tabs { display:flex; gap:8px; flex-wrap:wrap; margin:34px 0 20px; }
+.tabs button { font:600 15px var(--font); color:var(--dim); background:var(--panel); border:1px solid var(--line); border-radius:999px; padding:10px 18px; cursor:pointer; }
+.tabs button.on { background:var(--acc); color:#140d00; border-color:var(--acc); }
+.skin-cap { color:var(--dim); margin:0 0 18px; min-height:3em; }
+
+/* features */
+.grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:16px; margin-top:46px; }
+.card { background:var(--panel); border:1px solid var(--line); border-radius:var(--r); padding:26px; position:relative; overflow:hidden; }
+.card h3 { font-size:21px; margin:14px 0 8px; }
+.card p { color:var(--dim); margin:0; font-size:15.5px; }
+.card .ic { width:40px; height:40px; border-radius:10px; display:grid; place-items:center; background:rgba(232,160,25,.12); color:var(--acc); font-size:20px; }
+.card.big { grid-column:span 2; }
+@media (max-width:640px) { .card.big { grid-column:auto; } }
+.card img { border-radius:10px; margin-top:18px; border:1px solid var(--line); }
+
+/* split */
+.split { display:grid; grid-template-columns:1.05fr 1fr; gap:56px; align-items:center; }
+@media (max-width:880px) { .split { grid-template-columns:1fr; } }
+.ticks { list-style:none; padding:0; margin:26px 0 0; display:grid; gap:12px; }
+.ticks li { padding-left:30px; position:relative; color:var(--dim); }
+.ticks li b { color:var(--txt); font-weight:600; }
+.ticks li::before { content:"✓"; position:absolute; left:0; top:0; color:var(--acc); font-weight:700; }
+.phone { max-width:330px; margin:0 auto; border-radius:34px; border:10px solid #1e2130; overflow:hidden; box-shadow:0 30px 80px rgba(0,0,0,.6); aspect-ratio:9/16; background:#000; }
+.phone video, .phone img { width:100%; height:100%; object-fit:cover; }
+
+/* compare */
+table { width:100%; border-collapse:collapse; margin-top:40px; font-size:15.5px; }
+th, td { text-align:left; padding:15px 14px; border-bottom:1px solid var(--line); vertical-align:top; }
+th { font:600 12px var(--mono); letter-spacing:.16em; text-transform:uppercase; color:var(--dim); }
+td:first-child { color:var(--txt); font-weight:600; width:34%; }
+td.us { color:var(--acc2); }
+td.them { color:var(--dim); }
+.tblwrap { overflow-x:auto; }
+.note { color:var(--dim); font-size:13.5px; margin-top:14px; }
+
+/* download */
+.dl-box { background:linear-gradient(160deg, #1b1e2a, #12141c); border:1px solid var(--line); border-radius:22px; padding:clamp(26px, 5vw, 56px); margin-top:40px; }
+.steps { display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:20px; margin-top:24px; }
+.step { background:rgba(0,0,0,.25); border:1px solid var(--line); border-radius:14px; padding:22px; }
+.step .num { font:700 13px var(--mono); color:var(--acc); letter-spacing:.14em; }
+.step h3 { font-size:20px; margin:8px 0 6px; }
+.step p { color:var(--dim); margin:0 0 16px; font-size:15px; }
+.step.done { border-color:rgba(232,160,25,.5); }
+.files { display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:12px; margin-top:22px; }
+.files a { display:block; padding:18px; border-radius:12px; border:1px solid var(--line); background:rgba(0,0,0,.25); text-decoration:none; }
+.files a:hover { border-color:var(--acc); }
+.files b { display:block; font-size:18px; }
+.files small { color:var(--dim); }
+.files .go { color:var(--acc); font-weight:600; font-size:14px; margin-top:8px; display:block; }
+.msg { margin-top:18px; padding:12px 16px; border-radius:10px; border-left:3px solid var(--acc); background:rgba(232,160,25,.08); font-size:15px; }
+
+/* faq */
+details { border-bottom:1px solid var(--line); padding:18px 0; }
+summary { cursor:pointer; font-weight:600; font-size:18px; list-style:none; display:flex; justify-content:space-between; gap:20px; }
+summary::after { content:"+"; color:var(--acc); font-size:22px; line-height:1; }
+details[open] summary::after { content:"–"; }
+details p { color:var(--dim); margin:12px 0 0; max-width:780px; }
+
+footer { border-top:1px solid var(--line); padding:40px 0 60px; color:var(--dim); font-size:14px; }
+footer .wrap { display:flex; flex-wrap:wrap; gap:16px 28px; align-items:center; }
+footer .sp { margin-left:auto; }
+
+.reveal { opacity:0; transform:translateY(24px); transition:opacity .7s ease, transform .7s ease; }
+.reveal.in { opacity:1; transform:none; }
+@media (prefers-reduced-motion: reduce) { .reveal { opacity:1; transform:none; transition:none; } }
+</style>
+</head>
+<body>
+<nav>
+  <div class="wrap">
+    <a class="logo" href="#"><img src="icon.png" alt="">STRATUM</a>
+    <div class="links">
+      <a class="hide-s" href="#features">Features</a>
+      <a class="hide-s" href="#compare">Why STRATUM</a>
+      <a class="hide-s" href="https://github.com/Irlewis91/stratum" target="_blank" rel="noopener">GitHub</a>
+      <a class="btn acc small" href="#download">Download</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow">Free during the alpha · Mac · Windows · iPhone · iPad · Android</div>
+    <h1>The studio that goes <em>where you go.</em></h1>
+    <p class="lead">Start a beat on your laptop, finish it on your phone, and open the projects you already made in FL Studio, Ableton Live, Logic Pro or Reason. STRATUM is one music studio on every device, with visuals, live streaming and stem separation built in.</p>
+    <div class="cta">
+      <a class="btn acc" href="#download">Download STRATUM</a>
+      <a class="btn ghost" href="https://irlewis91.github.io/stratum/" target="_blank" rel="noopener">Try it in your browser</a>
+      <small>Free for members of the STRATUM Discord. No account, no card.</small>
+    </div>
+    <div class="bars" aria-hidden="true"></div>
+    <div class="shot reveal"><img src="img/arrange.jpg" alt="STRATUM's Arrange layout with drums, bass, keys and arp tracks" width="1600" height="1000"></div>
+  </div>
+</header>
+
+<div class="imports">
+  <div class="wrap">
+    <b>Opens projects from</b>
+    <span>FL Studio</span><span>Ableton Live</span><span>Logic Pro</span><span>Reason</span><span>MIDI</span><span>DAWproject</span>
+  </div>
+</div>
+
+<section id="features">
+  <div class="wrap">
+    <div class="eyebrow">One beat · four layouts</div>
+    <h2>Work the way you already think.</h2>
+    <p class="lead">Most studios make you learn their way. STRATUM has four layouts, called Comfort Skins, and switching between them never stops the music. Same beat, same sounds; only the screen and the shortcuts change.</p>
+    <div class="tabs" role="tablist">
+      <button class="on" data-skin="pattern">Pattern</button>
+      <button data-skin="session">Session</button>
+      <button data-skin="arrange">Arrange</button>
+      <button data-skin="mixedit">Mix / Edit</button>
+    </div>
+    <p class="skin-cap" id="skinCap"></p>
+    <div class="shot" style="margin-top:0"><img id="skinImg" src="img/pattern.jpg" alt="STRATUM layout" width="1600" height="1000"></div>
+
+    <div class="grid">
+      <div class="card big reveal">
+        <div class="ic">◉</div>
+        <h3>Visuals that move with your music</h3>
+        <p>44 audio-reactive modes, 24 palettes, your own image and lyrics, grids of up to 36 tiles and a performance mode. Turn any beat into a full-screen show, a video or a live stream background.</p>
+        <img src="img/visuals.jpg" alt="STRATUM Visuals, an audio-reactive pattern" loading="lazy">
+      </div>
+      <div class="card reveal"><div class="ic">▶</div><h3>Share a 1080p video in one click</h3><p>Branded vertical videos for TikTok, Reels and Shorts, drawn frame by frame at full 1080×1920 with clean sound. On a Mac they take about a third of the song's length to make.</p></div>
+      <div class="card reveal"><div class="ic">●</div><h3>Go live from the studio</h3><p>Stream to Twitch, YouTube, Instagram or TikTok straight from STRATUM: your screen or your Visuals, a camera box, and the sound of your session. No OBS needed.</p></div>
+      <div class="card reveal"><div class="ic">≋</div><h3>Split any song into stems</h3><p>AI stem separation pulls drums, bass, vocals and everything else apart, right on your computer (Windows, or a Mac with Apple silicon). Sample, flip and remix without leaving the app.</p></div>
+      <div class="card reveal"><div class="ic">⧉</div><h3>Your plugins come too</h3><p>VST3 and VST2 on Mac and Windows, Audio Units on Mac, each in its own window. Plus STRATUM Wave, STRATUM Tune and all 508 Airwindows effects, free.</p></div>
+      <div class="card reveal"><div class="ic">♪</div><h3>Your sounds, every project</h3><p>Add a whole drum library or sample pack once and it's there in every project, sorted into kicks, snares and hats. 791 free sounds and 99 MIDI kits come built in.</p></div>
+      <div class="card reveal"><div class="ic">⇄</div><h3>One file, every device</h3><p>A beat is a single file that opens the same on Mac, Windows, phone and tablet. Save it to iCloud, OneDrive or Google Drive and pick up where you left off.</p></div>
+    </div>
+  </div>
+</section>
+
+<section style="background:var(--bg2); border-block:1px solid var(--line)">
+  <div class="wrap split">
+    <div class="reveal">
+      <div class="eyebrow">Bring your old projects</div>
+      <h2>Your sessions aren't stuck where you made them.</h2>
+      <p class="lead" style="margin-top:20px">Open a project from another studio and STRATUM rebuilds it: tracks, notes, tempo, arrangement, audio clips and your own samples.</p>
+      <ul class="ticks">
+        <li><b>FL Studio</b> patterns, playlist, volume and pan automation, and the samples your project points to.</li>
+        <li><b>Ableton Live</b> sets with clips, scenes and the arrangement.</li>
+        <li><b>Logic Pro</b> projects, with matching plugins loaded where they're installed.</li>
+        <li><b>Reason</b> songs, with your own samples back on the right Kong and Redrum pads.</li>
+        <li><b>Missing samples</b> are looked for across your computer and your sound library.</li>
+      </ul>
+    </div>
+    <div class="reveal"><div class="shot" style="margin:0"><img src="img/sounds.jpg" alt="STRATUM Sounds browser with My Sounds" loading="lazy"></div></div>
+  </div>
+</section>
+
+<section id="compare">
+  <div class="wrap">
+    <div class="eyebrow">Why STRATUM</div>
+    <h2>Built for how producers work now.</h2>
+    <p class="lead" style="margin-top:20px">Traditional studios were built for one computer in one room. STRATUM is built for making music anywhere and getting it in front of people.</p>
+    <div class="tblwrap reveal">
+      <table>
+        <thead><tr><th></th><th>STRATUM</th><th>A typical desktop studio</th></tr></thead>
+        <tbody>
+          <tr><td>Price</td><td class="us">Free during the alpha</td><td class="them">Often a paid licence or subscription</td></tr>
+          <tr><td>Devices</td><td class="us">Mac, Windows, iPhone, iPad, Android and the browser</td><td class="them">Usually desktop only, or a separate mobile app</td></tr>
+          <tr><td>Opening other studios' projects</td><td class="us">FL Studio, Ableton Live, Logic Pro, Reason, MIDI, DAWproject</td><td class="them">Usually its own format, plus MIDI and audio</td></tr>
+          <tr><td>Layouts</td><td class="us">Four, switchable mid-song</td><td class="them">One</td></tr>
+          <tr><td>Audio-reactive visuals</td><td class="us">Built in, 44 modes</td><td class="them">Separate software</td></tr>
+          <tr><td>Share video for TikTok, Reels and Shorts</td><td class="us">One click, 1080×1920</td><td class="them">Export, then edit in a video app</td></tr>
+          <tr><td>Live streaming</td><td class="us">Built in, with camera and Visuals</td><td class="them">Needs OBS or similar</td></tr>
+          <tr><td>Stem separation</td><td class="us">Built in, runs on your computer</td><td class="them">Paid add-on, a separate app or a website</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">STRATUM is alpha software, so expect rough edges. FL Studio, Ableton Live, Logic Pro and Reason are trademarks of their owners; STRATUM isn't affiliated with them.</p>
+  </div>
+</section>
+
+<section id="download" style="padding-top:40px">
+  <div class="wrap">
+    <div class="eyebrow">Download</div>
+    <h2>Get STRATUM free.</h2>
+    <p class="lead" style="margin-top:20px">Downloads are for members of the STRATUM Discord, where producers share beats, get help, report bugs and hear about new versions first.</p>
+    <div class="dl-box">
+      <div id="gate">
+        <div class="steps">
+          <div class="step" id="s1">
+            <div class="num">STEP 1</div>
+            <h3>Join the Discord</h3>
+            <p>It's free. Say hi, then come back here.</p>
+            <a class="btn discord" id="joinBtn" href="https://discord.gg/PtpChEj8Gc" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.3 4.4A19.6 19.6 0 0 0 15.4 3l-.6 1.3a18.2 18.2 0 0 0-5.6 0L8.6 3a19.5 19.5 0 0 0-4.9 1.5C.6 9.1-.3 13.7.1 18.2a19.7 19.7 0 0 0 6 3l1.3-2.1a12.7 12.7 0 0 1-2-1l.5-.4a14 14 0 0 0 12.2 0l.5.4-2 1 1.3 2.1a19.6 19.6 0 0 0 6-3c.5-5.2-.8-9.8-3.6-13.8ZM8 15.5c-1.2 0-2.2-1.1-2.2-2.4s1-2.4 2.2-2.4 2.2 1.1 2.2 2.4-1 2.4-2.2 2.4Zm8 0c-1.2 0-2.2-1.1-2.2-2.4s1-2.4 2.2-2.4 2.2 1.1 2.2 2.4-1 2.4-2.2 2.4Z"/></svg>Join the server</a>
+          </div>
+          <div class="step" id="s2">
+            <div class="num">STEP 2</div>
+            <h3>Sign in with Discord</h3>
+            <p>So we can see you're in the server. We only see your name and server list, and we never post anything.</p>
+            <a class="btn acc" id="signBtn" href="/api/login">Sign in with Discord</a>
+          </div>
+        </div>
+      </div>
+      <div id="files" hidden>
+        <h3 id="hello" style="font-size:24px"></h3>
+        <div class="files">
+          <a href="/api/download?file=mac"><b>Mac</b><small>macOS 12 or later · Apple silicon and Intel</small><span class="go">Download .dmg →</span></a>
+          <a href="/api/download?file=windows"><b>Windows</b><small>Windows 10 or 11 · 64-bit</small><span class="go">Download .zip →</span></a>
+          <a href="https://irlewis91.github.io/stratum/" target="_blank" rel="noopener"><b>Phone and tablet</b><small>Opens in the browser · add it to your home screen</small><span class="go">Open →</span></a>
+          <a href="/api/download?file=manual"><b>Owner's Manual</b><small>PDF, 33 pages</small><span class="go">Download →</span></a>
+        </div>
+        <p class="note">Not you? <a href="/api/logout">Sign out</a></p>
+      </div>
+      <div id="note" class="msg" hidden></div>
+    </div>
+  </div>
+</section>
+
+<section style="padding-top:20px">
+  <div class="wrap">
+    <div class="eyebrow">Questions</div>
+    <h2 style="margin-bottom:20px">Good to know</h2>
+    <details><summary>Is it really free?</summary><p>Yes. STRATUM is free during the alpha for everyone in the Discord. Paid extras may come later.</p></details>
+    <details><summary>Why does my Mac or PC warn me when I open it?</summary><p>STRATUM isn't signed with an Apple Developer ID or a Windows code-signing certificate yet, so macOS and Windows show a warning the first time. On a Mac, open it once, then go to System Settings › Privacy &amp; Security and choose Open Anyway. On Windows, choose More info › Run anyway. Signing is on the way.</p></details>
+    <details><summary>Will my FL Studio, Ableton, Logic or Reason project sound exactly the same?</summary><p>Tracks, notes, tempo, arrangement, audio and your own samples come across. Each studio's own built-in instruments and effects can't be copied, so those parts play on STRATUM's sounds, or on the same plugin if you have it installed. Bouncing a track to audio before you export always brings it across exactly.</p></details>
+    <details><summary>Does it work on my phone?</summary><p>Yes. Open the web version on an iPhone, iPad or Android device and add it to your home screen. It runs full screen and works offline. Plugins, stem separation and live streaming are on the Mac and Windows versions.</p></details>
+    <details><summary>What does "alpha" mean here?</summary><p>STRATUM is new and changing every week. Expect bugs, and tell us about them in the Discord. Every release lists what was tested and what wasn't.</p></details>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <a class="logo" href="#"><img src="icon.png" alt="">STRATUM</a>
+    <a href="https://discord.gg/PtpChEj8Gc" target="_blank" rel="noopener">Discord</a>
+    <a href="https://github.com/Irlewis91/stratum" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://github.com/Irlewis91/stratum/releases" target="_blank" rel="noopener">Release notes</a>
+    <span class="sp">STRATUM alpha</span>
+  </div>
+</footer>
+
+<script>
+// Equaliser bars in the hero.
+(() => { const b = document.querySelector('.bars'); for (let i = 0; i < 48; i++) { const s = document.createElement('i'); s.style.animationDelay = (-(Math.sin(i * 1.7) + 1) * 0.55).toFixed(2) + 's'; s.style.animationDuration = (0.7 + ((i * 37) % 9) / 10).toFixed(2) + 's'; b.appendChild(s); } })();
+
+// Layout switcher.
+(() => {
+  const caps = {
+    pattern: 'Pattern: a step sequencer and channel rack, for building loops one pattern at a time.',
+    session: 'Session: clips in a grid you launch live, scene by scene.',
+    arrange: 'Arrange: a timeline of regions for laying out the whole song.',
+    mixedit: 'Mix / Edit: big faders and editors for finishing the track.',
+  };
+  const img = document.getElementById('skinImg'), cap = document.getElementById('skinCap');
+  cap.textContent = caps.pattern;
+  Object.keys(caps).forEach((k) => { const i = new Image(); i.src = 'img/' + k + '.jpg'; });
+  document.querySelectorAll('.tabs button').forEach((b) => b.addEventListener('click', () => {
+    document.querySelectorAll('.tabs button').forEach((x) => x.classList.toggle('on', x === b));
+    img.src = 'img/' + b.dataset.skin + '.jpg'; cap.textContent = caps[b.dataset.skin];
+  }));
+})();
+
+// Fade sections in as they scroll into view.
+(() => {
+  const io = 'IntersectionObserver' in window ? new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { rootMargin: '0px 0px -8% 0px' }) : null;
+  document.querySelectorAll('.reveal').forEach((el) => (io ? io.observe(el) : el.classList.add('in')));
+})();
+
+// Download gate: what the producer sees depends on whether they've signed in and joined.
+(async () => {
+  const q = new URLSearchParams(location.search), note = document.getElementById('note');
+  const say = (t) => { note.textContent = t; note.hidden = false; };
+  const msgs = {
+    cancelled: 'Sign-in was cancelled. You can try again whenever you like.',
+    expired: 'That sign-in took too long. Please try again.',
+    failed: "Discord sign-in didn't go through. Please try again in a minute.",
+    needed: 'Sign in with Discord first, then the download starts.',
+  };
+  if (q.get('signin')) say(msgs[q.get('signin')] || msgs.failed);
+  let me = { signedIn: false };
+  try { me = await (await fetch('/api/me', { cache: 'no-store' })).json(); } catch (e) {}
+  if (me.invite) document.getElementById('joinBtn').href = me.invite;
+  if (me.signedIn && me.member) {
+    document.getElementById('gate').hidden = true;
+    document.getElementById('files').hidden = false;
+    document.getElementById('hello').textContent = 'Welcome, ' + me.name + '. Pick your download:';
+    note.hidden = true;
+  } else if (me.signedIn) {
+    document.getElementById('s1').classList.add('done');
+    document.getElementById('signBtn').textContent = "I've joined, check again";
+    say('You are signed in as ' + me.name + ", but you're not in the STRATUM server yet. Join it, then press “I've joined, check again”.");
+  }
+  if (q.toString()) { history.replaceState(null, '', '/#download'); document.getElementById('download').scrollIntoView(); }
+})();
+</script>
+</body>
+</html>

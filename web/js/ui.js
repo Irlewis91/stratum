@@ -902,7 +902,7 @@
     async libUse(el) {
       const x = (await IO.libList())[+el.dataset.i], t = curTrack(), ab = x && (await IO.libRead(x.path));
       if (!ab) return U.toast('That sound could not be read.', true);
-      const file = x.file || x.name + (/\.mid$/i.test(x.path) ? '.mid' : '.flac');
+      const file = x.file || x.name + x.path.slice(x.path.lastIndexOf('.'));
       if (/\.mid$/i.test(x.path)) {
         // Notes from the MIDI file become a new region on the selected track at the play position.
         const src = IO.midiIn(ab, x.name).proj, notes = [];

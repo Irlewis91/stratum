@@ -1,5 +1,6 @@
 #!/bin/bash
-# Fetches STRATUM's built-in sound library: public-domain (CC0) sounds that may be redistributed, converted to FLAC and
+# Fetches STRATUM's built-in sound library: public-domain (CC0) sounds that may be redistributed, converted to FLAC (or
+# 24-bit WAV for one-shots too short for afconvert's FLAC encoder) and
 # sorted into vendor/library/<collection>/<category>/, with vendor/library/library.json listing every sound.
 #   Stargate sample pack (CC0) - github.com/stargatedaw/stargate-sample-pack, pinned commit
 #   Producer Space (CC0)       - archive.org/details/producer-space-cc0-sample-library, selected packs
@@ -52,6 +53,18 @@ def category(path):
                        (("found-sounds",), "Found Sounds"), (("fx",), "FX"), (("progression", "piano riff"), "MIDI")]:
         if any(re.search(r"(^|[^a-z])" + re.escape(w), p) for w in words): return cat
     return "Other"
+def readable(path): return os.path.exists(path) and subprocess.run(["afinfo", path], capture_output=True).returncode == 0
+def audio(src, base):
+    # FLAC where possible. afconvert's FLAC encoder writes an empty 42-byte stub (no fLaC marker, no frames) for sounds
+    # shorter than one 4608-frame packet, which no decoder accepts, so those short one-shots are kept as 24-bit WAV.
+    flac, wav = base + ".flac", base + ".wav"
+    if readable(wav): return wav
+    if not readable(flac): subprocess.run(["afconvert", "-f", "flac", "-d", "flac", src, flac], check=True, capture_output=True)
+    if readable(flac): return flac
+    os.remove(flac)
+    subprocess.run(["afconvert", "-f", "WAVE", "-d", "LEI24", src, wav], check=True, capture_output=True)
+    if not readable(wav): sys.exit("could not convert " + src)
+    return wav
 entries = []
 sources = [(os.path.join(work, "stargate", "stargate-sample-pack"), "Stargate (CC0)"), (os.path.join(work, "producer-space", "Producer Space", "Packs"), "Producer Space (CC0)")]
 for root, coll in sources:
@@ -62,12 +75,14 @@ for root, coll in sources:
             cat = category(rel)
             name = os.path.splitext(f)[0]
             out_rel = os.path.join(coll, cat, re.sub(r"[^\w\-. ]", "_", os.path.dirname(rel).replace(os.sep, " - ")) + " - " + name if os.path.dirname(rel) else name)
-            out_rel = out_rel.replace("/ - ", "/") + (".mid" if ext == "mid" else ".flac")
-            dst = os.path.join(lib, out_rel)
-            os.makedirs(os.path.dirname(dst), exist_ok=True)
-            if not os.path.exists(dst):
-                if ext == "mid": shutil.copyfile(src, dst)
-                else: subprocess.run(["afconvert", "-f", "flac", "-d", "flac", src, dst], check=True, capture_output=True)
+            out_rel = out_rel.replace("/ - ", "/")
+            os.makedirs(os.path.dirname(os.path.join(lib, out_rel)), exist_ok=True)
+            if ext == "mid":
+                out_rel += ".mid"
+                if not os.path.exists(os.path.join(lib, out_rel)): shutil.copyfile(src, os.path.join(lib, out_rel))
+            else:
+                out_rel = audio(src, os.path.join(lib, out_rel))
+                out_rel = os.path.relpath(out_rel, lib)
             entries.append({"path": out_rel, "name": name, "category": cat, "collection": coll})
 for coll, lic in [("Stargate (CC0)", os.path.join(work, "stargate", "LICENSE")), ("Producer Space (CC0)", os.path.join(work, "producer-space", "Producer Space", "LICENSE.txt"))]:
     if os.path.exists(lic): shutil.copyfile(lic, os.path.join(lib, coll, "LICENSE.txt"))

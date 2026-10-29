@@ -174,17 +174,18 @@ footer .sp { margin-left:auto; }
 
 <section id="features">
   <div class="wrap">
-    <div class="eyebrow">One beat · four layouts</div>
-    <h2>Work the way you already think.</h2>
-    <p class="lead">Most studios make you learn their way. STRATUM has four layouts, called Comfort Skins, and switching between them never stops the music. Same beat, same sounds; only the screen and the shortcuts change.</p>
+    <div class="eyebrow">One beat · five layouts</div>
+    <h2>Work the way you already think. Or try ours.</h2>
+    <p class="lead">Four layouts, called Comfort Skins, feel like the studios you already know, and switching between them never stops the music. The fifth, Strata, is STRATUM's own: your song as glowing layers beside a live Stage showing what your audience will see.</p>
     <div class="tabs" role="tablist">
-      <button class="on" data-skin="pattern">Pattern</button>
+      <button class="on" data-skin="strata">Strata ✦</button>
+      <button data-skin="pattern">Pattern</button>
       <button data-skin="session">Session</button>
       <button data-skin="arrange">Arrange</button>
       <button data-skin="mixedit">Mix / Edit</button>
     </div>
     <p class="skin-cap" id="skinCap"></p>
-    <div class="shot" style="margin-top:0"><img id="skinImg" src="img/pattern.jpg" alt="STRATUM layout" width="1600" height="1000"></div>
+    <div class="shot" style="margin-top:0"><img id="skinImg" src="img/strata.jpg" alt="STRATUM layout" width="1600" height="1000"></div>
 
     <div class="grid">
       <div class="card big reveal">
@@ -233,7 +234,7 @@ footer .sp { margin-left:auto; }
           <tr><td>Price</td><td class="us">Free during the alpha</td><td class="them">Often a paid licence or subscription</td></tr>
           <tr><td>Devices</td><td class="us">Mac, Windows, iPhone, iPad, Android and the browser</td><td class="them">Usually desktop only, or a separate mobile app</td></tr>
           <tr><td>Opening other studios' projects</td><td class="us">FL Studio, Ableton Live, Logic Pro, Reason, MIDI, DAWproject</td><td class="them">Usually its own format, plus MIDI and audio</td></tr>
-          <tr><td>Layouts</td><td class="us">Four, switchable mid-song</td><td class="them">One</td></tr>
+          <tr><td>Layouts</td><td class="us">Five, switchable mid-song, including Strata</td><td class="them">One</td></tr>
           <tr><td>Audio-reactive visuals</td><td class="us">Built in, 44 modes</td><td class="them">Separate software</td></tr>
           <tr><td>Share video for TikTok, Reels and Shorts</td><td class="us">One click, 1080×1920</td><td class="them">Export, then edit in a video app</td></tr>
           <tr><td>Live streaming</td><td class="us">Built in, with camera and Visuals</td><td class="them">Needs OBS or similar</td></tr>
@@ -300,7 +301,7 @@ footer .sp { margin-left:auto; }
     <a href="https://discord.gg/PtpChEj8Gc" target="_blank" rel="noopener">Discord</a>
     <a href="https://github.com/Irlewis91/stratum" target="_blank" rel="noopener">GitHub</a>
     <a href="https://github.com/Irlewis91/stratum/releases" target="_blank" rel="noopener">Release notes</a>
-    <span class="sp">STRATUM alpha</span>
+    <span class="sp">Powered by Matova LC.</span>
   </div>
 </footer>
 
@@ -311,13 +312,14 @@ footer .sp { margin-left:auto; }
 // Layout switcher.
 (() => {
   const caps = {
+    strata: 'Strata, only in STRATUM: the song as glowing layers, a live Stage of Visuals, and Record, Share and Go live one click away.',
     pattern: 'Pattern: a step sequencer and channel rack, for building loops one pattern at a time.',
     session: 'Session: clips in a grid you launch live, scene by scene.',
     arrange: 'Arrange: a timeline of regions for laying out the whole song.',
     mixedit: 'Mix / Edit: big faders and editors for finishing the track.',
   };
   const img = document.getElementById('skinImg'), cap = document.getElementById('skinCap');
-  cap.textContent = caps.pattern;
+  cap.textContent = caps.strata;
   Object.keys(caps).forEach((k) => { const i = new Image(); i.src = 'img/' + k + '.jpg'; });
   document.querySelectorAll('.tabs button').forEach((b) => b.addEventListener('click', () => {
     document.querySelectorAll('.tabs button').forEach((x) => x.classList.toggle('on', x === b));

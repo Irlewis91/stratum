@@ -615,8 +615,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKNaviga
             ("sounds", "S.ui.setSkin('pattern'); S.ui.act('sounds')"), ("share", "document.getElementById('pop').hidden = true; S.ui.act('share')"),
             ("tour", "document.getElementById('pop').hidden = true; S.tour.start(); document.querySelector('.tour-card [data-t=next]').click(); document.querySelector('.tour-card [data-t=next]').click(); document.querySelector('.tour-card [data-t=next]').click(); document.querySelector('.tour-card [data-t=next]').click()"),
             ("visuals", "document.getElementById('pop').hidden = true; const sk = document.querySelector('.tour-card [data-t=skip]'); if (sk) sk.click(); S.ui.act('play'); S.vis.open(); S.vis.applyPreset('Stained Glass', true); setTimeout(() => { S.engine.stop(); }, 1800)"),
+            ("strata", "S.vis.close(); S.ui.setSkin('strata'); const m = document.getElementById('modeSel'); m.value = 'song'; m.dispatchEvent(new Event('change', { bubbles: true })); S.ui.playFrom = 16; if (!S.engine.playing) S.ui.act('play'); setInterval(() => S.ui.stageTick(), 33)"),
         ]
-        let selectors = ["#visBar .vtabs", "#visBar .vbody", "#visCanvas", "#hdr .logo", "[data-act=new]", "[data-act=open]", "[data-act=save]", "#wantBtn", "[data-act=sounds]", "[data-act=share]", "#exportSel", "#playBtn", "[data-act=stop]", "#recBtn", "#monBtn", "#modeSel", "#bpm", "#rootSel", "#metroBtn", "#pos", "#keysBtn", "[data-act=dump]", "[data-act=undo]", "#addTrackSel", "[data-act=help]", "#skinSel", "#rack", "#session", "#timeline", "#mixer", "#editor", "#devices", "#inspector", "#pop .popbox", ".wavebox", "#wavePreset", ".pctl.grouped", ".gatepat", ".ikind", ".tour-card", ".tour-box"]
+        let selectors = ["#visBar .vtabs", "#visBar .vbody", "#visCanvas", "#hdr .logo", "[data-act=new]", "[data-act=open]", "[data-act=save]", "#wantBtn", "[data-act=sounds]", "[data-act=share]", "#exportSel", "#playBtn", "[data-act=stop]", "#recBtn", "#monBtn", "#modeSel", "#bpm", "#rootSel", "#metroBtn", "#pos", "#keysBtn", "[data-act=dump]", "[data-act=undo]", "#addTrackSel", "[data-act=help]", "#skinSel", "#rack", "#session", "#timeline", "#mixer", "#editor", "#devices", "#inspector", "#stage", "#stageLayers", ".stageacts", ".stagelook", "#pop .popbox", ".wavebox", "#wavePreset", ".pctl.grouped", ".gatepat", ".ikind", ".tour-card", ".tour-box"]
         var rects: [String: Any] = [:]
         var queue = shots
         func next() {
@@ -626,7 +627,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKNaviga
             }
             let (name, js) = queue.removeFirst()
             web.evaluateJavaScript(js) { _, _ in
-                DispatchQueue.main.asyncAfter(deadline: .now() + (name == "wave" ? 2.5 : 0.8)) {
+                DispatchQueue.main.asyncAfter(deadline: .now() + (name == "strata" ? 4 : name == "wave" ? 2.5 : 0.8)) {
                     let probe = "document.getElementById('toast').hidden = true; JSON.stringify(Object.fromEntries(\(selectors.description).map((q) => { const e = document.querySelector(q); if (!e) return [q, null]; const r = e.getBoundingClientRect(); return [q, r.width > 2 && r.height > 2 ? [r.left, r.top, r.width, r.height] : null]; })))"
                     self.web.evaluateJavaScript(probe) { v, _ in
                         if let s = v as? String, let d = s.data(using: .utf8), let o = try? JSONSerialization.jsonObject(with: d) { rects[name] = o }

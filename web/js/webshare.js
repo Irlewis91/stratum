@@ -235,6 +235,8 @@
     return new Blob([...ftyp, ...build(offs).flat(Infinity), head, ...order.map(([ti, si]) => tracks[ti].data[si])], { type: 'video/mp4' });
   }
 
+  IO.BufferAnalyser = BufferAnalyser;
+
   IO.canRenderOffline = async (W, H) => {
     if (typeof VideoEncoder === 'undefined' || typeof AudioEncoder === 'undefined' || typeof VideoFrame === 'undefined') return null;
     for (const codec of VIDEO_CODECS) {

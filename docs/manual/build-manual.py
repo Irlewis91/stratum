@@ -148,10 +148,13 @@ add("""<section><h1><span>3</span>Comfort Skins</h1>
         ["<b>Pattern</b>", "FL Studio", "Channel Rack with step grid, Mixer, Piano Roll and Devices; F5 and F7 switch the lower panel to the Playlist or Piano Roll."],
         ["<b>Session</b>", "Ableton Live", "Scenes and clips in a grid, the Mixer, and clip or device view at the bottom (⇧Tab)."],
         ["<b>Arrange</b>", "Logic Pro, Cubase, Studio One", "Inspector on the left, tracks and regions on a timeline, editor or mixer below."],
-        ["<b>Mix / Edit</b>", "Pro Tools", "Separate Edit and Mix windows (⌘=)."]])
+        ["<b>Mix / Edit</b>", "Pro Tools", "Separate Edit and Mix windows (⌘=)."],
+        ["<b>Strata</b>", "Only STRATUM", "The song as glowing layers, the Stage with live Visuals and each track's level, and Record, Share and Go live a click away."]])
     + figure("session", [("#session", "Clip grid", "scenes in rows, tracks in columns; ▶ launches a whole scene."), ("#mixer", "Mixer", "levels, pan, mute and solo."), ("#devices", "Device view", "instrument and effects of the selected track.")], "The Session skin.")
     + figure("arrange", [("#inspector", "Inspector", "the selected track's level, pan and inserts."), ("#timeline", "Tracks area", "regions on the song timeline, with section markers above."), ("#editor", "Editor", "the piano roll for the selected region.")], "The Arrange skin.")
     + figure("mixedit", [("#timeline", "Edit window", "the timeline; ⌘= swaps to the Mix window."), ("#editor", "Editor", "notes of the selected region.")], "The Mix / Edit skin.")
+    + """<h3>Strata, STRATUM's own skin</h3><p>The other skins borrow layouts producers already know. <b>Strata</b> is built around what STRATUM adds: making music to be seen. Each track is a layer of the song, drawn as a glowing band. Beside it, the <b>Stage</b> plays live Visuals of your mix, the look you would share or stream, and switches looks with ‹ › or [ and ]. Under it, <b>Layers</b> lights each track up with its level, so you can see what is playing at a glance. <b>Record</b>, <b>Share video</b>, <b>Go live</b> and <b>Visuals</b> sit underneath, and <b>Below the song</b> chooses the Piano roll, Devices or Mixer for the lower panel (E, D and X).</p>"""
+    + figure("strata", [("#timeline", "Layers of the song", "each track a glowing band, regions as pills."), ("#stage", "Stage", "live Visuals of the mix; ‹ › change the look, ⤢ goes full screen."), ("#stageLayers", "Layers", "each track lit by its level."), (".stageacts", "Moments", "Record, Share video, Go live and Visuals."), ("#editor", "Below the song", "Piano roll, Devices or Mixer.")], "The Strata skin.")
     + "</section>")
 
 # 4
@@ -272,7 +275,7 @@ add("""<section><h1><span>15</span>Coming from another DAW</h1><p>Most ideas you
     + "</section>")
 
 # 16
-names = {"common": "Every skin", "pattern": "Pattern", "session": "Session", "arrange": "Arrange", "mixedit": "Mix / Edit"}
+names = {"common": "Every skin", "strata": "Strata", "pattern": "Pattern", "session": "Session", "arrange": "Arrange", "mixedit": "Mix / Edit"}
 sc = "".join(f"<h3>{names.get(k, k)}</h3>" + table(["Key", "Does"], [[f"<kbd>{esc(keyname(a))}</kbd>", esc(b)] for a, b in v]) for k, v in keymap.items())
 add(f"<section><h1><span>16</span>Keyboard shortcuts</h1><p>Shortcuts change with the Comfort Skin so they match the software it imitates. Press <b>?</b> in STRATUM to see the current set.</p>{sc}</section>")
 

@@ -2,7 +2,7 @@
 
 A digital audio workstation for Mac, Windows, phones and tablets. Alpha software: expect rough edges.
 
-STRATUM has one project model and four switchable layouts ("Comfort Skins"): Pattern, Session, Arrange and Mix / Edit. Switching skin changes the screen layout and the keyboard map without stopping playback.
+STRATUM has one project model and five switchable layouts ("Comfort Skins"): Pattern, Session, Arrange and Mix / Edit, which feel like the studios producers already know, and Strata, STRATUM's own: the song as glowing layers beside a live Stage of Visuals, with Record, Share and Go live a click away. Switching skin changes the screen layout and the keyboard map without stopping playback.
 
 ## Install
 

@@ -5,7 +5,7 @@
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const U = (S.ui = {
     skin: 'pattern', track: null, scene: null, note: null, block: -1, flip: false, keys: false, arm: null, scaleLock: true, lastLen: 1,
-    bottom: { pattern: 'editor', session: 'devices', arrange: 'editor' }, ptWin: 'edit', log: [], held: {}, octave: 0, pendingAudio: null, pendingSample: null, pctl: {}, meters: [],
+    bottom: { pattern: 'editor', session: 'devices', arrange: 'editor', strata: 'editor' }, ptWin: 'edit', log: [], held: {}, octave: 0, pendingAudio: null, pendingSample: null, pctl: {}, meters: [],
     region: null, playFrom: 0, pxb: 40, recording: null, monitor: false, sessionTop: 'session',
   });
   const P = () => S.proj;
@@ -23,7 +23,7 @@
     return { t, sc, clip, bars: sc.bars };
   }
   const CW = 22, RH = 14, HEADW = 170, STEPW = 20, COMPX = 24;
-  const SKIN_NAMES = { pattern: 'Pattern', session: 'Session', arrange: 'Arrange', mixedit: 'Mix / Edit' };
+  const SKIN_NAMES = { strata: 'Strata', pattern: 'Pattern', session: 'Session', arrange: 'Arrange', mixedit: 'Mix / Edit' };
 
   U.toast = (msg, err) => {
     const t = $('#toast');
@@ -47,7 +47,7 @@
   // ---------- layout ----------
   const DEV = IO.platform === 'windows' ? 'PC' : 'Mac';
   const PHONE = matchMedia('(max-width: 700px)'), TOUCH = matchMedia('(pointer: coarse)'), MAC = /Mac/.test(navigator.platform) && navigator.maxTouchPoints < 2;
-  const PANEL_NAMES = { rack: 'Rack', editor: 'Piano roll', timeline: 'Song', mixer: 'Mixer', devices: 'Devices', session: 'Clips', inspector: 'Track' };
+  const PANEL_NAMES = { rack: 'Rack', editor: 'Piano roll', timeline: 'Song', mixer: 'Mixer', devices: 'Devices', session: 'Clips', inspector: 'Track', stage: 'Stage' };
   PHONE.addEventListener('change', () => render());
   function layout() {
     const b = U.bottom[U.skin], f = 'minmax(0,1fr)';
@@ -55,6 +55,8 @@
     if (U.skin === 'pattern') L = { cols: `minmax(0,1.45fr) ${f}`, rows: `${f} ${f}`, cells: { rack: '1/1', [b === 'timeline' ? 'timeline' : 'editor']: '2/1', mixer: '1/2', devices: '2/2' } };
     else if (U.skin === 'session') L = { cols: f, rows: `${f} ${f} ${f}`, cells: { [U.sessionTop === 'timeline' ? 'timeline' : 'session']: '1/1', mixer: '2/1', [b === 'editor' ? 'editor' : 'devices']: '3/1' } };
     else if (U.skin === 'arrange') L = { cols: `230px ${f}`, rows: `minmax(0,1.15fr) ${f}`, cells: { inspector: '1/1/3/2', timeline: '1/2', [b]: '2/2' } };
+    // Strata, STRATUM's own: the song as stacked layers, with a live Stage (what your audience sees) beside it.
+    else if (U.skin === 'strata') L = { cols: `minmax(0,1fr) minmax(280px,340px)`, rows: `minmax(0,1.25fr) ${f}`, cells: { timeline: '1/1', [b || 'editor']: '2/1', stage: '1/2/3/3' } };
     else L = { cols: f, rows: `minmax(0,1.35fr) ${f}`, cells: U.ptWin === 'mix' ? { mixer: '1/1', devices: '2/1' } : { timeline: '1/1', editor: '2/1' } };
     // Phones: one panel at a time, chosen from a tab bar along the bottom.
     const phone = PHONE.matches, tabs = $('#phoneTabs');
@@ -89,7 +91,8 @@
   }
   function render() {
     layout();
-    const R = { rack: renderRack, session: renderSession, timeline: renderTimeline, mixer: renderMixer, editor: renderEditor, devices: renderDevices, inspector: renderInspector };
+    const R = { rack: renderRack, session: renderSession, timeline: renderTimeline, mixer: renderMixer, editor: renderEditor, devices: renderDevices, inspector: renderInspector, stage: renderStage };
+    if (!U.visible.stage) stageStop();
     for (const id in U.visible) R[id]();
     U.meters = [...document.querySelectorAll('[data-m]')];
   }
@@ -232,6 +235,70 @@
       }
     return s;
   }
+  // ---------- Strata stage: live Visuals of the mix, the track layers as light, and the moments you share ----------
+  let stageR = null, stageA = null, stageAn = null, stageRaf = 0, stageLast = 0, stageTiles = null;
+  const stageLooks = () => Object.keys(S.vis.FACTORY);
+  const stageName = () => { const l = stageLooks(); return l.includes(U.stageLook) ? U.stageLook : 'Liquid Glow'; };
+  function stageLook(d) {
+    const l = stageLooks(), i = l.indexOf(stageName());
+    U.stageLook = l[(i + d + l.length) % l.length]; stageTiles = null;
+    const n = $('#stageName'); if (n) n.textContent = U.stageLook;
+  }
+  function stageStop() { cancelAnimationFrame(stageRaf); stageRaf = 0; }
+  function stageFrame(now) {
+    stageRaf = requestAnimationFrame(stageFrame);
+    if (!$('#stageCv') || !U.visible.stage || document.hidden) return stageStop();
+    stageDraw(now);
+  }
+  // Also called directly when STRATUM photographs itself (its window is hidden then, so animation frames pause).
+  U.stageTick = () => { if (U.visible.stage) stageDraw(performance.now()); };
+  function stageDraw(now) {
+    const cv = $('#stageCv'), lv = $('#stageLayers');
+    const dt = Math.min(0.1, stageLast ? (now - stageLast) / 1000 : 0.016); stageLast = now;
+    try {
+      const ctx = E.ensure(); if (!E.graph) E.rebuild();
+      const w = Math.round(cv.clientWidth * Math.min(2, devicePixelRatio || 1)), h = Math.round(cv.clientHeight * Math.min(2, devicePixelRatio || 1));
+      if (w && (cv.width !== w || cv.height !== h)) { cv.width = w; cv.height = h; }
+      if (!stageR) stageR = new S.vis.Renderer(cv);
+      const an = E.graph.master.an;
+      if (an !== stageAn) { stageAn = an; stageA = new S.vis.Analyzer(an); }
+      if (!stageTiles) stageTiles = [{ P: JSON.parse(JSON.stringify(S.vis.FACTORY[stageName()])), st: {} }];
+      stageA.read(ctx.currentTime, 1, E.playing ? E.beatAt(ctx.currentTime) : null);
+      stageR.render(stageA, stageTiles, [1, 1], {}, dt);
+      // Track layers: one band per track, glowing with that track's level.
+      if (lv) {
+        const g = lv.getContext('2d'), W = (lv.width = lv.clientWidth * 2), H = (lv.height = lv.clientHeight * 2), ts = P().tracks, bh = H / Math.max(1, ts.length);
+        g.clearRect(0, 0, W, H);
+        ts.forEach((t, i) => {
+          const node = E.graph.tracks[t.id] && E.graph.tracks[t.id].an;
+          let lvl = 0;
+          if (node && E.playing) { const d = U._lvBuf && U._lvBuf.length === node.fftSize ? U._lvBuf : (U._lvBuf = new Uint8Array(node.fftSize)); node.getByteTimeDomainData(d); let s = 0; for (let k = 0; k < d.length; k += 4) { const x = (d[k] - 128) / 128; s += x * x; } lvl = Math.min(1, Math.sqrt(s / (d.length / 4)) * 3.2); }
+          t._glow = Math.max(lvl, (t._glow || 0) * 0.86);
+          const y = i * bh + bh * 0.18, hh = bh * 0.64, grad = g.createLinearGradient(0, 0, W, 0);
+          grad.addColorStop(0, t.color); grad.addColorStop(Math.max(0.02, t._glow), t.color); grad.addColorStop(Math.min(1, t._glow + 0.04), 'rgba(255,255,255,0.06)'); grad.addColorStop(1, 'rgba(255,255,255,0.03)');
+          g.globalAlpha = t.mute ? 0.25 : 1; g.fillStyle = grad; g.beginPath(); (g.roundRect ? g.roundRect(0, y, W, hh, hh / 2) : g.rect(0, y, W, hh)); g.fill();
+          g.fillStyle = 'rgba(255,255,255,.92)'; g.font = `600 ${Math.max(18, hh * 0.42)}px -apple-system, "Segoe UI", system-ui, sans-serif`; g.textBaseline = 'middle'; g.fillText(t.name, hh * 0.45, y + hh / 2);
+          g.globalAlpha = 1;
+        });
+      }
+    } catch (e) { stageStop(); const c = $('#stageCv'); if (c) c.replaceWith(Object.assign(document.createElement('p'), { className: 'hint pad', textContent: 'The Stage needs WebGL: ' + (e.message || e) })); }
+  }
+  function renderStage() {
+    const below = U.bottom.strata || 'editor', btn = (v, l) => `<button class="${below === v ? 'on' : ''}" data-act="stageBelow" data-v="${v}">${l}</button>`;
+    if (!$('#stageCv')) {
+      setHTML('stage', `<div class="ptitle">Stage <span class="hint">what your audience sees</span></div>` +
+        `<div class="stagebox"><canvas id="stageCv"></canvas><div class="stagelook"><button data-act="stagePrev" title="Previous look ([)">‹</button><span id="stageName"></span><button data-act="stageNext" title="Next look (])">›</button><button data-act="stageFull" title="Full screen (V)">⤢</button></div></div>` +
+        `<div class="stagesec"><b>Layers</b><canvas id="stageLayers"></canvas></div>` +
+        `<div class="stagesec stageacts"><button data-act="rec" class="rec">● Record</button><button data-act="share">↗ Share video</button><button data-act="live">◉ Go live</button><button data-act="visuals">✦ Visuals</button></div>` +
+        `<div class="stagesec"><b>Below the song</b><div class="seg" id="stageBelow"></div></div>`);
+      stageR = null; stageAn = null; stageTiles = null;
+    }
+    $('#stageName').textContent = stageName();
+    $('#stageBelow').innerHTML = btn('editor', 'Piano roll') + btn('devices', 'Devices') + btn('mixer', 'Mixer');
+    const lv = $('#stageLayers'); if (lv) lv.style.height = Math.max(60, Math.min(260, P().tracks.length * 30)) + 'px';
+    if (!stageRaf) { stageLast = 0; stageRaf = requestAnimationFrame(stageFrame); }
+  }
+
   function renderTimeline() {
     const p = P(), total = S.songEnd(p), pxb = U.pxb, bw = pxb / 4, w = Math.max(900, (total / 4 + 8) * pxb), pt = U.skin === 'mixedit', rgSel = regionOf(curTrack());
     let h = `<div class="ptitle">${pt ? 'Edit Window' : 'Arrangement'} <button data-act="addBlock">+ Add “${esc(curScene().name)}” section</button>` +
@@ -657,6 +724,7 @@
   const KEYMAP = {
     common: [['Space', 'play', 'Play / stop'], ['Tab', 'flip', 'Flip the rack to its back panel'], ['Meta+z', 'undo', 'Undo'], ['Meta+s', 'save', 'Save project'], ['Meta+o', 'open', 'Open / import'],
       ['Backspace', 'delRg', 'Delete the selected note or region'], ['Meta+e', 'splitRg', 'Split region at the playhead'], ['Meta+d', 'dup', 'Duplicate region or scene'], ['Meta+Shift+v', 'visuals', 'Visuals']],
+    strata: [['Enter', 'stop', 'Go to beginning'], ['e', 'showEditor', 'Piano roll below'], ['d', 'showDevices', 'Devices below'], ['x', 'showMixer', 'Mixer below'], ['[', 'stagePrev', 'Previous Stage look'], [']', 'stageNext', 'Next Stage look'], ['v', 'visuals', 'Stage full screen (Visuals)'], ['r', 'rec', 'Record'], ['m', 'muteSel', 'Mute track'], ['s', 'soloSel', 'Solo track']],
     pattern: [['l', 'toggleMode', 'Pattern / Song mode'], ['F5', 'showTimeline', 'Playlist'], ['F7', 'showEditor', 'Piano roll'], ['=', 'nextScene', 'Next pattern'], ['-', 'prevScene', 'Previous pattern'], ['Meta+b', 'dupScene', 'Duplicate pattern'], ['r', 'rec', 'Record']],
     session: [['Shift+Tab', 'toggleBottom', 'Clip view / device view'], ['Meta+Shift+t', 'addSynth', 'Insert MIDI track'], ['Meta+t', 'addAudio', 'Insert audio track'], ['Meta+i', 'addScene', 'Insert scene'], ['Meta+d', 'dupScene', 'Duplicate scene'], ['F9', 'rec', 'Record'], ['F10', 'arrView', 'Session / Arrangement view']],
     arrange: [['Enter', 'stop', 'Go to beginning'], ['p', 'showEditor', 'Piano roll'], ['x', 'showMixer', 'Mixer'], ['b', 'showDevices', 'Devices'], ['k', 'metronome', 'Metronome'], ['r', 'rec', 'Record'], ['Meta+t', 'splitRg', 'Split region at the playhead'], ['m', 'muteSel', 'Mute track'], ['s', 'soloSel', 'Solo track'], ['Meta+Alt+s', 'addSynth', 'New software instrument track'], ['Meta+Alt+a', 'addAudio', 'New audio track']],
@@ -834,7 +902,7 @@
     async libUse(el) {
       const x = (await IO.libList())[+el.dataset.i], t = curTrack(), ab = x && (await IO.libRead(x.path));
       if (!ab) return U.toast('That sound could not be read.', true);
-      const file = x.file || x.name + (/\.mid$/i.test(x.path) ? '.mid' : '.flac');
+      const file = x.file || x.name + x.path.slice(x.path.lastIndexOf('.'));
       if (/\.mid$/i.test(x.path)) {
         // Notes from the MIDI file become a new region on the selected track at the play position.
         const src = IO.midiIn(ab, x.name).proj, notes = [];
@@ -1017,7 +1085,11 @@
     },
     showEditor() { if (U.skin === 'mixedit') U.ptWin = 'edit'; else U.bottom[U.skin] = 'editor'; render(); },
     showTimeline() { if (U.skin === 'pattern') U.bottom.pattern = 'timeline'; else if (U.skin === 'mixedit') U.ptWin = 'edit'; else if (U.skin === 'session') U.sessionTop = 'timeline'; render(); },
-    showMixer() { if (U.skin === 'mixedit') U.ptWin = U.ptWin === 'mix' ? 'edit' : 'mix'; else if (U.skin === 'arrange') U.bottom.arrange = 'mixer'; render(); },
+    showMixer() { if (U.skin === 'mixedit') U.ptWin = U.ptWin === 'mix' ? 'edit' : 'mix'; else if (U.skin === 'arrange' || U.skin === 'strata') U.bottom[U.skin] = 'mixer'; render(); },
+    stageBelow(el) { U.bottom.strata = el.dataset.v; render(); },
+    stageNext() { stageLook(1); },
+    stagePrev() { stageLook(-1); },
+    stageFull() { const name = stageName(); S.vis.open(); if (S.vis.applyPreset) S.vis.applyPreset(name, true); },
     showDevices() { if (U.skin === 'mixedit') U.ptWin = 'mix'; else if (U.skin !== 'pattern') U.bottom[U.skin] = 'devices'; render(); },
     toggleBottom() { U.bottom.session = U.bottom.session === 'editor' ? 'devices' : 'editor'; render(); },
     flip() { U.flip = !U.flip; U.arm = null; if (!U.visible.devices) return A.showDevices(); const d = $('#devices'); d.classList.remove('flipping'); void d.offsetWidth; d.classList.add('flipping'); renderDevices(); },

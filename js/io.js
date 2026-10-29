@@ -1079,7 +1079,7 @@ ${lanes}    </Lanes>
       const ab = pick && (await IO.libRead(pick.path));
       if (!ab) continue;
       try {
-        const rec = await IO.addAudio(pick.name + '.flac', ab);
+        const rec = await IO.addAudio(pick.name + pick.path.slice(pick.path.lastIndexOf('.')), ab);
         t.pads = t.pads || {};
         t.pads[j.pitch] = { audio: rec.id, name: (j.file || pick.name).replace(/\.[^.]+$/, ''), tune: 0, gain: 1, standIn: pick.name };
         n++;

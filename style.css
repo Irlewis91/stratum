@@ -2,6 +2,7 @@
 :root { --bg:#0f1017; --panel:#1b1d27; --panel2:#15171f; --line:#07080c; --txt:#ede9e0; --dim:#8f8d88; --acc:#e39a12; --acc2:#8fd14f; --cell:#30333f; --cell2:#262934; --r:4px; --font:-apple-system, "SF Pro Text", "Helvetica Neue", sans-serif; }
 .skin-session { --bg:#8c8c8c; --panel:#c2c2c2; --panel2:#b1b1b1; --line:#7d7d7d; --txt:#101010; --dim:#4d4d4d; --acc:#ff9f1a; --acc2:#3ac23a; --cell:#9d9d9d; --cell2:#a9a9a9; --r:0px; }
 .skin-arrange { --bg:#18191b; --panel:#2a2b2f; --panel2:#232428; --line:#101113; --txt:#e8e8ea; --dim:#8b8d93; --acc:#3d8bfd; --acc2:#30d158; --cell:#3a3b40; --cell2:#323338; --r:7px; }
+.skin-strata { --bg:#07080d; --panel:#0f1119; --panel2:#0b0d14; --line:#1d2130; --txt:#f2ede2; --dim:#8e8b85; --acc:#ff8a3d; --acc2:#5ce1c6; --cell:#191d29; --cell2:#232838; --r:12px; }
 .skin-mixedit { --bg:#59616d; --panel:#d2d6dc; --panel2:#bfc5cd; --line:#8a929d; --txt:#14171b; --dim:#4a525d; --acc:#2f6fd6; --acc2:#1f9d55; --cell:#aab1bb; --cell2:#b8bec7; --r:2px; }
 
 * { box-sizing:border-box; }
@@ -320,3 +321,35 @@ body.phone .rkh { width:118px; }
 .vchip { display:inline-flex; }
 #visText { width:100%; box-sizing:border-box; background:var(--panel2); color:var(--txt); border:1px solid var(--line); border-radius:6px; padding:6px; font:13px var(--font); }
 input[type=color] { width:34px; height:24px; padding:0; border:1px solid var(--line); background:none; }
+
+/* Strata: STRATUM's own layout. Ink-dark glass panels, the song as glowing layers, and the Stage beside it. */
+body.skin-strata { background:radial-gradient(ellipse 80% 60% at 70% -10%, rgba(255,138,61,.13), transparent 60%), radial-gradient(ellipse 60% 50% at 0% 110%, rgba(92,225,198,.08), transparent 60%), var(--bg); }
+.skin-strata #hdr { background:rgba(11,13,20,.85); border-bottom-color:transparent; box-shadow:0 1px 0 rgba(255,255,255,.04); }
+.skin-strata #main { gap:8px; padding:8px; }
+.skin-strata .panel { background:linear-gradient(180deg, rgba(25,29,41,.82), rgba(15,17,25,.9)); border-color:rgba(255,255,255,.06); box-shadow:0 10px 30px rgba(0,0,0,.35); }
+.skin-strata .ptitle { letter-spacing:.04em; }
+.skin-strata button { border-radius:999px; }
+.skin-strata button.on { box-shadow:0 0 18px -4px var(--acc); }
+.skin-strata .tlrow { height:60px; border-bottom:0; }
+.skin-strata .tlrow.arr { height:28px; }
+.skin-strata .tlrow.rul { height:18px; }
+.skin-strata .tlh { background:transparent; border-right:0; backdrop-filter:blur(6px); }
+.skin-strata .tlrow.sel .tlh { background:rgba(255,138,61,.08); }
+.skin-strata .lane { background:repeating-linear-gradient(to right, transparent 0 calc(var(--pxb, 40px) - 1px), rgba(255,255,255,.035) calc(var(--pxb, 40px) - 1px) var(--pxb, 40px)), linear-gradient(180deg, transparent 0 46%, rgba(255,255,255,.025) 46% 54%, transparent 54%); }
+.skin-strata .reg { top:7px; bottom:7px; border:0; border-radius:999px; background:linear-gradient(90deg, color-mix(in srgb, var(--c) 85%, #fff 0%), color-mix(in srgb, var(--c) 45%, transparent)); box-shadow:0 0 22px -6px var(--c), inset 0 1px 0 rgba(255,255,255,.25); }
+.skin-strata .reg.sel { outline:2px solid #fff; outline-offset:1px; }
+.skin-strata .blk { border-radius:999px; background:rgba(255,255,255,.06); border-color:transparent; }
+.skin-strata .blk.sel { background:var(--acc); }
+#stage { gap:0; }
+.stagebox { position:relative; margin:0 10px; align-self:center; width:calc(100% - 20px); border-radius:12px; overflow:hidden; background:#000; aspect-ratio:9/12; max-height:46%; flex:none; box-shadow:0 0 0 1px rgba(255,255,255,.06), 0 12px 40px -12px rgba(255,138,61,.45); }
+.stagebox canvas { width:100%; height:100%; display:block; }
+.stagelook { position:absolute; left:8px; right:8px; bottom:8px; display:flex; align-items:center; gap:6px; padding:4px; border-radius:999px; background:rgba(0,0,0,.55); backdrop-filter:blur(8px); }
+.stagelook span { flex:1; text-align:center; font-weight:600; font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.stagelook button { background:rgba(255,255,255,.08); border:0; width:28px; padding:3px 0; }
+.stagesec { padding:10px 12px 0; display:flex; flex-direction:column; gap:6px; }
+.stagesec b { font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--dim); }
+#stageLayers { width:100%; height:120px; display:block; }
+.stageacts { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+.stageacts button { padding:8px 6px; font-weight:600; }
+.stageacts .rec { color:#ff6b6b; }
+.seg { display:flex; gap:4px; flex-wrap:wrap; }

@@ -324,7 +324,7 @@
 "collection": "Stargate (CC0)"
 },
 {
-"path": "Stargate (CC0)/Percussion/fugue-state-audio - drums - percussion - distkit-claves.flac",
+"path": "Stargate (CC0)/Percussion/fugue-state-audio - drums - percussion - distkit-claves.wav",
 "name": "distkit-claves",
 "category": "Percussion",
 "collection": "Stargate (CC0)"
@@ -360,7 +360,7 @@
 "collection": "Stargate (CC0)"
 },
 {
-"path": "Stargate (CC0)/Percussion/fugue-state-audio - drums - percussion - x0xproc2-claves.flac",
+"path": "Stargate (CC0)/Percussion/fugue-state-audio - drums - percussion - x0xproc2-claves.wav",
 "name": "x0xproc2-claves",
 "category": "Percussion",
 "collection": "Stargate (CC0)"
@@ -372,13 +372,13 @@
 "collection": "Stargate (CC0)"
 },
 {
-"path": "Stargate (CC0)/Percussion/fugue-state-audio - drums - percussion - x0xproc2-maracas.flac",
+"path": "Stargate (CC0)/Percussion/fugue-state-audio - drums - percussion - x0xproc2-maracas.wav",
 "name": "x0xproc2-maracas",
 "category": "Percussion",
 "collection": "Stargate (CC0)"
 },
 {
-"path": "Stargate (CC0)/Percussion/fugue-state-audio - drums - percussion - x0xproc2-rimshot.flac",
+"path": "Stargate (CC0)/Percussion/fugue-state-audio - drums - percussion - x0xproc2-rimshot.wav",
 "name": "x0xproc2-rimshot",
 "category": "Percussion",
 "collection": "Stargate (CC0)"
@@ -744,7 +744,7 @@
 "collection": "Stargate (CC0)"
 },
 {
-"path": "Stargate (CC0)/Claps/freesound - drums - clap - 448221__toxicfilmzsrsounds__hip-hop-clap.flac",
+"path": "Stargate (CC0)/Claps/freesound - drums - clap - 448221__toxicfilmzsrsounds__hip-hop-clap.wav",
 "name": "448221__toxicfilmzsrsounds__hip-hop-clap",
 "category": "Claps",
 "collection": "Stargate (CC0)"
@@ -816,7 +816,7 @@
 "collection": "Stargate (CC0)"
 },
 {
-"path": "Stargate (CC0)/Hats/freesound - drums - cymbal - open - 165028__rodrigo-the-mad__mini-909ish-open-hat.flac",
+"path": "Stargate (CC0)/Hats/freesound - drums - cymbal - open - 165028__rodrigo-the-mad__mini-909ish-open-hat.wav",
 "name": "165028__rodrigo-the-mad__mini-909ish-open-hat",
 "category": "Hats",
 "collection": "Stargate (CC0)"
@@ -846,7 +846,7 @@
 "collection": "Stargate (CC0)"
 },
 {
-"path": "Stargate (CC0)/Hats/microlag - One-Shots - Drums - Hihat1.flac",
+"path": "Stargate (CC0)/Hats/microlag - One-Shots - Drums - Hihat1.wav",
 "name": "Hihat1",
 "category": "Hats",
 "collection": "Stargate (CC0)"
@@ -3768,7 +3768,7 @@
 "collection": "Producer Space (CC0)"
 },
 {
-"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - High Hat 2.flac",
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - High Hat 2.wav",
 "name": "VPFX - High Hat 2",
 "category": "Vocal Percussion",
 "collection": "Producer Space (CC0)"
@@ -3978,7 +3978,7 @@
 "collection": "Producer Space (CC0)"
 },
 {
-"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Pop 2.flac",
+"path": "Producer Space (CC0)/Vocal Percussion/Vocal Percussion FX - VPFX - Pop 2.wav",
 "name": "VPFX - Pop 2",
 "category": "Vocal Percussion",
 "collection": "Producer Space (CC0)"

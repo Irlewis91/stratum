@@ -71,8 +71,9 @@ EOF
 
 codesign --force --deep --sign - "$APP"
 
-mkdir -p build/dmg
+rm -rf build/dmg && mkdir -p build/dmg
 cp -R "$APP" build/dmg/
 ln -s /Applications build/dmg/Applications
+[ -f "docs/STRATUM Owner's Manual.pdf" ] && cp "docs/STRATUM Owner's Manual.pdf" "build/dmg/STRATUM Owner's Manual.pdf"
 hdiutil create -volname "STRATUM" -srcfolder build/dmg -ov -format UDZO "$OUT/STRATUM.dmg" >/dev/null
 echo "Built $APP and $OUT/STRATUM.dmg"

@@ -19,6 +19,7 @@ if [ -f "$ORT_DLL" ] && [ -f vendor/model/htdemucs.onnx ]; then
   printf 'HT-Demucs stem separation model (htdemucs.onnx)\nONNX export: https://huggingface.co/StemSplitio/htdemucs-onnx (MIT licence)\nOriginal model: Demucs, Meta Platforms, Inc. (MIT licence) https://github.com/facebookresearch/demucs\nONNX Runtime for Windows (MIT licence) https://github.com/microsoft/onnxruntime\n' > dist-win/STRATUM/licenses/stems-NOTICE.txt
 fi
 cp -R dist-web dist-win/STRATUM/app
+[ -f "docs/STRATUM Owner's Manual.pdf" ] && cp "docs/STRATUM Owner's Manual.pdf" "dist-win/STRATUM/STRATUM Owner's Manual.pdf"
 rm -f dist-win/STRATUM/app/sw.js dist-win/STRATUM/app/.nojekyll
 mkdir -p dist-win/STRATUM/licenses
 cp vendor/vst3sdk/public.sdk/LICENSE.txt dist-win/STRATUM/licenses/vst3sdk-LICENSE.txt

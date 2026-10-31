@@ -70,6 +70,41 @@ nav .links a:hover { color:var(--txt); }
 .cta { display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
 .cta small { color:var(--dim); font-size:14px; width:100%; margin-top:4px; }
 .bars { display:flex; gap:5px; align-items:flex-end; height:46px; margin:40px 0 0; }
+.bars.chord { height:96px; margin:44px 0 -8px; gap:clamp(2px, .5vw, 5px); }
+.bars.chord i { flex:1; width:auto; }
+.stage { margin-top:48px; }
+.stage-in { position:relative; }
+.glow { position:absolute; inset:-12% 0; background:radial-gradient(ellipse 55% 50% at 50% 55%, rgba(232,160,25,.2), transparent 72%); pointer-events:none; }
+.shot.tilt { margin-top:0; }
+.played, .playhead { position:absolute; display:none; top:12.8%; height:25.4%; pointer-events:none; }
+.layers { margin-top:0; aspect-ratio:16/10; }
+.layers img { position:absolute; inset:0; width:100%; height:100%; }
+.layers img:not(:first-of-type) { display:none; }
+.wipe { position:absolute; top:0; bottom:0; width:2px; background:var(--acc2); box-shadow:0 0 14px 2px rgba(255,207,107,.55); opacity:0; pointer-events:none; }
+.play .bars i { animation:none; height:100%; transform:scaleY(.08); transform-origin:bottom; will-change:transform; }
+.play .stage { height:230vh; margin-top:30px; }
+.play .stage-in { position:sticky; top:84px; height:calc(100vh - 100px); display:flex; flex-direction:column; justify-content:center; perspective:1500px; }
+.play .shot.tilt { width:min(100%, calc((100vh - 190px) * 1.6)); margin-inline:auto; transform:translateY(calc((1 - var(--p, 0)) * 34px)) rotateX(calc((1 - min(var(--p, 0) * 2.4, 1)) * 16deg)) scale(calc(.9 + min(var(--p, 0) * 2.4, 1) * .1)); transform-origin:50% 100%; will-change:transform; }
+.play .glow { transform:translateY(calc(var(--p, 0) * 70px)); }
+.play #heroBars { position:relative; z-index:2; width:min(100%, calc((100vh - 190px) * 1.6)); margin:-30px auto 0; justify-content:space-between; transform:translateY(calc(var(--p, 0) * -44px)); }
+.play .played, .play .playhead { display:block; }
+.play .played { left:28%; width:calc(var(--head, 0) * 34%); background:linear-gradient(90deg, rgba(255,207,107,.03), rgba(255,207,107,.17)); }
+.play .playhead { left:calc(28% + var(--head, 0) * 34%); width:2px; background:var(--acc2); box-shadow:0 0 14px 2px rgba(255,207,107,.6); }
+.play .skins { height:520vh; }
+.play .skins-in { position:sticky; top:72px; height:calc(100vh - 84px); display:flex; flex-direction:column; }
+.play .skins-in .tabs { margin:14px 0 10px; }
+.play .skins-in .skin-cap { min-height:3.1em; margin:0 0 10px; }
+.play .layers { width:min(100%, calc((100vh - 270px) * 1.6)); margin-inline:auto; }
+.play .layers img:not(:first-of-type) { display:block; clip-path:inset(0 100% 0 0); }
+.calm .layers img:not(:first-of-type) { display:none; }
+.calm .layers img.show { display:block !important; }
+@media (max-width:720px) {
+  .play .stage { height:170vh; }
+  .play #heroBars { height:30px; margin-top:12px; transform:none; }
+  .play .skins { height:400vh; }
+  .play .skins-in .tabs button { padding:7px 12px; font-size:13px; }
+  .bars.chord { height:64px; }
+}
 .bars i { display:block; width:6px; border-radius:3px; background:var(--acc); opacity:.85; animation:eq 1.1s ease-in-out infinite alternate; }
 @keyframes eq { from { height:12%; } to { height:100%; } }
 @media (prefers-reduced-motion: reduce) { .bars i { animation:none; height:50%; } }
@@ -179,8 +214,11 @@ footer .powered img { height:40px; width:186px; max-width:none; flex:none; displ
       <a class="btn ghost" href="https://matovalabs.github.io/stratum/" target="_blank" rel="noopener">Try it in your browser</a>
       <small>Free for members of the STRATUM Discord. No card.</small>
     </div>
-    <div class="bars" aria-hidden="true"></div>
-    <div class="shot reveal"><img src="img/arrange.jpg" alt="STRATUM's Arrange layout with drums, bass, keys and arp tracks" width="1600" height="1000"></div>
+    <div class="stage" id="stage"><div class="stage-in">
+      <div class="glow" aria-hidden="true"></div>
+      <div class="shot tilt" id="tilt"><img src="img/arrange.jpg" alt="STRATUM's Arrange layout with drums, bass, keys and arp tracks" width="1600" height="1000"><i class="played" aria-hidden="true"></i><i class="playhead" aria-hidden="true"></i></div>
+      <div class="bars" id="heroBars" aria-hidden="true"></div>
+    </div></div>
   </div>
 </header>
 
@@ -196,6 +234,7 @@ footer .powered img { height:40px; width:186px; max-width:none; flex:none; displ
     <div class="eyebrow">One beat · five layouts</div>
     <h2>Work the way you already think. Or try ours.</h2>
     <p class="lead">Four layouts, called Comfort Skins, feel like the studios you already know, and switching between them never stops the music. The fifth, Strata, is STRATUM's own: your song as glowing layers beside a live Stage showing what your audience will see.</p>
+    <div class="skins" id="skins"><div class="skins-in">
     <div class="tabs" role="tablist">
       <button class="on" data-skin="strata">Strata ✦</button>
       <button data-skin="pattern">Pattern</button>
@@ -204,7 +243,8 @@ footer .powered img { height:40px; width:186px; max-width:none; flex:none; displ
       <button data-skin="mixedit">Mix / Edit</button>
     </div>
     <p class="skin-cap" id="skinCap"></p>
-    <div class="shot" style="margin-top:0"><img id="skinImg" loading="lazy" decoding="async" src="img/strata.jpg" alt="STRATUM layout" width="1600" height="1000"></div>
+    <div class="shot layers" id="layers"><img data-skin="strata" src="img/strata.jpg" alt="Strata, STRATUM&#39;s own layout, with the song as glowing layers and a live Stage" width="1600" height="1000" decoding="async"><img data-skin="pattern" src="img/pattern.jpg" alt="Pattern layout with a step sequencer and channel rack" width="1600" height="1000" decoding="async"><img data-skin="session" src="img/session.jpg" alt="Session layout with a grid of clips" width="1600" height="1000" decoding="async"><img data-skin="arrange" src="img/arrange.jpg" alt="Arrange layout with regions on a timeline" width="1600" height="1000" decoding="async"><img data-skin="mixedit" src="img/mixedit.jpg" alt="Mix and Edit layout with big faders and editors" width="1600" height="1000" decoding="async"><i class="wipe" id="wipe" aria-hidden="true"></i></div>
+    </div></div>
 
     <div class="grid">
       <div class="card big reveal">
@@ -270,6 +310,7 @@ footer .powered img { height:40px; width:186px; max-width:none; flex:none; displ
     <div class="eyebrow">Download</div>
     <h2>Get STRATUM free.</h2>
     <p class="lead" style="margin-top:20px">Alpha v10.9, released October 28, 2026. Downloads are for members of the STRATUM Discord, where producers share beats, get help, report bugs and hear about new versions first.</p>
+    <div class="bars chord" id="chord" aria-hidden="true"></div>
     <div class="dl-box">
       <div id="gate">
         <div class="steps">

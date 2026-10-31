@@ -25,9 +25,9 @@ STRATUM Sync keeps every producer's beats in their account so they open on Mac, 
 
 ## 4. Where sign-in may return
 **Authentication › URL Configuration**:
-- **Site URL:** `https://irlewis91.github.io/stratum/`
+- **Site URL:** `https://matovalabs.github.io/stratum/`
 - **Redirect URLs:** add both:
-  - `https://irlewis91.github.io/stratum/**`  (phones, tablets and browsers, plus the Mac app)
+  - `https://matovalabs.github.io/stratum/**`  (phones, tablets and browsers, plus the Mac app)
   - `https://app.stratum/**`  (the Windows app)
 
 ## 5. Connect STRATUM

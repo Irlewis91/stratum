@@ -23,7 +23,7 @@ Download `STRATUM-Windows.zip` from the Releases page, unzip it, and double-clic
 
 ### iPhone, iPad, Android phones and tablets
 
-Open **https://irlewis91.github.io/stratum/** in Safari (iPhone/iPad) or Chrome (Android), then:
+Open **https://matovalabs.github.io/stratum/** in Safari (iPhone/iPad) or Chrome (Android), then:
 - iPhone / iPad: tap **Share › Add to Home Screen**.
 - Android: tap **Install app** (or the browser menu › **Install app**).
 
@@ -47,7 +47,7 @@ Then press **Open / Import** on the other device and pick the file.
 | | Mac | Windows | Phones, tablets, browsers |
 |---|---|---|---|
 | Beat making, piano roll, mixer, skins, built-in sounds and effects | ✓ | ✓ | ✓ |
-| Sound library (791 CC0 sounds, 99 MIDI kits) | ✓ | ✓ | ✓ (sounds download as you use them) |
+| Sound library (761 sounds, 99 MIDI kits, 50,000+ CC0 pack sounds) | ✓ | ✓ | ✓ (sounds download as you use them) |
 | Import FL Studio, Ableton, Reason, Logic, MIDI, DAWproject | ✓ | ✓ | ✓ |
 | Recording from a microphone or interface | ✓ | ✓ | ✓ |
 | Branded share videos and Visuals | ✓ | ✓ | ✓ (via the share sheet) |
@@ -87,7 +87,7 @@ Plugin settings travel with a project between the Mac and Windows versions.
 - **STRATUM Tune:** pitch correction for vocals and other single-note parts, added like any plugin effect. It detects the pitch, pulls it to the nearest note of the chosen key and scale (it starts in the song's key), with retune speed from instant “robot” to natural, amount and mix.
 - **Built-in effects:** 508 Airwindows effects (reverbs, tape, saturation, consoles, EQs, compressors, clippers and more, from Airwindows Consolidated, MIT licence) appear in the plugin-effect picker and work on any track, with their controls shown in the Devices panel.
 - **Record from another app:** File › Record from Another App… (or the button in Sounds) records the sound one running app makes — a browser, a music player — onto a new audio track, the sampler or a drum pad, with silence trimmed from both ends. Needs macOS 13 and the Screen & System Audio Recording permission.
-- **Sound library:** the Sounds button browses 791 built-in public-domain (CC0) sounds — kicks, snares, claps, hats, cymbals, toms, percussion, found sounds, vocal shouts and vocal percussion from the Stargate sample pack and Producer Space — plus 99 MIDI chord, bass and piano kits. Preview a sound, then add it to a drum pad, the sampler, an audio track, or (for MIDI) as notes on the selected track. `fetch-library.sh` rebuilds the library.
+- **Sound library:** the Sounds button browses 761 built-in sounds and over 50,000 public-domain (CC0) pack sounds that download as you use them. Built-in sounds are public-domain (CC0) or made for STRATUM: — kicks, snares, claps, hats, cymbals, toms, percussion, found sounds, vocal shouts and vocal percussion from the Stargate sample pack and Producer Space — plus 99 MIDI chord, bass and piano kits. Preview a sound, then add it to a drum pad, the sampler, an audio track, or (for MIDI) as notes on the selected track. `fetch-library.sh` rebuilds the library.
 - **My Sounds:** in Sounds › My Sounds, **Add your sounds…** or **Add a folder…** (a whole sample pack, subfolders included) keeps your own WAV, AIFF, MP3, FLAC and other sound files on this device for every project, sorted as kicks, snares, hats and so on from their names. They're searchable with the built-in sounds, and an imported project that needs one of them finds it there.
 - **Help:** on first open STRATUM offers a guided tour that highlights each part of the window and waits for you to try things (Help › Take the Tour runs it again). Help › STRATUM Owner’s Manual opens the bundled PDF manual (`docs/STRATUM Owner's Manual.pdf`), built from real screenshots by `docs/manual/build-manual.py`.
 - **Share:** the Share button makes a STRATUM-branded video and an AAC audio file of the whole track or its first 15, 30 or 60 seconds and saves both in Movies › STRATUM. It sends them by Messages, Mail or AirDrop or through the macOS share menu, and posts to Instagram (Story, Reel, Post), Facebook, TikTok, X, Threads and YouTube Shorts in each platform's shape (9:16, 4:5 or square) by opening the upload page with the video selected in Finder. Instagram Stories can only be posted from the phone app, so that video is saved to Photos. Platform length limits are applied (Stories 60 s, X 2:20, Reels 3 min).

@@ -930,7 +930,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKNaviga
 
     /// The STRATUM page may go to the sign-in service and Discord and come back. Sign-in returns to the address below, which
     /// is turned back into STRATUM's own page with the sign-in details attached. Other links open in the default browser.
-    static let syncReturn = "https://irlewis91.github.io/stratum/?app=mac"
+    static let syncReturn = "https://matovalabs.github.io/stratum/?app=mac"
     func webView(_ webView: WKWebView, decidePolicyFor action: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
         guard webView === web, let url = action.request.url, let scheme = url.scheme?.lowercased(), scheme == "http" || scheme == "https" else { return decisionHandler(.allow) }
         guard action.targetFrame?.isMainFrame ?? false else { return decisionHandler(.allow) }

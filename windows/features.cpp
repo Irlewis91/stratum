@@ -338,7 +338,7 @@ void shareFiles(const Json &b) {
     auto shape = shapes.count(target) ? shapes.at(target) : std::string("9x16");
     std::wstring dir = videosDir(), v = dir + L"\\" + wide(safe + " " + shape + "." + ext), a = dir + L"\\" + wide(safe + ".wav");
     if (video.empty() || !writeAll(v, video) || !writeAll(a, audio)) return shareDone(false, "Could not save the video in Videos › STRATUM.");
-    std::string line = "\xE2\x80\x9C" + title + "\xE2\x80\x9D" + (artist.empty() ? "" : " by " + artist) + " \xE2\x80\x94 made with STRATUM. https://github.com/Irlewis91/stratum/releases/latest";
+    std::string line = "\xE2\x80\x9C" + title + "\xE2\x80\x9D" + (artist.empty() ? "" : " by " + artist) + " \xE2\x80\x94 made with STRATUM. https://github.com/matovalabs/stratum/releases/latest";
     if (target == "messages" || target == "airdrop" || target == "more" || target == "mail") {
         if (shareSheet(target == "mail" ? a : v, title + " \xE2\x80\x94 made with STRATUM", line)) return shareDone(true, "Choose where to send your track.");
         showInExplorer(v);

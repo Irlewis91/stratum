@@ -111,6 +111,12 @@
   U.setSkin = (k) => { const sel = $('#skinSel'); sel.value = k; C.skin(sel); };
   U.manualFocus = (id) => { document.body.classList.add('manual'); const m = $('#main'); m.style.gridTemplateColumns = '1fr'; m.style.gridTemplateRows = '1fr'; for (const el of m.children) { el.hidden = el.id !== id; el.style.gridArea = el.id === id ? '1/1' : ''; } };
   U.manualWave = () => { const t = P().tracks.find((x) => x.type === 'synth'); U.track = t.id; t.plugin = { id: 'stratum|wave', name: 'STRATUM Wave', maker: 'STRATUM', state: '', fx: [] }; changed(true); };
+  // The insert slots of a track: its effects, then the empty ones up to D.MAX_FX.
+  U.fxPicked = new Set();
+  U.fxSlots = (t) => Array.from({ length: Math.max(D.MAX_FX, t.fx.length) }, (_, i) => {
+    const f = t.fx[i];
+    return f ? `<div class="slot" data-act="selFx" data-t="${t.id}" title="${esc(f.prompt || f.name)}"><b>${i + 1}</b>${esc(f.name)}</div>` : `<div class="slot empty" data-act="addFx" data-t="${t.id}" title="Add an effect"><b>${i + 1}</b>+</div>`;
+  }).join('');
   U.manualGate = () => { const t = P().tracks.find((x) => x.type === 'drums'); U.track = t.id; delete t.plugin; t.fx = [D.stock('gate'), D.stock('pump')]; t.fx[0].blocks[0].pattern = '0010200030004000'; changed(true); };
   // STRATUM Wave: fill the preset menu and draw what each oscillator is playing.
   U.wavePresetList = async () => {
@@ -390,9 +396,9 @@
 
   function renderMixer() {
     const p = P();
+    const fxSlots = U.fxSlots;
     const strip = (t) => `<div class="strip ${t.id === U.track ? 'sel' : ''}" data-act="selTrack" data-t="${t.id}" style="--c:${t.color}"><div class="sname">${esc(t.name)}</div><div class="slots">` +
-      t.fx.map((f) => `<div class="slot" data-act="selFx" data-t="${t.id}" title="${esc(f.prompt || f.name)}">${esc(f.name)}</div>`).join('') +
-      `<div class="slot empty" data-act="addFx" data-t="${t.id}">+ insert</div></div>${ctl('knob', { k: 'pan', t: t.id }, (t.pan + 1) / 2, 'Pan')}<div class="fad">${ctl('fader', { k: 'vol', t: t.id }, t.vol / 1.25)}<div class="meter"><i data-m="${t.id}"></i></div></div><div class="msb">${ms(t)}</div></div>`;
+      fxSlots(t) + `</div>${ctl('knob', { k: 'pan', t: t.id }, (t.pan + 1) / 2, 'Pan')}<div class="fad">${ctl('fader', { k: 'vol', t: t.id }, t.vol / 1.25)}<div class="meter"><i data-m="${t.id}"></i></div></div><div class="msb">${ms(t)}</div></div>`;
     const master = `<div class="strip master"><div class="sname">Master</div><div class="slots"><div class="slot fixed">Console summing</div></div><div class="krow">${ctl('knob', { k: 'master', key: 'drive' }, p.master.drive, 'Drive')}${ctl('knob', { k: 'master', key: 'glue' }, p.master.glue, 'Glue')}</div><div class="fad">${ctl('fader', { k: 'master', key: 'vol' }, p.master.vol / 1.25)}<div class="meter"><i data-m="master"></i></div></div><div class="msb"></div></div>`;
     setHTML('mixer', `<div class="ptitle">${U.skin === 'mixedit' ? 'Mix Window' : 'Mixer'}</div><div class="scroll"><div class="strips">${p.tracks.map(strip).join('')}${master}</div></div>`);
   }
@@ -466,8 +472,12 @@
         `<div class="krow"><button data-act="plugPick" data-kind="fx">+ Plugin effect…</button></div>` +
         (pf.length ? `<p class="hint">With a plugin effect on it, this track plays through the ${DEV}'s audio output directly, so the STRATUM effects on this track and the master section do not process it${t.type === 'synth' && !t.inst.sample ? ', and CV cables to its filter have no effect' : ''}.</p>` : `<p class="hint">Audio Unit, VST3 or VST2 effects on this track's audio.</p>`) + `</div>`;
     }
+    if (t.fx.length > 1 && !back) {
+      const n = t.fx.filter((f) => U.fxPicked.has(f.id)).length;
+      h += `<div class="dev patchbar"><h4>Patcherize</h4><p class="hint">Tick two or more effects to combine them into one.</p><button data-act="patcherize" ${n < 2 ? 'disabled' : ''}>Patcherize${n ? ` (${n})` : ''}</button></div>`;
+    }
     t.fx.forEach((f, fi) => {
-      h += `<div class="dev fx"><h4>${esc(f.name)} <button class="x" data-act="rmFx" data-i="${fi}" title="Remove">✕</button></h4>${f.prompt ? `<p class="hint">“${esc(f.prompt)}”</p>` : ''}<div class="krow">`;
+      h += `<div class="dev fx"><h4><span>${back ? '' : `<input type="checkbox" class="fxpick" data-chg="fxPick" data-id="${esc(f.id)}" title="Pick for Patcherize" ${U.fxPicked.has(f.id) ? 'checked' : ''}> `}${esc(f.name)}</span> <span>${f.parts && !back ? `<button data-act="unpackFx" data-i="${fi}" title="Back into separate effects">Unpack</button> ` : ''}<button class="x" data-act="rmFx" data-i="${fi}" title="Remove">✕</button></span></h4>${f.parts ? `<p class="hint">${f.parts.map((x) => esc(x.name)).join(' → ')}</p>` : ''}${f.prompt ? `<p class="hint">“${esc(f.prompt)}”</p>` : ''}<div class="krow">`;
       f.blocks.forEach((b, bi) => {
         const def = D.BLOCKS[b.type];
         for (const k in def.params) {
@@ -515,7 +525,7 @@
       `<div><div class="fad">${ctl('fader', { k: 'master', key: 'vol' }, p.master.vol / 1.25)}<div class="meter"><i data-m="master"></i></div></div><span>Stereo Out</span></div></div>` +
       `<div class="krow">${ctl('knob', { k: 'pan', t: t.id }, (t.pan + 1) / 2, 'Pan')}<div class="msb">${ms(t)}</div></div>` +
       ((t.auto && (t.auto.vol || t.auto.pan)) || (p.master.auto && p.master.auto.vol) ? `<div class="hint">Automation (plays in Song mode): ${[t.auto && t.auto.vol ? 'volume ' + t.auto.vol.length + ' pts' : '', t.auto && t.auto.pan ? 'pan ' + t.auto.pan.length + ' pts' : '', p.master.auto && p.master.auto.vol ? 'master volume ' + p.master.auto.vol.length + ' pts' : ''].filter(Boolean).join(', ')} <button data-act="clearAuto">Clear</button></div>` : '') +
-      `<div class="hint">Inserts</div>${t.fx.map((f) => `<div class="slot">${esc(f.name)}</div>`).join('')}<div class="slot empty" data-act="addFx" data-t="${t.id}">+ insert</div></div>`);
+      `<div class="hint">Inserts</div><div class="slots inlist">${U.fxSlots(t)}</div></div>`);
   }
 
   const prRows = (t) => { if (t.type === 'drums') return S.drumRows(t).map((d) => d.p); const r = []; for (let p = 96; p >= 24; p--) r.push(p); return r; };
@@ -836,18 +846,18 @@
     // Sounds browser: built-in CC0 sounds by category, with search, preview, and a button that puts the sound where it fits
     // the selected track (a drum pad, the sampler, an audio clip, or for MIDI files the notes themselves).
     async sounds(el) {
-      const all = await IO.libList(), cats = ['My Sounds', ...[...new Set(all.filter((x) => !x.mine).map((x) => x.category))].sort()], t = curTrack();
+      const all = await IO.soundList(), cats = ['My Sounds', ...[...new Set(all.filter((x) => !x.mine).map((x) => x.category))].sort()], t = curTrack();
       U.libCat = (el && el.dataset && el.dataset.cat) || U.libCat || cats[1] || cats[0];
-      const q = (U.libQuery || '').toLowerCase(), list = all.filter((x) => (q ? (x.name + ' ' + x.category + ' ' + (x.kind || '')).toLowerCase().includes(q) : x.category === U.libCat)).slice(0, 300);
+      const q = (U.libQuery || '').toLowerCase(), list = all.filter((x) => (q ? (x.name + ' ' + x.category + ' ' + (x.kind || '') + ' ' + (x.tags || '')).toLowerCase().includes(q) : x.category === U.libCat)).slice(0, 300);
       const mineView = !q && U.libCat === 'My Sounds', nMine = all.filter((x) => x.mine).length;
       const verb = (x) => (/\.mid$/i.test(x.path) ? (t.type === 'audio' ? '' : 'Add notes') : t.type === 'drums' ? 'Add to pad' : t.type === 'synth' ? 'Use as sample' : 'Add as clip');
       const pretty = (x) => x.name.replace(/^(VPFX|DVS|DVSV2|PP|HPR) - /, '');
       showPop(`<p style="float:right;margin:0"><button data-act="capture">● Record from another app…</button></p><h3>Sounds <span class="hint">· ${all.length - nMine} free sounds (public domain, CC0)${nMine ? ` and ${nMine} of yours` : ''} · adding to “${esc(t.name)}”</span></h3>` +
         `<input id="libQ" placeholder="Search all sounds" value="${esc(U.libQuery || '')}" oninput="S.ui.libSearch(this.value)">` +
-        `<div class="stock">${cats.map((c) => `<button data-act="sounds" data-cat="${esc(c)}" class="${!q && c === U.libCat ? 'on' : ''}">${esc(c)} <small>${all.filter((x) => x.category === c).length}</small></button>`).join('')}</div>` +
+        `<div class="stock chips">${IO.GENRE_CHIPS.map((g) => `<button class="${q === g.toLowerCase() ? 'on' : ''}" onclick="S.ui.libSearch('${g}')">${esc(g)}</button>`).join('')}</div><div class="stock chips">${cats.map((c) => `<button data-act="sounds" data-cat="${esc(c)}" class="${!q && c === U.libCat ? 'on' : ''}">${esc(c)} <small>${all.filter((x) => x.category === c).length}</small></button>`).join('')}</div>` +
         (mineView ? `<p class="mine"><button data-act="addMine" class="primary">+ Add your sounds…</button> <button data-act="addMine" data-folder="1">+ Add a folder…</button> <span class="hint">WAV, AIFF, MP3, FLAC and more. They stay on this ${IO.platform === 'web' ? 'device' : IO.platform === 'windows' ? 'PC' : 'Mac'} for every project; a project that needs one of them (from another app, too) finds it here.</span></p>` : '') +
         `<div class="plist lib">${list.map((x, i) => `<div class="lrow">${/\.mid$/i.test(x.path) ? '<span class="hint">MIDI</span>' : `<button data-act="libPlay" data-i="${all.indexOf(x)}" title="Preview">▶</button>`}<span title="${esc(x.collection)}">${esc(pretty(x))}${x.mine ? ` <small class="hint">${esc(x.kind === 'Other' ? x.collection : x.kind)}</small>` : ''}</span>${verb(x) ? `<button data-act="libUse" data-i="${all.indexOf(x)}">${verb(x)}</button>` : ''}${x.mine ? `<button data-act="delMine" data-id="${esc(x.id)}" title="Remove from My Sounds">✕</button>` : ''}</div>`).join('') || `<span class="hint">${mineView ? 'No sounds of your own yet. Add single files, or a whole sample pack folder.' : 'No sounds match.'}</span>`}</div>` +
-        `<p class="hint">${mineView ? 'Your sounds are kept only on this device. To use them on another device, add them there too.' : 'Sounds from the Stargate sample pack and Producer Space, released as public domain (CC0): free to use in anything, no credit needed.'}</p><button data-act="closePop">Close</button>`);
+        `<p class="hint">${mineView ? 'Your sounds are kept only on this device. To use them on another device, add them there too.' : 'Public domain (CC0) sounds: free to use in anything, no credit needed. Sounds from the packs download the first time you use them.'}</p><button data-act="closePop">Close</button>`);
       const box = $('#libQ'); if (box && U.libQuery) { box.focus(); box.setSelectionRange(box.value.length, box.value.length); }
     },
     // Record from another app: the sound one running app makes (a browser, a music player…) becomes an audio clip, the
@@ -893,14 +903,14 @@
     },
     async delMine(el) { await IO.mine.remove(el.dataset.id); A.sounds(); },
     async libPlay(el) {
-      const x = (await IO.libList())[+el.dataset.i], ab = x && (await IO.libRead(x.path));
+      const x = (await IO.soundList())[+el.dataset.i], ab = x && (await IO.libRead(x.path));
       if (!ab) return;
       const ctx = E.ensure(), buf = await ctx.decodeAudioData(ab);
       try { U.libSrc && U.libSrc.stop(); } catch (e) {}
       const src = ctx.createBufferSource(); src.buffer = buf; src.connect(ctx.destination); src.start(); U.libSrc = src;
     },
     async libUse(el) {
-      const x = (await IO.libList())[+el.dataset.i], t = curTrack(), ab = x && (await IO.libRead(x.path));
+      const x = (await IO.soundList())[+el.dataset.i], t = curTrack(), ab = x && (await IO.libRead(x.path));
       if (!ab) return U.toast('That sound could not be read.', true);
       const file = x.file || x.name + x.path.slice(x.path.lastIndexOf('.'));
       if (/\.mid$/i.test(x.path)) {
@@ -914,6 +924,8 @@
       }
       if (t.type === 'audio') U.pendingAudio = t.id; else U.pendingSample = { t: t.id };
       await IO.importBytes(file, ab);
+      const root = x.root == null ? IO.noteOf(x.name) : x.root;
+      if (root != null && t.inst && t.inst.sample && x.category !== 'Vocals') { t.inst.sample.root = root; E.rebuild(); }
       U.openDone();
     },
     share() {
@@ -989,7 +1001,7 @@
       const r = U.webShared; if (!r) return;
       const files = el.dataset.what === 'audio' || !r.video ? [r.audio] : [r.video];
       try {
-        if (navigator.canShare && navigator.canShare({ files })) await navigator.share({ files, title: r.title, text: `“${r.title}” — made with STRATUM. https://github.com/Irlewis91/stratum` });
+        if (navigator.canShare && navigator.canShare({ files })) await navigator.share({ files, title: r.title, text: `“${r.title}” — made with STRATUM. https://github.com/matovalabs/stratum` });
         else { for (const f of files) IO.saveFile(f.name, new Uint8Array(await f.arrayBuffer())); U.toast('This device has no share menu here, so the file was saved instead.'); }
       } catch (e) { if (e.name !== 'AbortError') U.toast('Could not share: ' + (e.message || e), true); }
     },
@@ -1096,6 +1108,7 @@
     selFx(el) { U.track = el.dataset.t; A.showDevices(); },
     addFx(el) {
       U.track = el.dataset.t || curTrack().id;
+      if (curTrack().fx.length >= D.MAX_FX) return U.toast(`A track holds ${D.MAX_FX} effects. Patcherize some to make room.`, true);
       showPop(`<h3>Prompt-to-Plugin · ${esc(curTrack().name)}</h3><input id="ppIn" placeholder="Describe the effect, e.g. dusty lo-fi tape saturation with an analog chorus">` +
         `<p class="hint">Press Return to build it. The builder recognises effect words (saturation, tape, lo-fi, filter, chorus, phaser, delay, reverb, compressor, bit-crush, tremolo, vinyl…) and intensity words (subtle, heavy, slow, fast, huge, short).</p>` +
         `<div class="stock">Or add a single effect: ${D.ORDER.map((k) => `<button data-act="addStock" data-type="${k}">${D.BLOCKS[k].label}</button>`).join('')}</div><button data-act="closePop">Cancel</button>`);
@@ -1105,7 +1118,9 @@
       pat[s] = String((+pat[s] + 1) % 5); b.pattern = pat.join('');
       renderDevices();
     },
-    addStock(el) { structural(() => curTrack().fx.push(D.stock(el.dataset.type))); closePop(); A.showDevices(); },
+    addStock(el) { if (curTrack().fx.length < D.MAX_FX) structural(() => curTrack().fx.push(D.stock(el.dataset.type))); closePop(); A.showDevices(); },
+    patcherize() { const t = curTrack(), picks = t.fx.map((f, i) => (U.fxPicked.has(f.id) ? i : -1)).filter((i) => i >= 0); structural(() => D.patcherize(t, picks)); U.fxPicked.clear(); A.showDevices(); },
+    unpackFx(el) { const t = curTrack(), i = +el.dataset.i, f = t.fx[i]; if (t.fx.length - 1 + f.parts.length > D.MAX_FX) return U.toast(`Unpacking needs ${f.parts.length - 1} more free slots.`, true); structural(() => D.unpack(t, i)); A.showDevices(); },
     rmFx(el) { structural(() => { const t = curTrack(), i = +el.dataset.i; t.fx.splice(i, 1); t.cables = t.cables.filter((c) => c.dev !== i).map((c) => (c.dev > i ? { ...c, dev: c.dev - 1 } : c)); }); },
     jackOut(el) { U.arm = U.arm === +el.dataset.i ? null : +el.dataset.i; renderDevices(); },
     jackIn(el) {
@@ -1317,6 +1332,7 @@
     inst(el) { S.snap(); curTrack().inst[el.dataset.key] = el.value; },
     // Switch what a note track plays: built-in synth, the producer's own sample, a drum kit, or a plugin.
     plugParam() {},
+    fxPick(el) { if (el.checked) U.fxPicked.add(el.dataset.id); else U.fxPicked.delete(el.dataset.id); renderDevices(); },
     fxChoice(el) {
       const t = curTrack(), f = t.fx[+el.dataset.i], b = f.blocks[+el.dataset.b], n = +el.dataset.n;
       S.snap(); b.vals[el.dataset.k] = n > 1 ? +el.value / (n - 1) : 0;
@@ -1368,6 +1384,7 @@
       const text = e.target.value.trim();
       if (!text) return;
       const pl = D.fromPrompt(text);
+      if (curTrack().fx.length >= D.MAX_FX) return U.toast(`A track holds ${D.MAX_FX} effects. Patcherize some to make room.`, true);
       structural(() => curTrack().fx.push(pl));
       closePop(); A.showDevices();
       const chain = pl.blocks.map((b) => D.BLOCKS[b.type].label).join(' → ');

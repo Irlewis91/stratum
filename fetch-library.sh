@@ -40,6 +40,9 @@ for f in json.load(sys.stdin)["files"]:
   touch "$PS/.done"
 fi
 
+# STRATUM's own sounds, made from scratch.
+python3 make-sounds.py "$WORK/stratum-originals"
+
 # Sort, convert and index.
 python3 -I - "$WORK" "$LIB" <<'PY'
 import json, os, re, subprocess, sys, shutil
@@ -66,13 +69,13 @@ def audio(src, base):
     if not readable(wav): sys.exit("could not convert " + src)
     return wav
 entries = []
-sources = [(os.path.join(work, "stargate", "stargate-sample-pack"), "Stargate (CC0)"), (os.path.join(work, "producer-space", "Producer Space", "Packs"), "Producer Space (CC0)")]
+sources = [(os.path.join(work, "stargate", "stargate-sample-pack"), "Stargate (CC0)"), (os.path.join(work, "producer-space", "Producer Space", "Packs"), "Producer Space (CC0)"), (os.path.join(work, "stratum-originals"), "STRATUM Originals")]
 for root, coll in sources:
     for d, _, files in os.walk(root):
         for f in sorted(files):
             src = os.path.join(d, f); rel = os.path.relpath(src, root); ext = f.lower().rsplit(".", 1)[-1]
             if ext not in ("wav", "flac", "aif", "aiff", "mid"): continue
-            cat = category(rel)
+            cat = os.path.dirname(rel) if coll == "STRATUM Originals" else category(rel)
             name = os.path.splitext(f)[0]
             out_rel = os.path.join(coll, cat, re.sub(r"[^\w\-. ]", "_", os.path.dirname(rel).replace(os.sep, " - ")) + " - " + name if os.path.dirname(rel) else name)
             out_rel = out_rel.replace("/ - ", "/")

@@ -598,7 +598,7 @@
     const NOT_SOUND = /^(AudioEffectGroupDevice|InstrumentGroupDevice|MidiEffectGroupDevice|DrumGroupDevice|OriginalSimpler|MultiSampler)$/;
     const plugName = (d) => val(d, ':scope > PluginDesc > VstPluginInfo > PlugName') || val(d, ':scope > PluginDesc > Vst3PluginInfo > Name') || val(d, ':scope > PluginDesc > AuPluginInfo > Name');
     const tracks = [], sceneBars = {}, left = new Set();
-    const rep = { notes: 0, audio: 0, sessionAudio: 0, sounds: 0, pads: 0, sliced: 0, approx: 0, fx: 0, folded: 0, pitched: 0, muted: 0, plugins: 0 };
+    const rep = { notes: 0, audio: 0, sessionAudio: 0, sounds: 0, pads: 0, sliced: 0, approx: 0, fx: 0, fxOver: 0, folded: 0, pitched: 0, muted: 0, plugins: 0 };
     let arrEnd = 0, audioTracks = 0, midiClips = 0;
     // Return tracks: STRATUM has no sends, so each return's effects go on the tracks that send to it, mixed by the send level.
     const returns = [...doc.querySelectorAll('Tracks > ReturnTrack')].map((t) => ({
@@ -634,7 +634,7 @@
       for (const d of chain) {
         if (d === chain[0] && ft.plugin) continue;
         const x = fxOf(d, bpm);
-        if (x) { ft.fx.push(x); rep.fx++; } else if (!NOT_SOUND.test(d.tagName)) left.add(plugName(d) || d.tagName);
+        if (x) { if (ft.fx.length < D.MAX_FX) { ft.fx.push(x); rep.fx++; } else rep.fxOver++; } else if (!NOT_SOUND.test(d.tagName)) left.add(plugName(d) || d.tagName);
       }
       [...t.querySelectorAll(':scope > DeviceChain > Mixer > Sends > TrackSendHolder')].forEach((h, i) => {
         const amt = num(h, ':scope > Send > Manual', 0) * ((returns[i] && returns[i].gain) || 0);
@@ -642,7 +642,7 @@
         for (const fx of returns[i].fx) {
           const c = JSON.parse(JSON.stringify(fx)); c.id = S.uid();
           if (c.blocks[0].vals.mix != null) c.blocks[0].vals.mix = clamp(c.blocks[0].vals.mix * amt);
-          ft.fx.push(c); rep.folded++;
+          if (ft.fx.length < D.MAX_FX) { ft.fx.push(c); rep.folded++; } else rep.fxOver++;
         }
       });
       // Audio clips in the arrangement. A warped clip counts in the file's own beats, an unwarped one in seconds.
@@ -707,6 +707,7 @@
       report: `Ableton set: ${tracks.length} tracks, ${rep.notes} notes, tempo ${+bpm.toFixed(2)}. Volume, pan and mutes kept.` +
         ` Read from the set: ${list([say(rep.pads, 'drum pad'), say(rep.sounds, 'Simpler sound'), say(rep.audio, 'audio clip'), say(rep.fx, 'effect'), say(rep.folded, 'return-track effect moved onto the track that sends to it', 'return-track effects moved onto the tracks that send to them')]) || 'no sounds'}.` +
         (rep.approx ? ` ${rep.approx} of the ${say(rep.sliced, 'sliced sample')} use${rep.approx === 1 ? 's' : ''} Beat slices, which Live works out when it opens a set, so the chop points are STRATUM's best estimate and may differ from Live's.` : '') +
+        (rep.fxOver ? ` ${rep.fxOver} effects left out: a track holds ${D.MAX_FX}.` : '') +
         (left.size ? ` Left out, no STRATUM match yet: ${[...left].join(', ')}.` : '') +
         (rep.pitched ? ` ${say(rep.pitched, 'audio clip was', 'audio clips were')} pitched in Live and ${rep.pitched === 1 ? 'plays' : 'play'} at the file's own pitch.` : '') +
         (rep.sessionAudio ? ` ${say(rep.sessionAudio, 'Session view audio clip is', 'Session view audio clips are')} not read.` : ''),

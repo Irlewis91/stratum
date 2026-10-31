@@ -8,8 +8,8 @@ enum ShareBrand {
     static let cream = NSColor(srgbRed: 0xed / 255, green: 0xe9 / 255, blue: 0xe0 / 255, alpha: 1)
     static let amber = NSColor(srgbRed: 0xe3 / 255, green: 0x9a / 255, blue: 0x12 / 255, alpha: 1)
     /// Where people can get STRATUM. Shown on every shared video and in shared messages.
-    static let link = "github.com/Irlewis91/stratum"
-    static let linkURL = "https://github.com/Irlewis91/stratum/releases/latest"
+    static let link = "github.com/matovalabs/stratum"
+    static let linkURL = "https://github.com/matovalabs/stratum/releases/latest"
     /// Upload pages for platforms that have no macOS share extension.
     static let uploadPages = [
         "tiktok": "https://www.tiktok.com/upload",

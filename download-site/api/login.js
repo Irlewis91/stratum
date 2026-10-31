@@ -3,7 +3,7 @@ import { env, nonce, cookie, redirect, redirectUri } from '../lib/gate.js';
 
 export function GET(request) {
     if (!env('DISCORD_CLIENT_ID') || !env('DISCORD_CLIENT_SECRET') || !env('SESSION_SECRET'))
-        return new Response('Sign-in is not set up yet.', { status: 503 });
+        return redirect('/?signin=unavailable');
     const state = nonce();
     const url = new URL('https://discord.com/oauth2/authorize');
     url.search = new URLSearchParams({

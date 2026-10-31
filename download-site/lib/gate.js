@@ -44,7 +44,7 @@ export const cookie = (name, value, maxAge) =>
     `${name}=${encodeURIComponent(value)}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${maxAge}`;
 
 export const session = request => verify(cookies(request).stratum_session);
-export const SESSION_AGE = 30 * DAY;
+export const SESSION_AGE = DAY;   // short, so leaving the server ends access within a day
 export const nonce = () => randomBytes(18).toString('base64url');
 
 export const origin = request => env('SITE_URL') || new URL(request.url).origin;

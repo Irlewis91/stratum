@@ -4,7 +4,7 @@ The page producers download STRATUM from, starting with Alpha v11. They sign in 
 
 - `public/index.html` is the page.
 - `api/login` sends producers to Discord. It asks only for their name and server list (`identify guilds`).
-- `api/callback` checks the sign-in and server membership, then sets a signed cookie that lasts 30 days.
+- `api/callback` checks the sign-in and server membership, then sets a signed cookie that lasts one day.
 - `api/download?file=mac|windows|manual` sends members to the file.
 - `api/me` reports the sign-in state to the page; `api/logout` signs out.
 

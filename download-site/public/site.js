@@ -34,6 +34,7 @@
     expired: 'That sign-in took too long. Please try again.',
     failed: "Discord sign-in didn't go through. Please try again in a minute.",
     needed: 'Sign in with Discord first, then the download starts.',
+    unavailable: "Discord sign-in isn't switched on yet. Join the server now and check back soon.",
   };
   if (q.get('signin')) say(msgs[q.get('signin')] || msgs.failed);
   let me = { signedIn: false };

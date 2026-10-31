@@ -10,7 +10,7 @@
   SY.configured = configured;
 
   // Where sign-in returns to. The Mac app intercepts this address and reloads its own page with the sign-in details.
-  const REDIRECT = IO.platform === 'windows' ? 'https://app.stratum/index.html' : IO.platform === 'mac' ? 'https://irlewis91.github.io/stratum/?app=mac' : location.origin + location.pathname;
+  const REDIRECT = IO.platform === 'windows' ? 'https://app.stratum/index.html' : IO.platform === 'mac' ? 'https://matovalabs.github.io/stratum/?app=mac' : location.origin + location.pathname;
   const DEVICE = (() => {
     const ua = navigator.userAgent;
     if (/iPhone/.test(ua)) return 'iPhone';

@@ -108,12 +108,17 @@ kbd { background:var(--cell); border:1px solid var(--line); border-radius:4px; p
 .strip.sel { background:var(--cell2); }
 .strip.master { margin-left:auto; border-top-color:var(--acc); width:104px; }
 .sname { font-weight:700; width:100%; text-align:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.slots { width:100%; display:flex; flex-direction:column; gap:2px; flex:1; }
+.slots { width:100%; display:flex; flex-direction:column; gap:2px; flex:1 1 0; min-height:64px; overflow-y:auto; contain:size; }
+.slots.inlist { flex:none; height:150px; }
+.slots .slot { flex:none; margin-bottom:0; }
+.slot b { font-weight:400; color:var(--dim); margin-right:4px; font-size:9px; }
+.dev.patchbar { flex:none; width:170px; }
+.dev h4 .fxpick { margin:0 3px 0 0; vertical-align:-2px; }
 .slot { background:var(--cell); border-radius:2px; padding:2px 4px; font-size:10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:2px; }
 .slot.empty { background:none; border:1px dashed var(--dim); color:var(--dim); text-align:center; }
 .slot.fixed { color:var(--dim); text-align:center; }
 .skin-session #mixer .fader, .skin-session #mixer .meter { height:64px; }
-.skin-session #mixer .slots { flex:none; }
+.skin-session #mixer .slots { flex:none; height:64px; }
 
 /* devices / rack */
 .rackwrap { position:relative; display:flex; gap:8px; padding:10px; align-items:flex-start; min-width:max-content; min-height:100%; }
@@ -353,3 +358,9 @@ body.skin-strata { background:radial-gradient(ellipse 80% 60% at 70% -10%, rgba(
 .stageacts button { padding:8px 6px; font-weight:600; }
 .stageacts .rec { color:#ff6b6b; }
 .seg { display:flex; gap:4px; flex-wrap:wrap; }
+
+/* Sounds browser on phones: genres and categories scroll sideways, so the sounds stay on screen */
+@media (max-width: 700px) {
+  .stock.chips { flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch; padding-bottom:4px; }
+  .stock.chips button { flex:none; white-space:nowrap; }
+}

@@ -193,6 +193,46 @@
     return { id: S.uid(), name: def.label, prompt: '', blocks: [{ type, vals }] };
   };
 
+  D.MAX_FX = 20;   // insert slots on a track
+  // Patcherize: several effects on a track become one, in the same order, at the place of the first. CV cables follow
+  // their knobs. One safety limiter now ends the chain, where each effect had its own.
+  D.patcherize = (t, picks) => {
+    const sel = [...new Set(picks)].filter((i) => t.fx[i]).sort((a, b) => a - b);
+    if (sel.length < 2) return false;
+    const first = sel[0], shift = {}, merged = { id: S.uid(), name: 'Patcher', prompt: '', patcher: true, parts: [], blocks: [] };
+    for (const i of sel) {
+      const f = t.fx[i];
+      shift[i] = merged.blocks.length;
+      merged.parts.push(...(f.parts || [{ name: f.name, prompt: f.prompt || '', n: f.blocks.length }]));
+      merged.blocks.push(...f.blocks);
+    }
+    const moved = (i) => (sel.includes(i) ? first : i - sel.filter((s) => s < i && s !== first).length);
+    t.cables = t.cables.map((c) => {
+      if (c.dev < 0) return c;
+      const [b, k] = c.key.split('.');
+      return { ...c, dev: moved(c.dev), key: sel.includes(c.dev) ? `${+b + shift[c.dev]}.${k}` : c.key };
+    });
+    t.fx = t.fx.filter((_, i) => !sel.includes(i) || i === first).map((f, i) => (i === first ? merged : f));
+    return true;
+  };
+  // Unpack: a Patcher back into its effects.
+  D.unpack = (t, i) => {
+    const f = t.fx[i];
+    if (!f || !f.parts || t.fx.length - 1 + f.parts.length > D.MAX_FX) return false;
+    let at = 0;
+    const out = f.parts.map((p) => { const e = { id: S.uid(), name: p.name, prompt: p.prompt, blocks: f.blocks.slice(at, at + p.n) }; at += p.n; return e; });
+    t.cables = t.cables.map((c) => {
+      if (c.dev < i) return c;
+      if (c.dev > i) return { ...c, dev: c.dev + out.length - 1 };
+      const [b, k] = c.key.split('.');
+      let part = 0, left = +b;
+      while (left >= f.parts[part].n) left -= f.parts[part++].n;
+      return { ...c, dev: i + part, key: `${left}.${k}` };
+    });
+    t.fx.splice(i, 1, ...out);
+    return true;
+  };
+
   // Prompt-to-Plugin: keyword rules choose blocks, modifier words scale their settings.
   const RULES = [
     [/telephone|radio|thin|high[- ]?pass|hpf|low[- ]?cut/, 'highpass', { cutoff: 0.55 }],

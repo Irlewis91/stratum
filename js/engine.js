@@ -109,11 +109,13 @@
 
   const freq = (p, cents) => 440 * Math.pow(2, (p - 69 + (cents || 0) / 100) / 12);
   // One-shot or held playback of a loaded sample. With `hold` the note gets an attack/release envelope and stops.
-  E.sample = (ctx, dest, buf, when, rate, gain, hold, att, rel, loop) => {
+  // `off` and `len` (seconds of the sample) play just one part of it: a slice, or a sample trimmed in Ableton's Simpler.
+  E.sample = (ctx, dest, buf, when, rate, gain, hold, att, rel, loop, off, len) => {
     const s = ctx.createBufferSource(), a = ctx.createGain();
-    if (dest.plug) return S.plug.voice(dest.plug, hold == null ? { buf, rate, gain } : { buf, rate, gain, d: Math.max(hold, att), att, rel, loop }, when, ctx);
+    if (len != null && hold == null) { hold = len / rate; att = 0.001; rel = 0.004; }
+    if (dest.plug) return S.plug.voice(dest.plug, hold == null ? { buf, rate, gain, off } : { buf, rate, gain, d: Math.max(hold, att), att, rel, loop, off }, when, ctx);
     s.buffer = buf; s.playbackRate.value = rate; s.loop = !!loop;
-    s.connect(a); a.connect(dest); s.start(when);
+    s.connect(a); a.connect(dest); s.start(when, off || 0);
     if (hold == null) { a.gain.value = gain; return; }
     const end = when + Math.max(hold, att);
     a.gain.setValueAtTime(0, when); a.gain.linearRampToValueAtTime(gain, when + att); a.gain.setTargetAtTime(0, end, rel / 4);
@@ -121,6 +123,14 @@
   };
   E.synth = (ctx, dest, inst, n, when, dur, prev) => {
     const smp = inst.sample, rec = smp && S.buffers[smp.audio];
+    if (rec && smp.slices) {
+      // Sliced sample (Ableton Simpler's Slice mode): each key plays one slice, at the sample's own pitch, through to the next slice.
+      const from = smp.slices[n.p - (smp.sliceBase == null ? 36 : smp.sliceBase)];
+      if (from == null) return;
+      const to = smp.slices[n.p - (smp.sliceBase == null ? 36 : smp.sliceBase) + 1], stop = to == null ? (smp.end == null ? rec.buf.duration : smp.end) : to;
+      return E.sample(ctx, dest, rec.buf, when, freq(60) / freq(smp.root == null ? 60 : smp.root, smp.cents || 0), 0.6 * (n.v == null ? 0.8 : n.v), undefined, 0, 0, false, from, stop - from);
+    }
+    if (rec && smp.oneShot) return E.sample(ctx, dest, rec.buf, when, freq(n.p, n.c) / freq(smp.root == null ? 60 : smp.root, smp.cents || 0), 0.6 * (n.v == null ? 0.8 : n.v), undefined, 0, 0, false, smp.start || 0, (smp.end == null ? rec.buf.duration : smp.end) - (smp.start || 0));
     if (rec) return E.sample(ctx, dest, rec.buf, when, freq(n.p, n.c) / freq(smp.root == null ? 60 : smp.root, smp.cents || 0), 0.6 * (n.v == null ? 0.8 : n.v), dur, 0.003 + inst.attack * 0.5, 0.02 + inst.release * 1.2, smp.loop);
     if (dest.plug) return S.plug.synthNote(dest.plug, inst, n, when, dur, prev, ctx);
     const f = freq(n.p, n.c), a = ctx.createGain(), o1 = ctx.createOscillator(), o2 = ctx.createOscillator(), g2 = ctx.createGain();
@@ -141,7 +151,7 @@
   };
   E.drum = (ctx, dest, pitch, vel, when, tr) => {
     const pad = tr && tr.pads && tr.pads[pitch], rec = pad && S.buffers[pad.audio];
-    if (rec) return E.sample(ctx, dest, rec.buf, when, Math.pow(2, (pad.tune || 0) / 12), (vel == null ? 0.8 : vel) * (pad.gain == null ? 1 : pad.gain));
+    if (rec) { const r = Math.pow(2, (pad.tune || 0) / 12), st = pad.start || 0; return E.sample(ctx, dest, rec.buf, when, r, (vel == null ? 0.8 : vel) * (pad.gain == null ? 1 : pad.gain), undefined, 0, 0, false, st, pad.end == null ? undefined : pad.end - st); }
     const p = S.drumMap(pitch), v = vel == null ? 0.8 : vel;
     if (dest.plug) { const b = S.plug.drumBuf(p); if (b) S.plug.voice(dest.plug, { buf: b, gain: v }, when, ctx); return; }
     const a = ctx.createGain();

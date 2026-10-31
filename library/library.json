@@ -4744,5 +4744,419 @@
 "name": "DVSV2 - Youre Gonna Love This 3",
 "category": "Vocal Shouts",
 "collection": "Producer Space (CC0)"
+},
+{
+"path": "STRATUM Originals/Piano and Keys/Piano and Keys - Electric Piano FM C4.flac",
+"name": "Electric Piano FM C4",
+"category": "Piano and Keys",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/Piano and Keys/Piano and Keys - Funk Clav C4.flac",
+"name": "Funk Clav C4",
+"category": "Piano and Keys",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/Piano and Keys/Piano and Keys - Soft Keys C4.flac",
+"name": "Soft Keys C4",
+"category": "Piano and Keys",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/Cymbals/Cymbals - Crash Noise.flac",
+"name": "Crash Noise",
+"category": "Cymbals",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/Cymbals/Cymbals - Ride Noise.flac",
+"name": "Ride Noise",
+"category": "Cymbals",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/Organ/Organ - Gospel Drawbar Organ C4.flac",
+"name": "Gospel Drawbar Organ C4",
+"category": "Organ",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/Organ/Organ - Reggae Bubble Organ C4.flac",
+"name": "Reggae Bubble Organ C4",
+"category": "Organ",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/FX/FX - Impact Boom.flac",
+"name": "Impact Boom",
+"category": "FX",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/FX/FX - Synth Riser.flac",
+"name": "Synth Riser",
+"category": "FX",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/FX/FX - Tape Hiss Loop.flac",
+"name": "Tape Hiss Loop",
+"category": "FX",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/FX/FX - Vinyl Crackle Loop.flac",
+"name": "Vinyl Crackle Loop",
+"category": "FX",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/FX/FX - White Noise Downlifter.flac",
+"name": "White Noise Downlifter",
+"category": "FX",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/FX/FX - White Noise Riser.flac",
+"name": "White Noise Riser",
+"category": "FX",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/Hats/Hats - Closed Hat Dark.flac",
+"name": "Closed Hat Dark",
+"category": "Hats",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/Hats/Hats - Closed Hat Tight.wav",
+"name": "Closed Hat Tight",
+"category": "Hats",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/Hats/Hats - Closed Hat.flac",
+"name": "Closed Hat",
+"category": "Hats",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/Hats/Hats - Open Hat Long.flac",
+"name": "Open Hat Long",
+"category": "Hats",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/Hats/Hats - Open Hat.flac",
+"name": "Open Hat",
+"category": "Hats",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/Hats/Hats - Shaker Tick.wav",
+"name": "Shaker Tick",
+"category": "Hats",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/Hats/Hats - Trap Hat.wav",
+"name": "Trap Hat",
+"category": "Hats",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/Synths/Synths - Bell Pluck C3.flac",
+"name": "Bell Pluck C3",
+"category": "Synths",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/Synths/Synths - Chiptune Lead C3.flac",
+"name": "Chiptune Lead C3",
+"category": "Synths",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/Synths/Synths - House Chord Stab C3.flac",
+"name": "House Chord Stab C3",
+"category": "Synths",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/Synths/Synths - Pluck C3.flac",
+"name": "Pluck C3",
+"category": "Synths",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/Synths/Synths - Square Lead C3.flac",
+"name": "Square Lead C3",
+"category": "Synths",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/Synths/Synths - Supersaw Lead C3.flac",
+"name": "Supersaw Lead C3",
+"category": "Synths",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/Synths/Synths - Synthwave Brass C3.flac",
+"name": "Synthwave Brass C3",
+"category": "Synths",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/Synths/Synths - Trance Stab C3.flac",
+"name": "Trance Stab C3",
+"category": "Synths",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/World/World - Amapiano Log Drum C2.flac",
+"name": "Amapiano Log Drum C2",
+"category": "World",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/World/World - Amapiano Log Drum High C3.flac",
+"name": "Amapiano Log Drum High C3",
+"category": "World",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/Bass/Bass - Acid Bass C2.flac",
+"name": "Acid Bass C2",
+"category": "Bass",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/Bass/Bass - FM Bass C2.flac",
+"name": "FM Bass C2",
+"category": "Bass",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/Bass/Bass - Growl Bass C2.flac",
+"name": "Growl Bass C2",
+"category": "Bass",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/Bass/Bass - Pluck Bass C2.flac",
+"name": "Pluck Bass C2",
+"category": "Bass",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/Bass/Bass - Reese Bass C2.flac",
+"name": "Reese Bass C2",
+"category": "Bass",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/Bass/Bass - Sub Sine C2.flac",
+"name": "Sub Sine C2",
+"category": "Bass",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/Bass/Bass - Wobble Bass C2.flac",
+"name": "Wobble Bass C2",
+"category": "Bass",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/Pads/Pads - Airy Pad C3.flac",
+"name": "Airy Pad C3",
+"category": "Pads",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/Pads/Pads - Dark Pad C3.flac",
+"name": "Dark Pad C3",
+"category": "Pads",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/Pads/Pads - Vapor Pad C3.flac",
+"name": "Vapor Pad C3",
+"category": "Pads",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/Pads/Pads - Warm Pad C3.flac",
+"name": "Warm Pad C3",
+"category": "Pads",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/Claps/Claps - Electronic Clap.flac",
+"name": "Electronic Clap",
+"category": "Claps",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/Claps/Claps - Gospel Snap Clap.flac",
+"name": "Gospel Snap Clap",
+"category": "Claps",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/Claps/Claps - House Clap.flac",
+"name": "House Clap",
+"category": "Claps",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/Claps/Claps - Trap Clap.flac",
+"name": "Trap Clap",
+"category": "Claps",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/Snares/Snares - DnB Snare.flac",
+"name": "DnB Snare",
+"category": "Snares",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/Snares/Snares - Drill Snare.flac",
+"name": "Drill Snare",
+"category": "Snares",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/Snares/Snares - Electronic Snare.flac",
+"name": "Electronic Snare",
+"category": "Snares",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/Snares/Snares - Rim Tick.wav",
+"name": "Rim Tick",
+"category": "Snares",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/Snares/Snares - Trap Snare.flac",
+"name": "Trap Snare",
+"category": "Snares",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/808s/808s - 808 Boom Bap C2.flac",
+"name": "808 Boom Bap C2",
+"category": "808s",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/808s/808s - 808 Distorted C2.flac",
+"name": "808 Distorted C2",
+"category": "808s",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/808s/808s - 808 Drill Slide C2.flac",
+"name": "808 Drill Slide C2",
+"category": "808s",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/808s/808s - 808 Glide Up C2.flac",
+"name": "808 Glide Up C2",
+"category": "808s",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/808s/808s - 808 Hard Clip C2.flac",
+"name": "808 Hard Clip C2",
+"category": "808s",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/808s/808s - 808 Long C2.flac",
+"name": "808 Long C2",
+"category": "808s",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/808s/808s - 808 Punch C2.flac",
+"name": "808 Punch C2",
+"category": "808s",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/808s/808s - 808 Reggaeton C2.flac",
+"name": "808 Reggaeton C2",
+"category": "808s",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/808s/808s - 808 Short C2.flac",
+"name": "808 Short C2",
+"category": "808s",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/808s/808s - 808 Soft Sub C2.flac",
+"name": "808 Soft Sub C2",
+"category": "808s",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/Kicks/Kicks - Afro Kick.flac",
+"name": "Afro Kick",
+"category": "Kicks",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/Kicks/Kicks - Boom Bap Kick.flac",
+"name": "Boom Bap Kick",
+"category": "Kicks",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/Kicks/Kicks - DnB Kick.flac",
+"name": "DnB Kick",
+"category": "Kicks",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/Kicks/Kicks - Hardstyle Kick.flac",
+"name": "Hardstyle Kick",
+"category": "Kicks",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/Kicks/Kicks - House Kick.flac",
+"name": "House Kick",
+"category": "Kicks",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/Kicks/Kicks - Soft Lo-fi Kick.flac",
+"name": "Soft Lo-fi Kick",
+"category": "Kicks",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/Kicks/Kicks - Techno Kick.flac",
+"name": "Techno Kick",
+"category": "Kicks",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/Kicks/Kicks - Trance Kick.flac",
+"name": "Trance Kick",
+"category": "Kicks",
+"collection": "STRATUM Originals"
+},
+{
+"path": "STRATUM Originals/Kicks/Kicks - Trap Kick.flac",
+"name": "Trap Kick",
+"category": "Kicks",
+"collection": "STRATUM Originals"
 }
 ]

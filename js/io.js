@@ -65,10 +65,20 @@
     const t = proj.tracks.find((x) => x.id === w.t), nm = w.file.replace(/\.[^.]+$/, '');
     if (!t) return;
     if (w.kind === 'clip') {
-      const beats = (rec.buf.duration * proj.bpm) / 60, bars = Math.max(1, Math.ceil(beats / 4));
-      for (const it of w.items || []) t.regions.push({ id: S.uid(), start: it.t, len: Math.max(0.25, Math.min(it.len || beats, beats)), off: 0, clip: { audio: rec.id, warp: false, bars, gain: 1 } });
-    } else if (t.type === 'drums') { t.pads = t.pads || {}; t.pads[w.pitch || 36] = { audio: rec.id, name: nm, tune: 0, gain: 1 }; }
-    else if (t.inst) t.inst.sample = { audio: rec.id, name: nm, root: 60, loop: false };
+      if (w.bpm) rec.bpm = w.bpm;   // Ableton's warp markers say the file's real tempo; better than detecting it
+      const beats = (rec.buf.duration * (w.bpm || proj.bpm)) / 60, bars = Math.max(1, Math.ceil(beats / 4));
+      for (const it of w.items || []) t.regions.push({ id: S.uid(), start: it.t, len: it.off != null ? it.len : Math.max(0.25, Math.min(it.len || beats, beats)), off: it.off || 0, clip: { audio: rec.id, warp: !!it.warp, bars, gain: it.gain == null ? 1 : it.gain } });
+    } else if (t.type === 'drums') {
+      t.pads = t.pads || {};
+      t.pads[w.pitch || 36] = { audio: rec.id, name: nm, tune: w.tune || 0, gain: w.gain == null ? 1 : w.gain };
+      if (w.start) t.pads[w.pitch || 36].start = w.start;
+      if (w.end) t.pads[w.pitch || 36].end = w.end;
+    } else if (t.inst) {
+      t.inst.sample = { audio: rec.id, name: nm, root: w.root == null ? 60 : w.root, cents: w.cents || 0, loop: false };
+      for (const k of ['slices', 'oneShot', 'start', 'end']) if (w[k] != null) t.inst.sample[k] = w[k];
+      Object.assign(t.inst, w.env || {});
+      if (w.gain != null) t.vol = Math.min(1.25, t.vol * (w.gain / 0.6));   // samples play at 0.6 of full level in a note track
+    }
   };
   // Offer a file to the open project: used when its name matches a missing sample. Resolves true when it was used.
   IO.offer = async (name, ab) => {
@@ -510,18 +520,156 @@
     };
     const loopOf = (clip) => ({ on: (clip.querySelector('Loop > LoopOn') || { getAttribute: () => 'false' }).getAttribute('Value') === 'true', start: num(clip, 'Loop > LoopStart', 0), end: num(clip, 'Loop > LoopEnd', 4), rel: num(clip, 'Loop > StartRelative', 0) });
     const off = (clip) => { const d = clip.querySelector(':scope > Disabled'); return !!d && d.getAttribute('Value') === 'true'; };
-    const tracks = [], sceneBars = {};
+    const on = (dev) => { const x = dev.querySelector(':scope > On > Manual'); return !x || x.getAttribute('Value') !== 'false'; };
+    const val = (el, sel) => { const x = el && el.querySelector(sel); return x ? x.getAttribute('Value') || '' : ''; };
+    const dbGain = (db) => Math.pow(10, db / 20);
+    // Where a sample lives: Live keeps the folders it last saw it in, as a relative path and as a hint.
+    const fileOf = (ref) => {
+      const fr = ref && ref.querySelector(':scope > FileRef');
+      if (!fr) return null;
+      const dirs = (sel) => [...fr.querySelectorAll(`:scope > ${sel} > RelativePathElement`)].map((e) => e.getAttribute('Dir') || '').filter(Boolean);
+      const rel = val(fr, ':scope > RelativePath') || dirs('RelativePath').join('/'), hint = dirs('SearchHint > PathHint').join('/');
+      const whole = val(fr, ':scope > Path') || rel, file = val(fr, ':scope > Name') || whole.split('/').pop();
+      if (!file) return null;
+      const path = val(fr, ':scope > Path') || (hint ? '/' + hint + '/' + file : rel.endsWith(file) ? rel : rel + '/' + file);
+      return { file, path };
+    };
+    // Every device on a chain, going inside racks. Drum Racks are read pad by pad, so they are not entered here.
+    const walk = (list, out = []) => {
+      for (const d of list ? [...list.children] : []) {
+        if (!on(d)) continue;
+        out.push(d);
+        if (/^(Audio|Midi|Instrument)EffectGroupDevice$|^InstrumentGroupDevice$/.test(d.tagName))
+          for (const b of d.querySelectorAll(':scope > Branches > *')) walk([...b.querySelectorAll('Devices')].find((x) => x.closest('AudioEffectBranch, InstrumentBranch, MidiEffectBranch') === b), out);
+      }
+      return out;
+    };
+    const chainOf = (t) => walk(t.querySelector(':scope > DeviceChain > DeviceChain > Devices'));
+    // Simpler's slices. Transient and Beat slices are stored as points; Live works out most Beat slices again when the
+    // set opens, so those are rebuilt here from the warp markers and are close to Live's, not exact.
+    const slicesOf = (part, sr) => {
+      const pts = (k) => [...part.querySelectorAll(`:scope > ${k} > *`)].map((p) => parseFloat(p.getAttribute('TimeInSeconds'))).filter((x) => !isNaN(x)).sort((a, b) => a - b);
+      const start = num(part, ':scope > SampleStart', 0) / sr, end = num(part, ':scope > SampleEnd', 0) / sr, style = num(part, ':scope > SlicingStyle', 0);
+      // A first point right at the start is the first slice, not a sliver before it.
+      const inside = (l) => { const k = l.filter((x) => x >= start - 0.01 && x < end); return { slices: k.length && k[0] < start + 0.1 ? k : [start, ...k], exact: true }; };
+      if (style === 2) { const n = Math.max(1, num(part, ':scope > SlicingRegions', 8)); return { slices: [...Array(n).keys()].map((i) => start + (i * (end - start)) / n), exact: true }; }
+      if (style === 3) return inside(pts('ManualSlicePoints'));
+      if (style === 0) return inside(pts('SlicePoints'));
+      if (pts('BeatSlicePoints').length) return inside(pts('BeatSlicePoints'));
+      const wm = [...part.querySelectorAll(':scope > SampleWarpProperties > WarpMarkers > WarpMarker')].map((m) => [parseFloat(m.getAttribute('SecTime')), parseFloat(m.getAttribute('BeatTime'))]);
+      const a = wm[0], b = wm[wm.length - 1], perBeat = wm.length > 1 && b[1] > a[1] ? (b[0] - a[0]) / (b[1] - a[1]) : 0.5;
+      const beats = { 4: 1, 6: 2, 9: 4 }[num(part, ':scope > SlicingBeatGrid', 4)] || 1, out = [];
+      for (let x = start; x < end - 0.01 && out.length < 512; x += beats * perBeat) out.push(x);
+      return { slices: out, exact: false };
+    };
+    // One Simpler becomes what STRATUM needs to play it: {file, path, root, cents, gain, ...}.
+    const simpler = (s) => {
+      const part = s.querySelector('MultiSamplePart'), ref = part && part.querySelector(':scope > SampleRef'), f = fileOf(ref);
+      if (!f) return null;
+      const sr = num(ref, ':scope > DefaultSampleRate', 44100), mode = num(s, ':scope > Globals > PlaybackMode', 0);
+      const key = num(s, ':scope > Pitch > TransposeKey > Manual', 0), fine = num(s, ':scope > Pitch > TransposeFine > Manual', 0) + num(part, ':scope > Detune', 0);
+      const st = num(part, ':scope > SampleStart', 0) / sr, en = num(part, ':scope > SampleEnd', 0) / sr, full = num(ref, ':scope > DefaultDuration', 0) / sr;
+      const o = { ...f, root: num(part, ':scope > RootKey', 60) - key, cents: -fine, key, fine, mode, gain: dbGain(num(s, ':scope > VolumeAndPan > Volume > Manual', 0)) };
+      if (st > 0.0005) o.start = st;
+      if (en && (!full || en < full - 0.01)) o.end = en;
+      if (mode === 2) { const r = slicesOf(part, sr); o.slices = r.slices; o.exact = r.exact; }
+      else if (mode === 1) o.oneShot = true;
+      else o.env = { attack: Math.min(1, Math.max(0, (num(s, ':scope > VolumeAndPan > Envelope > AttackTime > Manual', 1) / 1000 - 0.003) * 2)), release: Math.min(1, Math.max(0, (num(s, ':scope > VolumeAndPan > Envelope > ReleaseTime > Manual', 50) / 1000 - 0.02) / 1.2)) };
+      return o;
+    };
+    const clamp = (v) => Math.min(1, Math.max(0, v));
+    // Live effects that have a STRATUM counterpart. `wet` is 1 on a return track, where the effect is all wet.
+    const fxOf = (d, bpm) => {
+      const m = (k, def) => num(d, `:scope > ${k} > Manual`, def), mk = (type, vals) => { const fx = D.stock(type); Object.assign(fx.blocks[0].vals, vals); fx.fromLive = d.tagName; return fx; };
+      const delayTime = (sec) => clamp((sec - 0.05) / 0.75);
+      switch (d.tagName) {
+        case 'Reverb': return mk('reverb', { size: clamp((m('DecayTime', 1500) / 1000 - 0.3) / 4), mix: clamp(m('DryWet', 0.3) / 0.8) });
+        case 'CrossDelay': return mk('delay', { time: delayTime(val(d, ':scope > SyncModeLeft > Manual') === 'true' ? (m('BeatDelayEnumL', 2) + 1) * (15 / bpm) : m('MsDelayLeft', 250) / 1000), feedback: clamp(m('Feedback', 0.3) / 0.85), mix: clamp(m('DryWet', 0.3)) });
+        case 'Delay': case 'PingPongDelay': return mk('delay', { time: delayTime(30 / bpm), feedback: clamp(m('Feedback', 0.3) / 0.85), mix: clamp(m('DryWet', 0.3)) });
+        case 'Echo': return mk('delay', { time: delayTime(m('Delay_TimeL', 0.25)), feedback: clamp(m('Feedback', 0.3) / 0.85), mix: clamp(m('DryWet', 0.3)) });
+        case 'GlueCompressor': case 'Compressor2': return mk('comp', { amount: clamp(-m('Threshold', -15) / 40) });
+        case 'Chorus': return mk('chorus', { rate: clamp(m('ModFreq', 1) / 6), depth: clamp(m('ModAmount', 0.5)), mix: clamp(m('DryWet', 0.5)) });
+        case 'Phaser': return mk('phaser', { mix: clamp(m('DryWet', 0.5)) });
+        case 'Saturator': case 'Overdrive': case 'DrumBuss': return mk('sat', {});
+        case 'Redux': case 'Redux2': return mk('crush', {});
+        default: return null;
+      }
+    };
+    const NOT_SOUND = /^(AudioEffectGroupDevice|InstrumentGroupDevice|MidiEffectGroupDevice|DrumGroupDevice|OriginalSimpler|MultiSampler)$/;
+    const plugName = (d) => val(d, ':scope > PluginDesc > VstPluginInfo > PlugName') || val(d, ':scope > PluginDesc > Vst3PluginInfo > Name') || val(d, ':scope > PluginDesc > AuPluginInfo > Name');
+    const tracks = [], sceneBars = {}, left = new Set();
+    const rep = { notes: 0, audio: 0, sessionAudio: 0, sounds: 0, pads: 0, sliced: 0, approx: 0, fx: 0, fxOver: 0, folded: 0, pitched: 0, muted: 0, plugins: 0 };
     let arrEnd = 0, audioTracks = 0, midiClips = 0;
+    // Return tracks: STRATUM has no sends, so each return's effects go on the tracks that send to it, mixed by the send level.
+    const returns = [...doc.querySelectorAll('Tracks > ReturnTrack')].map((t) => ({
+      fx: chainOf(t).map((d) => { const x = fxOf(d, bpm); if (!x && !NOT_SOUND.test(d.tagName)) left.add(plugName(d) || d.tagName); return x; }).filter(Boolean),
+      gain: num(t, 'DeviceChain > Mixer > Volume > Manual', 1), off: val(t, 'DeviceChain > Mixer > Speaker > Manual') === 'false',
+    }));
     doc.querySelectorAll('Tracks > MidiTrack, Tracks > AudioTrack').forEach((t) => {
       const nameEl = t.querySelector('Name > EffectiveName'), tname = nameEl ? nameEl.getAttribute('Value') : 'Track';
       const isAudio = t.tagName === 'AudioTrack';
       if (isAudio) audioTracks++;
       const ft = { name: tname, type: isAudio ? 'audio' : t.querySelector('DrumGroupDevice') || /(^|[^a-z])(drums?|drum ?kit|percussion)([^a-z]|$)/i.test(tname) ? 'drums' : 'synth',
-        vol: num(t, 'DeviceChain > Mixer > Volume > Manual', 0.8), pan: num(t, 'DeviceChain > Mixer > Pan > Manual', 0), clips: {}, arr: [] };
+        vol: num(t, 'DeviceChain > Mixer > Volume > Manual', 0.8), pan: num(t, 'DeviceChain > Mixer > Pan > Manual', 0), clips: {}, arr: [],
+        mute: val(t, 'DeviceChain > Mixer > Speaker > Manual') === 'false', fx: [], wanted: [] };
+      if (ft.mute) rep.muted++;
+      // The sound: a Drum Rack pad by pad, a Simpler, or an instrument plugin at the head of the chain.
+      const chain = chainOf(t), dg = chain.find((d) => d.tagName === 'DrumGroupDevice'), sim = chain.find((d) => d.tagName === 'OriginalSimpler' || d.tagName === 'MultiSampler');
+      if (dg) {
+        for (const b of dg.querySelectorAll(':scope > Branches > DrumBranch')) {
+          const s = b.querySelector('OriginalSimpler, MultiSampler'), o = s && on(s) ? simpler(s) : null;
+          if (!o) continue;
+          const pitch = 128 - num(b, ':scope > BranchInfo > ReceivingNote', 92), send = num(b, ':scope > BranchInfo > SendingNote', 60);
+          ft.wanted.push({ kind: 'inst', file: o.file, path: o.path, pitch, tune: send - (o.root + o.key) + o.key + o.fine / 100, gain: o.gain * num(b, ':scope > MixerDevice > Volume > Manual', 1), start: o.start, end: o.end });
+          rep.pads++;
+        }
+      } else if (sim) {
+        const o = simpler(sim);
+        if (o) {
+          ft.wanted.push({ kind: 'inst', file: o.file, path: o.path, root: o.root, cents: o.cents, gain: o.gain, slices: o.slices, oneShot: o.oneShot, start: o.start, end: o.end, env: o.env });
+          rep.sounds++; if (o.slices) { rep.sliced++; if (!o.exact) rep.approx++; }
+        }
+      } else if (t.tagName === 'MidiTrack' && chain[0] && /^(Au)?PluginDevice$/.test(chain[0].tagName) && plugName(chain[0])) { ft.plugin = plugName(chain[0]); rep.plugins++; }
+      // The effects after it, then whatever this track sends to the return tracks.
+      for (const d of chain) {
+        if (d === chain[0] && ft.plugin) continue;
+        const x = fxOf(d, bpm);
+        if (x) { if (ft.fx.length < D.MAX_FX) { ft.fx.push(x); rep.fx++; } else rep.fxOver++; } else if (!NOT_SOUND.test(d.tagName)) left.add(plugName(d) || d.tagName);
+      }
+      [...t.querySelectorAll(':scope > DeviceChain > Mixer > Sends > TrackSendHolder')].forEach((h, i) => {
+        const amt = num(h, ':scope > Send > Manual', 0) * ((returns[i] && returns[i].gain) || 0);
+        if (amt < 0.01 || !returns[i] || returns[i].off) return;
+        for (const fx of returns[i].fx) {
+          const c = JSON.parse(JSON.stringify(fx)); c.id = S.uid();
+          if (c.blocks[0].vals.mix != null) c.blocks[0].vals.mix = clamp(c.blocks[0].vals.mix * amt);
+          if (ft.fx.length < D.MAX_FX) { ft.fx.push(c); rep.folded++; } else rep.fxOver++;
+        }
+      });
+      // Audio clips in the arrangement. A warped clip counts in the file's own beats, an unwarped one in seconds.
+      t.querySelectorAll(':scope > DeviceChain > MainSequencer > Sample > ArrangerAutomation > Events > AudioClip').forEach((c) => {
+        if (off(c)) return;
+        const f = fileOf(c.querySelector(':scope > SampleRef'));
+        if (!f) return;
+        const start = parseFloat(c.getAttribute('Time')) || num(c, 'CurrentStart', 0), end = num(c, 'CurrentEnd', start + 4), lp = loopOf(c);
+        const warped = val(c, ':scope > IsWarped') === 'true', marks = [...c.querySelectorAll(':scope > WarpMarkers > WarpMarker')].map((m) => [parseFloat(m.getAttribute('SecTime')), parseFloat(m.getAttribute('BeatTime'))]);
+        const a = marks[0], b = marks[marks.length - 1], spb = warped && marks.length > 1 && b[0] > a[0] ? (b[1] - a[1]) / (b[0] - a[0]) : 0;
+        const fileBpm = spb ? spb * 60 : 0, stretch = !!fileBpm && Math.abs(fileBpm - bpm) > 0.01, zero = spb ? a[1] - a[0] * spb : 0;
+        const beat = (x) => (warped ? x - zero : (x * bpm) / 60), gain = num(c, ':scope > SampleVolume', 1);
+        const rel = lp.rel || 0, L = lp.end - lp.start, items = [];
+        if (lp.on && L > 0) {
+          for (let at = start, from = lp.start + rel, room = lp.end - from; at < end - 1e-6 && items.length < 256; at += room, from = lp.start, room = L)
+            items.push({ t: at, len: Math.min(room, end - at), off: beat(from), warp: stretch, gain });
+        } else items.push({ t: start, len: end - start, off: beat(lp.start), warp: stretch, gain });
+        if (num(c, ':scope > PitchCoarse', 0) || num(c, ':scope > PitchFine', 0)) rep.pitched++;
+        const same = ft.wanted.find((w) => w.kind === 'clip' && w.file === f.file);
+        if (same) same.items.push(...items); else ft.wanted.push({ kind: 'clip', file: f.file, path: f.path, bpm: stretch ? fileBpm : 0, items });
+        arrEnd = Math.max(arrEnd, end); rep.audio++;
+      });
+      rep.sessionAudio += t.querySelectorAll(':scope > DeviceChain > MainSequencer > ClipSlotList AudioClip').length;
       t.querySelectorAll('MainSequencer > ClipTimeable > ArrangerAutomation > Events > MidiClip').forEach((c) => {
         if (off(c)) return;
         const start = parseFloat(c.getAttribute('Time')) || num(c, 'CurrentStart', 0), end = num(c, 'CurrentEnd', start + 4), lp = loopOf(c);
-        for (const n of clipNotes(c, lp.start, end - start, lp.on ? lp : null)) ft.arr.push({ ...n, t: n.t + start });
+        for (const n of clipNotes(c, lp.start, end - start, lp.on ? lp : null)) { ft.arr.push({ ...n, t: n.t + start }); rep.notes++; }
         arrEnd = Math.max(arrEnd, end); midiClips++;
       });
       t.querySelectorAll('MainSequencer > ClipSlotList > ClipSlot').forEach((slot, i) => {
@@ -545,10 +693,24 @@
       ft.clips = clips;
     }
     if (!scenes.length) scenes.push({ name: 'Scene 1', bars: 4 });
+    const proj = S.fromFlat({ name, bpm, scenes, tracks, arrangement: arrangement.length ? arrangement : undefined });
+    proj.wanted = []; proj.wantPlugins = [];
+    tracks.forEach((ft, i) => {
+      const t = proj.tracks[i];
+      t.mute = ft.mute; t.fx = ft.fx;
+      for (const w of ft.wanted) if (!proj.wanted.some((o) => o.t === t.id && o.kind === w.kind && o.file === w.file && o.pitch === w.pitch)) proj.wanted.push({ ...w, t: t.id });
+      if (ft.plugin) proj.wantPlugins.push({ t: t.id, name: ft.plugin, maker: '' });
+    });
+    const say = (n, one, many) => (n ? `${n} ${n === 1 ? one : many || one + 's'}` : ''), list = (a) => a.filter(Boolean).join(', ');
     return {
-      proj: S.fromFlat({ name, bpm, scenes, tracks, arrangement: arrangement.length ? arrangement : undefined }),
-      report: `Ableton set: ${tracks.length} tracks, ${midiClips} MIDI clips, tempo ${Math.round(bpm)}. Track volume and pan kept.` +
-        (audioTracks ? ` ${audioTracks} audio tracks came in empty: their audio files and all Live devices are not read.` : ' Live devices are not read; tracks use STRATUM instruments.'),
+      proj,
+      report: `Ableton set: ${tracks.length} tracks, ${rep.notes} notes, tempo ${+bpm.toFixed(2)}. Volume, pan and mutes kept.` +
+        ` Read from the set: ${list([say(rep.pads, 'drum pad'), say(rep.sounds, 'Simpler sound'), say(rep.audio, 'audio clip'), say(rep.fx, 'effect'), say(rep.folded, 'return-track effect moved onto the track that sends to it', 'return-track effects moved onto the tracks that send to them')]) || 'no sounds'}.` +
+        (rep.approx ? ` ${rep.approx} of the ${say(rep.sliced, 'sliced sample')} use${rep.approx === 1 ? 's' : ''} Beat slices, which Live works out when it opens a set, so the chop points are STRATUM's best estimate and may differ from Live's.` : '') +
+        (rep.fxOver ? ` ${rep.fxOver} effects left out: a track holds ${D.MAX_FX}.` : '') +
+        (left.size ? ` Left out, no STRATUM match yet: ${[...left].join(', ')}.` : '') +
+        (rep.pitched ? ` ${say(rep.pitched, 'audio clip was', 'audio clips were')} pitched in Live and ${rep.pitched === 1 ? 'plays' : 'play'} at the file's own pitch.` : '') +
+        (rep.sessionAudio ? ` ${say(rep.sessionAudio, 'Session view audio clip is', 'Session view audio clips are')} not read.` : ''),
     };
   };
 
@@ -1107,7 +1269,15 @@ ${lanes}    </Lanes>
       else if (ext === 'flp') res = IO.flpIn(ab, base);
       else if (ext === 'zip') {
         // FL Studio zipped loop package: the project plus the samples it uses.
-        const files = await IO.unzip(ab), flp = files.find((f) => /\.flp$/i.test(f.name));
+        const files = await IO.unzip(ab), flp = files.find((f) => /\.flp$/i.test(f.name)), als = files.find((f) => /\.als$/i.test(f.name) && !/(^|\/)(Backup|__MACOSX)\//.test(f.name));
+        if (!flp && als) {
+          S.ui.imported(IO.alsIn(await IO.gunzip(als.data), als.name.split('/').pop().replace(/\.als$/i, '').trim()));
+          let n = 0;
+          for (const f of files) if (f !== als && !/\.(als|asd)$/i.test(f.name) && (await IO.offer(f.name, f.data).catch(() => false))) n++;
+          if (await IO.fillPads(S.proj)) S.engine.rebuild();
+          S.ui.wantedDone(n);
+          return IO.matchPlugins();
+        }
         if (!flp && files.some((f) => /\.logicx\//i.test(f.name))) {
           const map = {}, nm = (files.find((f) => /\.logicx\//i.test(f.name)).name.match(/([^/]+)\.logicx\//i) || [])[1] || base;
           for (const f of files) { const m = f.name.match(/\.logicx\/(.*)$/i); if (m && m[1] && !/(^|\/)\._/.test(m[1])) map[m[1]] = f.data; }
@@ -1145,6 +1315,7 @@ ${lanes}    </Lanes>
       else res = { audio: await IO.addAudio(fname, ab) };
       S.ui.imported(res);
       if (res.proj && res.proj.wanted && res.proj.wanted.length) await IO.seek();
+      if (ext === 'als' && S.proj.wanted.length && (await IO.fillPads(S.proj))) { S.engine.rebuild(); S.ui.refresh(); }
       if (res.proj && res.proj.wantPlugins && res.proj.wantPlugins.length) await IO.matchPlugins();
     } catch (e) {
       S.ui.toast('Could not open ' + fname + ': ' + (e.message || e), true);

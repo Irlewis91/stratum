@@ -2,7 +2,7 @@
 // recorded in real time with the mixdown as its soundtrack, then handed to the system share sheet or saved.
 (function () {
   const S = window.S, IO = S.io, E = S.engine;
-  const BG = '#0f1016', CREAM = '#ede9e0', AMBER = '#e39a12', LINK = 'github.com/Irlewis91/stratum';
+  const BG = '#0f1016', CREAM = '#ede9e0', AMBER = '#e39a12', LINK = 'github.com/matovalabs/stratum';
   const SHAPES = { ig_post: [1080, 1350, '4x5'], facebook: [1080, 1350, '4x5'], threads: [1080, 1350, '4x5'], x: [1080, 1080, '1x1'] };
   const PAGES = { tiktok: 'https://www.tiktok.com/upload', ig_reel: 'https://www.instagram.com/', ig_post: 'https://www.instagram.com/', ig_story: 'https://www.instagram.com/',
     facebook: 'https://www.facebook.com/', youtube: 'https://studio.youtube.com/', x: 'https://x.com/compose/post', threads: 'https://www.threads.com/' };

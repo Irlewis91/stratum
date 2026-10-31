@@ -28,6 +28,6 @@ Test it with `node tests/download-gate-test.mjs`, which uses a stand-in Discord.
    | `SITE_URL` | e.g. `https://stratum-download.vercel.app` (must match the Discord redirect) |
    | `DOWNLOAD_MAC_URL`, `DOWNLOAD_WINDOWS_URL`, `DOWNLOAD_MANUAL_URL` | where each file lives (see below) |
 
-4. **The files.** Put the v11 DMG, the Windows zip and the manual somewhere that isn't listed publicly, such as Vercel Blob storage, which gives each file a long random address. Set the download variables to those addresses. Don't attach them to the public GitHub release.
+4. **The files.** They live on a release in the private repository `matovalabs/stratum-downloads`. Set `DOWNLOAD_REPO`, `DOWNLOAD_TAG` and `DOWNLOAD_TOKEN` (a fine-grained GitHub token with read-only Contents access to that repository only). Members then get a signed link that expires in minutes. Without a token the site falls back to the `DOWNLOAD_*_URL` addresses. Each release: upload the files there and update `DOWNLOAD_TAG`.
 
 The gate is for building the community, not for copy protection. A member could share a file's address, and the source code is public on GitHub. To change that, give each release's files new addresses.

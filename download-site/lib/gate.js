@@ -59,6 +59,19 @@ export function redirect(location, setCookies = []) {
 export const json = (data, status = 200) =>
     new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json' } });
 
+// A short-lived link to a file in the private release that holds the downloads. GitHub answers with a signed address that
+// expires in minutes, so a shared link soon stops working. Returns '' when the file cannot be reached.
+export async function privateLink(file) {
+    const repo = env('DOWNLOAD_REPO'), tag = env('DOWNLOAD_TAG'), api = env('GITHUB_API') || 'https://api.github.com';
+    const ask = (path, accept) => fetch(api + path, { redirect: 'manual', headers: { Authorization: 'Bearer ' + env('DOWNLOAD_TOKEN'), Accept: accept, 'User-Agent': 'stratum-download', 'X-GitHub-Api-Version': '2022-11-28' } });
+    const rel = await ask(`/repos/${repo}/releases/tags/${tag}`, 'application/vnd.github+json');
+    if (!rel.ok) throw new Error('release ' + rel.status);
+    const asset = (await rel.json()).assets.find(a => a.name === file);
+    if (!asset) throw new Error('no file named ' + file);
+    const got = await ask(`/repos/${repo}/releases/assets/${asset.id}`, 'application/octet-stream');
+    return got.status === 302 ? got.headers.get('location') || '' : '';
+}
+
 // Exchanges the sign-in code for a token, then reads who the producer is and whether they are in the server.
 export async function discordCheck(code, request) {
     const tok = await fetch(DISCORD() + '/api/v10/oauth2/token', {

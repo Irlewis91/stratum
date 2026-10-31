@@ -10,6 +10,12 @@ const fake = http.createServer((req, res) => {
             const p = new URLSearchParams(body);
             return p.get('code') === 'good' && p.get('client_secret') === 'shh' ? send(200, { access_token: 'tok' }) : send(400, { error: 'invalid_grant' });
         }
+        if (req.url.startsWith('/repos/')) {
+            if (req.headers.authorization !== 'Bearer gh') return send(401, {});
+            if (req.url === '/repos/o/files/releases/tags/v1') return send(200, { assets: [{ id: 7, name: 'STRATUM.dmg' }] });
+            if (req.url === '/repos/o/files/releases/assets/7') { res.writeHead(302, { Location: 'https://signed.test/dmg?exp=1' }); return res.end(); }
+            return send(404, {});
+        }
         if (req.headers.authorization !== 'Bearer tok') return send(401, {});
         if (req.url === '/api/v10/users/@me') return send(200, { id: '42', username: 'beatmaker', global_name: 'Beat Maker' });
         if (req.url === '/api/v10/users/@me/guilds') return send(200, guilds);
@@ -62,6 +68,20 @@ r = await call('download', '/api/download?file=mac', sess);
 check(r.headers.get('location') === 'https://files.test/STRATUM.dmg', 'a member gets the Mac download');
 r = await call('download', '/api/download?file=windows', sess);
 check(r.headers.get('location') === 'https://files.test/STRATUM-Windows.zip', 'a member gets the Windows download');
+r = await call('download', '/api/download?file=manual', sess);
+{
+    const base = 'http://127.0.0.1:' + fake.address().port, wrong = { ...process.env };
+    Object.assign(process.env, { DOWNLOAD_TOKEN: 'gh', DOWNLOAD_REPO: 'o/files', DOWNLOAD_TAG: 'v1', GITHUB_API: base });
+    const dl = (f, c = sess) => call('download', '/api/download?file=' + f, c);
+    const signed = await dl('mac');
+    check(signed.headers.get('location') === 'https://signed.test/dmg?exp=1', 'a member gets a signed private link');
+    check((await dl('windows')).status === 503, 'a file missing from the private release is refused, not sent to a public address');
+    check((await dl('mac', '')).headers.get('location') === '/?signin=needed', 'no private link without signing in');
+    check((await dl('__proto__')).status === 404, 'odd file names are refused');
+    process.env.DOWNLOAD_TOKEN = 'bad';
+    check((await dl('mac')).status === 503, 'a bad token fails closed');
+    for (const k of ['DOWNLOAD_TOKEN', 'DOWNLOAD_REPO', 'DOWNLOAD_TAG', 'GITHUB_API']) delete process.env[k];
+}
 r = await call('download', '/api/download?file=manual', sess);
 check(r.status === 404, 'a file that is not set up says so');
 

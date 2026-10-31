@@ -69,11 +69,14 @@ cat > "$APP/Contents/Info.plist" <<EOF
 </plist>
 EOF
 
-codesign --force --deep --sign - "$APP"
-
-rm -rf build/dmg && mkdir -p build/dmg
-cp -R "$APP" build/dmg/
-ln -s /Applications build/dmg/Applications
-[ -f "docs/STRATUM Owner's Manual.pdf" ] && cp "docs/STRATUM Owner's Manual.pdf" "build/dmg/STRATUM Owner's Manual.pdf"
-hdiutil create -volname "STRATUM" -srcfolder build/dmg -ov -format UDZO "$OUT/STRATUM.dmg" >/dev/null
+# iCloud Drive keeps adding attributes that codesign refuses, so the app is signed and packed in a temporary folder.
+PACK="$(mktemp -d)"
+trap 'rm -rf "$PACK"' EXIT
+mkdir "$PACK/dmg"
+ditto --norsrc --noextattr --noacl "$APP" "$PACK/dmg/STRATUM.app"
+codesign --force --deep --sign - "$PACK/dmg/STRATUM.app"
+rm -rf "$APP" && ditto "$PACK/dmg/STRATUM.app" "$APP"
+ln -s /Applications "$PACK/dmg/Applications"
+[ -f "docs/STRATUM Owner's Manual.pdf" ] && ditto --norsrc --noextattr "docs/STRATUM Owner's Manual.pdf" "$PACK/dmg/STRATUM Owner's Manual.pdf"
+hdiutil create -volname "STRATUM" -srcfolder "$PACK/dmg" -ov -format UDZO "$OUT/STRATUM.dmg" >/dev/null
 echo "Built $APP and $OUT/STRATUM.dmg"

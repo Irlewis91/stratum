@@ -430,12 +430,33 @@ void foundNext() {
     Pending p = foundQueue.front(); foundQueue.erase(foundQueue.begin());
     runJs(L"S.io.found(" + jsString(p.name) + L", '" + wide(p.b64) + L"').then(() => window.chrome.webview.postMessage({ op: 'foundNext' }))");
 }
-// Looks for the sound files a project refers to: where the project says they are, and beside the project file.
+// Every file under a folder, keyed by lower-case name, for finding an Ableton set's sounds inside its project folder.
+static void indexFolder(const std::wstring &dir, std::map<std::wstring, std::vector<std::wstring>> &index, size_t &seen) {
+    WIN32_FIND_DATAW fd;
+    HANDLE h = FindFirstFileW((dir + L"\\*").c_str(), &fd);
+    if (h == INVALID_HANDLE_VALUE) return;
+    std::vector<std::wstring> subs;
+    do {
+        std::wstring n = fd.cFileName;
+        if (n == L"." || n == L".." || (fd.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN)) continue;
+        if (++seen > 20000) break;
+        if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) { subs.push_back(dir + L"\\" + n); continue; }
+        std::wstring low = n; for (auto &c : low) c = towlower(c);
+        index[low].push_back(dir + L"\\" + n);
+    } while (FindNextFileW(h, &fd));
+    FindClose(h);
+    for (auto &d : subs) if (seen <= 20000) indexFolder(d, index, seen);
+}
+// Looks for the sound files a project refers to: where the project says they are, beside the project file, and (for an Ableton
+// set) anywhere in its project folder, by name.
 void findFiles(const Json &paths, const std::string &nearUtf8) {
     foundQueue.clear();
     std::wstring nearP = wide(nearUtf8), dir, stem;
     if (!nearP.empty()) { size_t k = nearP.find_last_of(L"\\/"); dir = nearP.substr(0, k); stem = nearP.substr(k + 1); stem = stem.substr(0, stem.find_last_of(L'.')); }
     wchar_t prof[MAX_PATH] = {0}; GetEnvironmentVariableW(L"USERPROFILE", prof, MAX_PATH);
+    std::map<std::wstring, std::vector<std::wstring>> index;
+    std::wstring nearLow = nearP; for (auto &c : nearLow) c = towlower(c);
+    if (!dir.empty() && nearLow.size() > 4 && nearLow.compare(nearLow.size() - 4, 4, L".als") == 0) { size_t seen = 0; indexFolder(dir, index, seen); }
     for (auto &pj : paths.a) {
         std::wstring p = wide(pj.str()), name = p;
         for (auto &c : name) if (c == L'/') c = L'\\';
@@ -450,6 +471,16 @@ void findFiles(const Json &paths, const std::string &nearUtf8) {
         size_t u = low.find(L"\\users\\");
         if (u != std::wstring::npos) { size_t nameEnd = q.find(L'\\', u + 7); if (nameEnd != std::wstring::npos) tries.push_back(std::wstring(prof) + q.substr(nameEnd)); }
         if (!dir.empty()) { tries.push_back(dir + L"\\" + name); tries.push_back(dir + L"\\Samples\\" + name); tries.push_back(dir + L"\\" + stem + L"\\Samples\\" + name); tries.push_back(dir + L"\\" + stem + L"\\" + name); }
+        if (!dir.empty() && !q.empty() && q[0] != L'\\' && q.find(L':') == std::wstring::npos) tries.push_back(dir + L"\\" + q);
+        // Two files can share a name, so one in the same folder as the set remembers comes first.
+        std::wstring lowName = name; for (auto &c : lowName) c = towlower(c);
+        size_t cut = low.rfind(L'\\'); cut = cut == std::wstring::npos || cut == 0 ? std::wstring::npos : low.rfind(L'\\', cut - 1);
+        std::wstring tail = cut == std::wstring::npos ? low : low.substr(cut);
+        auto named = index.find(lowName);
+        if (named != index.end()) {
+            for (auto &h : named->second) { std::wstring l = h; for (auto &c : l) c = towlower(c); if (l.size() >= tail.size() && l.compare(l.size() - tail.size(), tail.size(), tail) == 0) tries.push_back(h); }
+            for (auto &h : named->second) tries.push_back(h);
+        }
         for (auto &t : tries) {
             DWORD a = GetFileAttributesW(t.c_str());
             if (a == INVALID_FILE_ATTRIBUTES || (a & FILE_ATTRIBUTE_DIRECTORY)) continue;

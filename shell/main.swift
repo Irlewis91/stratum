@@ -871,13 +871,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKNaviga
         web.evaluateJavaScript("window.S && S.menu('\(action)')", completionHandler: nil)
     }
 
-    /// Looks for sample files a project points at: where it says they are, then beside the project file. Found files are handed
-    /// to the web side one at a time.
+    /// Looks for sample files a project points at: where it says they are, then beside the project file, then (for an Ableton
+    /// set) anywhere in its project folder, by name. Found files are handed to the web side one at a time.
     private func findFiles(_ paths: [String], near: String) {
         let fm = FileManager.default, home = NSHomeDirectory()
         let dir = near.isEmpty ? nil : URL(fileURLWithPath: near).deletingLastPathComponent()
         let stem = near.isEmpty ? "" : URL(fileURLWithPath: near).deletingPathExtension().lastPathComponent
         var queue: [(String, URL)] = []
+        // Ableton keeps sounds in folders under the set (Samples/Imported, Samples/Collected, Samples/Processed/Reverse...).
+        var index: [String: [String]] = [:]
+        if let d = dir, near.lowercased().hasSuffix(".als"), let walk = fm.enumerator(at: d, includingPropertiesForKeys: nil, options: [.skipsHiddenFiles]) {
+            var seen = 0
+            for case let u as URL in walk { seen += 1; if seen > 20000 { break }; index[u.lastPathComponent.lowercased(), default: []].append(u.path) }
+        }
         for p in paths {
             let name = (p.replacingOccurrences(of: "\\", with: "/") as NSString).lastPathComponent
             var tries = [p.replacingOccurrences(of: "%FLStudioUserData%", with: home + "/Documents/Image-Line/FL Studio")]
@@ -885,6 +891,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKNaviga
             let parts = p.replacingOccurrences(of: "\\", with: "/").split(separator: "/").map(String.init)
             if let u = parts.firstIndex(where: { $0.lowercased() == "users" }), parts.count > u + 2 { tries.append(home + "/" + parts[(u + 2)...].joined(separator: "/")) }
             if let d = dir { tries += [d.appendingPathComponent(name).path, d.appendingPathComponent("Samples/" + name).path, d.appendingPathComponent(stem + "/Samples/" + name).path, d.appendingPathComponent(stem + "/" + name).path] }
+            if !p.hasPrefix("/"), let d = dir { tries.append(d.appendingPathComponent(p).path) }
+            // Two files can share a name, so one in the same folder as the set remembers comes first.
+            let tail = "/" + parts.suffix(2).joined(separator: "/").lowercased(), named = index[name.lowercased()] ?? []
+            tries += named.filter { $0.lowercased().hasSuffix(tail) } + named
             if let hit = tries.first(where: { var isDir: ObjCBool = false; return fm.fileExists(atPath: $0, isDirectory: &isDir) && !isDir.boolValue }) { queue.append((p, URL(fileURLWithPath: hit))) }
         }
         func next() {

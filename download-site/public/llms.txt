@@ -1,0 +1,19 @@
+# STRATUM
+
+> STRATUM is a free music production app (a digital audio workstation, or DAW) for Mac, Windows, iPhone, iPad and Android, made by Matova LC. It is free during the alpha.
+
+- Current version: Alpha v10.9 (0.1.0-alpha.10.9)
+- Mac: macOS 12 or later, Apple silicon and Intel
+- Windows: Windows 10 or 11, 64-bit
+- Phones and tablets: runs as a web app you add to your home screen
+- Opens: FL Studio, Ableton Live, Logic Pro and Reason projects, MIDI, DAWproject
+- Plugins: VST3 and VST2 on Mac and Windows, Audio Units on Mac
+- Also: AI stem separation, audio-reactive visuals, 1080p share videos, live streaming to Twitch, YouTube, Instagram and TikTok
+
+## Links
+
+- [Website and downloads](https://stratum-studio-pi.vercel.app/): features, install steps and FAQ
+- [Web app](https://matovalabs.github.io/stratum/): STRATUM in the browser
+- [Release notes](https://github.com/matovalabs/stratum/releases): what changed in each version
+- [Source](https://github.com/matovalabs/stratum): GitHub repository
+- [Discord](https://discord.gg/PtpChEj8Gc): community and support

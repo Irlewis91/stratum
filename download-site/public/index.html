@@ -114,6 +114,9 @@ td.them { color:var(--dim); }
 .step p { color:var(--dim); margin:0 0 16px; font-size:15px; }
 .step.done { border-color:rgba(232,160,25,.5); }
 .files { display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:12px; margin-top:22px; }
+.how { margin:0; padding-left:20px; color:var(--dim); font-size:15px; }
+.how li { margin-bottom:8px; }
+.how b { color:var(--txt); }
 .files a { display:block; padding:18px; border-radius:12px; border:1px solid var(--line); background:rgba(0,0,0,.25); text-decoration:none; }
 .files a:hover { border-color:var(--acc); }
 .files b { display:block; font-size:18px; }
@@ -252,9 +255,9 @@ footer .powered img { height:40px; width:186px; max-width:none; flex:none; displ
   <div class="wrap">
     <div class="eyebrow">Download</div>
     <h2>Get STRATUM free.</h2>
-    <p class="lead" style="margin-top:20px">Downloads are for members of the STRATUM Discord, where producers share beats, get help, report bugs and hear about new versions first.</p>
+    <p class="lead" style="margin-top:20px">Alpha v10.9 for Mac, Windows, phones and tablets. Join the <a id="joinInline" href="https://discord.gg/PtpChEj8Gc" target="_blank" rel="noopener">STRATUM Discord</a> to share beats, get help, report bugs and hear about new versions first.</p>
     <div class="dl-box">
-      <div id="gate">
+      <div id="gate" hidden>
         <div class="steps">
           <div class="step" id="s1">
             <div class="num">STEP 1</div>
@@ -270,15 +273,20 @@ footer .powered img { height:40px; width:186px; max-width:none; flex:none; displ
           </div>
         </div>
       </div>
-      <div id="files" hidden>
-        <h3 id="hello" style="font-size:24px"></h3>
+      <div id="files">
+        <h3 id="hello" style="font-size:24px">Pick your download</h3>
         <div class="files">
-          <a href="/api/download?file=mac"><b>Mac</b><small>macOS 12 or later · Apple silicon and Intel</small><span class="go">Download .dmg →</span></a>
-          <a href="/api/download?file=windows"><b>Windows</b><small>Windows 10 or 11 · 64-bit</small><span class="go">Download .zip →</span></a>
+          <a href="https://github.com/matovalabs/stratum/releases/download/v0.1.0-alpha.10.9/STRATUM.dmg"><b>Mac</b><small>macOS 12 or later · Apple silicon and Intel · 299 MB</small><span class="go">Download for Mac (.dmg) →</span></a>
+          <a href="https://github.com/matovalabs/stratum/releases/download/v0.1.0-alpha.10.9/STRATUM-Windows.zip"><b>Windows</b><small>Windows 10 or 11 · 64-bit · 283 MB</small><span class="go">Download for Windows (.zip) →</span></a>
           <a href="https://matovalabs.github.io/stratum/" target="_blank" rel="noopener"><b>Phone and tablet</b><small>Opens in the browser · add it to your home screen</small><span class="go">Open →</span></a>
-          <a href="/api/download?file=manual"><b>Owner's Manual</b><small>PDF, 36 pages</small><span class="go">Download →</span></a>
+          <a href="https://github.com/matovalabs/stratum/releases/download/v0.1.0-alpha.10.9/STRATUM-Owners-Manual.pdf"><b>Owner's Manual</b><small>PDF, 36 pages</small><span class="go">Download →</span></a>
         </div>
-        <p class="note">Not you? <a href="/api/logout">Sign out</a></p>
+        <h3 style="font-size:24px; margin-top:36px">How to install</h3>
+        <div class="steps">
+          <div class="step"><div class="num">MAC</div><h3>Open the .dmg</h3><ol class="how"><li>Open <b>STRATUM.dmg</b> and drag STRATUM to Applications.</li><li>Open STRATUM. macOS will stop it the first time, because the app isn't notarised yet.</li><li>Go to <b>System Settings › Privacy &amp; Security</b> and choose <b>Open Anyway</b>.</li></ol></div>
+          <div class="step"><div class="num">WINDOWS</div><h3>Unzip it first</h3><ol class="how"><li>Right-click <b>STRATUM-Windows.zip</b> and choose <b>Extract All</b>.</li><li>Keep <b>STRATUM.exe</b> with its folders, then double-click it.</li><li>If Windows says it protected your PC, choose <b>More info › Run anyway</b>.</li></ol></div>
+          <div class="step"><div class="num">PHONE AND TABLET</div><h3>Add it to your home screen</h3><ol class="how"><li>Open the <a href="https://matovalabs.github.io/stratum/" target="_blank" rel="noopener">web app</a>.</li><li>iPhone or iPad, in Safari: <b>Share › Add to Home Screen</b>.</li><li>Android, in Chrome: <b>Install app</b>.</li></ol></div>
+        </div>
       </div>
       <div id="note" class="msg" hidden></div>
     </div>
@@ -289,7 +297,7 @@ footer .powered img { height:40px; width:186px; max-width:none; flex:none; displ
   <div class="wrap">
     <div class="eyebrow">Questions</div>
     <h2 style="margin-bottom:20px">Good to know</h2>
-    <details><summary>Is it really free?</summary><p>Yes. STRATUM is free during the alpha for everyone in the Discord. Paid extras may come later.</p></details>
+    <details><summary>Is it really free?</summary><p>Yes. STRATUM is free during the alpha. Paid extras may come later.</p></details>
     <details><summary>Why does my Mac or PC warn me when I open it?</summary><p>STRATUM isn't signed with an Apple Developer ID or a Windows code-signing certificate yet, so macOS and Windows show a warning the first time. On a Mac, open it once, then go to System Settings › Privacy &amp; Security and choose Open Anyway. On Windows, choose More info › Run anyway. Signing is on the way.</p></details>
     <details><summary>Will my FL Studio, Ableton, Logic or Reason project sound exactly the same?</summary><p>Tracks, notes, tempo, arrangement, audio and your own samples come across. Each studio's own built-in instruments and effects can't be copied, so those parts play on STRATUM's sounds, or on the same plugin if you have it installed. Bouncing a track to audio before you export always brings it across exactly.</p></details>
     <details><summary>Does it work on my phone?</summary><p>Yes. Open the web version on an iPhone, iPad or Android device and add it to your home screen. It runs full screen and works offline. Plugins, stem separation and live streaming are on the Mac and Windows versions.</p></details>

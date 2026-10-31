@@ -19,7 +19,7 @@ const fake = http.createServer((req, res) => {
 await new Promise(r => fake.listen(0, r));
 Object.assign(process.env, {
     DISCORD_API: 'http://127.0.0.1:' + fake.address().port, DISCORD_CLIENT_ID: 'cid', DISCORD_CLIENT_SECRET: 'shh',
-    SITE_URL: 'https://download.test', DOWNLOAD_MAC_URL: 'https://files.test/STRATUM.dmg', DOWNLOAD_WINDOWS_URL: 'https://files.test/STRATUM-Windows.zip',
+    SESSION_SECRET: 'test-session', SITE_URL: 'https://download.test', DOWNLOAD_MAC_URL: 'https://files.test/STRATUM.dmg', DOWNLOAD_WINDOWS_URL: 'https://files.test/STRATUM-Windows.zip',
 });
 const site = '../download-site/api/';
 const api = name => import(site + name + '.js');

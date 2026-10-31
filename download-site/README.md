@@ -23,7 +23,7 @@ Test it with `node tests/download-gate-test.mjs`, which uses a stand-in Discord.
    |---|---|
    | `DISCORD_CLIENT_ID` | from step 1 |
    | `DISCORD_CLIENT_SECRET` | from step 1 |
-   | `SESSION_SECRET` | any long random text; it signs the sign-in cookie |
+   | `SESSION_SECRET` | any long random text, different from the Discord secret; it signs the sign-in cookie, and sign-in stays off without it |
    | `DISCORD_INVITE` | the never-expiring invite from step 2 |
    | `SITE_URL` | e.g. `https://stratum-download.vercel.app` (must match the Discord redirect) |
    | `DOWNLOAD_MAC_URL`, `DOWNLOAD_WINDOWS_URL`, `DOWNLOAD_MANUAL_URL` | where each file lives (see below) |

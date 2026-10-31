@@ -8,11 +8,12 @@ export const INVITE = () => env('DISCORD_INVITE') || 'https://discord.gg/PtpChEj
 export const DISCORD = () => env('DISCORD_API') || 'https://discord.com';      // overridden only by the tests
 const DAY = 86400;
 
-const key = () => env('SESSION_SECRET') || env('DISCORD_CLIENT_SECRET');
+const key = () => env('SESSION_SECRET');   // never the Discord secret: one leak must not give away both
 const b64 = s => Buffer.from(s).toString('base64url');
 const mac = s => createHmac('sha256', key()).update(s).digest('base64url');
 
 export function sign(data, maxAge) {
+    if (!key()) throw new Error('SESSION_SECRET is not set');
     const body = b64(JSON.stringify({ ...data, exp: Math.floor(Date.now() / 1000) + maxAge }));
     return body + '.' + mac(body);
 }
@@ -33,7 +34,8 @@ export function cookies(request) {
     const out = {};
     for (const part of (request.headers.get('cookie') || '').split(';')) {
         const i = part.indexOf('=');
-        if (i > 0) out[part.slice(0, i).trim()] = decodeURIComponent(part.slice(i + 1).trim());
+        if (i < 1) continue;
+        try { out[part.slice(0, i).trim()] = decodeURIComponent(part.slice(i + 1).trim()); } catch { /* a malformed cookie is ignored */ }
     }
     return out;
 }
